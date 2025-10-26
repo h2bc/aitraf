@@ -24,5 +24,9 @@ TODO
 	```
 
 ## Project Resources
-- **S3 storage**: https://storage.h2bcweb.com/aitraf
-- **Label Studio**: https://label.h2bcweb.com/
+
+- **S3 storage**
+  - https://storage.h2bcweb.com
+  - bucket: aitraf
+- **Label Studio**
+  - https://label.h2bcweb.com/
