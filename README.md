@@ -2,26 +2,31 @@
 
 TODO
 
+
+## Prerequisites
+
+- Ensure `uv` is installed and available on your PATH.
+
 ## Installation / Setup
 
-
-1. **Create and activate the conda environment**
+1. **Sync project dependencies**
 	```bash
-	conda env create -f environment.yml
-	conda activate aitraf
+	uv sync --group dev
 	```
+	This creates the local `.venv` managed by uv. Omit `--group dev` if you only need the runtime dependencies.
 
-2. **(Optional) Update dependencies**
-	If you add new packages to `environment.yml`, update your environment:
-	```bash
-	conda env update -f environment.yml --prune
-	```
+2. **Use the virtual environment**
+	Activate it with `source .venv/bin/activate`, or prefix commands with `uv run`, e.g. `uv run pytest`.
 
 3. **Jupyter Notebook**
-	Launch Jupyter for exploration:
+	Launch Jupyter inside the environment:
 	```bash
-	jupyter notebook
+	uv run jupyter notebook
 	```
+
+## Code Quality
+
+- **Ruff** (lint & format): `uv run ruff check .` to lint, `uv run ruff format .` to apply formatting.
 
 ## Project Resources
 

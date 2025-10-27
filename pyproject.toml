@@ -1,0 +1,27 @@
+[project]
+name = "aitraf"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "torch",
+    "torchvision",
+    "torchaudio",
+    "torchcodec",
+    "ultralytics",
+    "python-dotenv",
+    "ipykernel",
+    "label-studio-sdk",
+    "datasets",
+    "ipywidgets",
+    "s3fs",
+    "av",
+    "imageio[ffmpeg]"
+]
+
+[tool.uv]
+index-url = "https://download.pytorch.org/whl/cu126"
+extra-index-url = ["https://pypi.org/simple"]
+
+
+[dependency-groups]
+dev = ["ruff", "pytest"]
