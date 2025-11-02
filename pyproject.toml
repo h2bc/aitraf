@@ -15,7 +15,8 @@ dependencies = [
     "ipywidgets",
     "s3fs",
     "av",
-    "imageio[ffmpeg]"
+    "imageio[ffmpeg]",
+    "boto3"
 ]
 
 [tool.uv]
