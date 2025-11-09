@@ -28,6 +28,26 @@ TODO
 
 - **Ruff** (lint & format): `uv run ruff check .` to lint, `uv run ruff format .` to apply formatting.
 
+## Git LFS
+
+We use lfs storage for storing `data` and oter large files directories.
+
+1. Install Git LFS and run the one-time setup:
+	```bash
+	sudo apt install git-lfs   # or brew install git-lfs
+	git lfs install
+	```
+2. After cloning or pulling, fetch the large files:
+	```bash
+	git lfs pull
+	```
+3. When committing new heavy artifacts, track them before the first commit:
+	```bash
+	git lfs track "models/*.pt"
+	git add .gitattributes models/my_new_model.pt
+	```
+   Use `git lfs ls-files` to verify what is tracked.
+
 ## Project Resources
 
 - **S3 storage**
