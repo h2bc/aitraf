@@ -13,7 +13,7 @@ dependencies = [
     "label-studio-sdk",
     "datasets",
     "ipywidgets",
-    "s3fs",
+    "s3fs>=2025",
     "av",
     "imageio[ffmpeg]",
     "boto3",
