@@ -6,8 +6,6 @@ Usage:
     python -m scripts.pull_ls [--project-id 123] [--output data/label_studio_export.parquet]
 """
 
-from __future__ import annotations
-
 import argparse
 import os
 from pathlib import Path
@@ -16,8 +14,7 @@ from dotenv import load_dotenv
 from label_studio_sdk import LabelStudio
 
 from paths import DATA_DIR
-
-EXPECTED_COLUMNS = ["video", "trick", "key_foot", "person"]
+from dataset_schema import EXPECTED_COLUMNS, LABEL_COLUMNS, VIDEO_COLUMN
 
 
 def get_env(name: str) -> str:
@@ -40,7 +37,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output",
         type=Path,
-        default=DATA_DIR / "label_studio_export.parquet",
+        default=DATA_DIR / "labeled.parquet",
         help="Destination parquet file.",
     )
     parser.add_argument(
@@ -49,6 +46,19 @@ def parse_args() -> argparse.Namespace:
         help="Overwrite the output file if it already exists.",
     )
     return parser.parse_args()
+
+
+def report_missing_labels(df) -> None:
+    """Print missing-label counts and percentages for each non-video column."""
+    total = len(df)
+    if total == 0:
+        print("Missing label stats: dataframe empty after dropping video-less rows.")
+        return
+    print("Missing label stats:")
+    for col in LABEL_COLUMNS:
+        missing = df[col].isna().sum()
+        pct = (missing / total) * 100
+        print(f"  {col:<10}: {missing:>5} rows missing ({pct:5.1f}%)")
 
 
 def main() -> None:
@@ -76,7 +86,8 @@ def main() -> None:
             "Did the project schema change?"
         )
 
-    df = df.dropna(subset=["video"])
+    df = df.dropna(subset=[VIDEO_COLUMN])
+    report_missing_labels(df)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(args.output, index=False)
