@@ -9,6 +9,7 @@ dependencies = [
     "torchcodec",
     "ultralytics",
     "python-dotenv",
+    "pandas",
     "ipykernel",
     "label-studio-sdk",
     "datasets",
