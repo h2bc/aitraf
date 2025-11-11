@@ -145,14 +145,12 @@ wheels = [
 [[package]]
 name = "aitraf"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "av" },
     { name = "boto3" },
     { name = "datasets" },
     { name = "imageio", extra = ["ffmpeg"] },
-    { name = "ipykernel" },
-    { name = "ipywidgets" },
     { name = "label-studio-sdk", version = "2.0.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '4' and sys_platform == 'win32'" },
     { name = "label-studio-sdk", version = "2.0.13", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '4' or sys_platform != 'win32'" },
     { name = "pandas" },
@@ -168,6 +166,8 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "ipykernel" },
+    { name = "ipywidgets" },
     { name = "pytest" },
     { name = "ruff" },
 ]
@@ -178,8 +178,6 @@ requires-dist = [
     { name = "boto3" },
     { name = "datasets" },
     { name = "imageio", extras = ["ffmpeg"] },
-    { name = "ipykernel" },
-    { name = "ipywidgets" },
     { name = "label-studio-sdk" },
     { name = "pandas" },
     { name = "python-dotenv" },
@@ -194,6 +192,8 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "ipykernel" },
+    { name = "ipywidgets" },
     { name = "pytest" },
     { name = "ruff" },
 ]
