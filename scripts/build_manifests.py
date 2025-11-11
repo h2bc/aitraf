@@ -6,8 +6,6 @@ Usage:
     python -m scripts.build_manifests [--input data/label_studio_export.parquet]
 """
 
-from __future__ import annotations
-
 import argparse
 import json
 from pathlib import Path
