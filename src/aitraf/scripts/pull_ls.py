@@ -3,7 +3,7 @@
 Download a Label Studio project export and store it as parquet.
 
 Usage:
-    python -m scripts.pull_ls [--project-id 123] [--output data/label_studio_export.parquet]
+    python -m aitraf.scripts.pull_ls [--project-id 123] [--output data/label_studio_export.parquet]
 """
 
 import argparse
@@ -13,8 +13,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from label_studio_sdk import LabelStudio
 
-from paths import DATA_DIR
-from dataset_schema import EXPECTED_COLUMNS, LABEL_COLUMNS, VIDEO_COLUMN
+from aitraf.paths import DATA_DIR
+from aitraf.dataset_schema import EXPECTED_COLUMNS, LABEL_COLUMNS, VIDEO_COLUMN
 
 
 def get_env(name: str) -> str:

@@ -3,7 +3,7 @@
 Read the Label Studio parquet export, split it, and write JSONL manifests.
 
 Usage:
-    python -m scripts.build_manifests [--input data/label_studio_export.parquet]
+    python -m aitraf.scripts.build_manifests [--input data/label_studio_export.parquet]
 """
 
 import argparse
@@ -13,8 +13,12 @@ from pathlib import Path
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from paths import DATA_DIR
-from dataset_schema import TARGET_COLUMN, EXPECTED_COLUMNS, CATEGORICAL_COLUMNS
+from aitraf.paths import DATA_DIR
+from aitraf.dataset_schema import (
+    TARGET_COLUMN,
+    EXPECTED_COLUMNS,
+    CATEGORICAL_COLUMNS,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -23,7 +27,7 @@ def parse_args() -> argparse.Namespace:
         "--input",
         type=Path,
         default=DATA_DIR / "labeled.parquet",
-        help="Parquet file produced by scripts/pull_ls.py",
+        help="Parquet file produced by aitraf.scripts.pull_ls",
     )
     parser.add_argument(
         "--output-dir",
@@ -68,7 +72,7 @@ def ensure_columns(df: pd.DataFrame) -> None:
     if missing:
         raise SystemExit(
             f"Input is missing expected columns: {', '.join(missing)}. "
-            "Re-run scripts/pull_ls.py."
+            "Re-run aitraf.scripts.pull_ls."
         )
 
 

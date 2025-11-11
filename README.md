@@ -15,10 +15,16 @@ TODO
 	```
 	This creates the local `.venv` managed by uv. Omit `--group dev` if you only need the runtime dependencies.
 
-2. **Use the virtual environment**
+2. **Install the project package (editable)**
+	```bash
+	uv pip install -e .
+	```
+	This makes the `aitraf` package importable in scripts, notebooks, and Hydra jobs.
+
+3. **Use the virtual environment**
 	Activate it with `source .venv/bin/activate`, or prefix commands with `uv run`, e.g. `uv run pytest`.
 
-3. **Jupyter Notebook**
+4. **Jupyter Notebook**
 	Launch Jupyter inside the environment:
 	```bash
 	uv run jupyter notebook

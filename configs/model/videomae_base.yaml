@@ -1,0 +1,15 @@
+# VideoMAE v2 base configuration for trick classification.
+
+backbone: OpenGVLab/VideoMAEv2-Base
+trust_remote_code: true
+feature_extractor: OpenGVLab/VideoMAEv2-Base
+num_labels: 0                 # resolved at runtime from label metadata
+dropout: 0.1
+classifier_head:
+  type: mlp
+  hidden_dim: 768
+  activation: gelu
+  dropout: 0.1
+freeze_backbone: false
+gradient_checkpointing: true
+use_flash_attn: false
