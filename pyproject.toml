@@ -13,6 +13,8 @@ dependencies = [
     "torchcodec",
     "ultralytics",
     "python-dotenv",
+    "transformers",
+    "huggingface-hub>=0.34,<1.0",
     "pandas",
     "scikit-learn",
     "label-studio-sdk",
@@ -21,6 +23,7 @@ dependencies = [
     "av",
     "imageio[ffmpeg]",
     "boto3",
+    "numpy"
 ]
 
 [dependency-groups]
