@@ -4,8 +4,10 @@ TODO
 
 ## Prerequisites
 
+- Linux environment with NVIDIA GPU
 - `uv` on your PATH
-- `make` for the convenience targets (optional)
+- `make`
+
 
 ## Installation / Setup
 
