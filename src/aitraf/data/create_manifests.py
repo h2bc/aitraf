@@ -1,4 +1,4 @@
-"""Split parquet export into train/val/test manifests."""
+"""Split Label Studio export into train/val/test manifests."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from aitraf import dataset_schema
+from aitraf.data import schema
 
 
 @dataclass
@@ -28,11 +28,11 @@ class ManifestBuildConfig:
         self.output_dir = Path(self.output_dir)
 
 
-def build_manifests(config: ManifestBuildConfig) -> None:
+def create_manifests(config: ManifestBuildConfig) -> None:
     input_path = config.input_path
     output_dir = config.output_dir
     if not input_path.exists():
-        raise RuntimeError(f"Parquet input not found: {input_path}")
+        raise RuntimeError(f"Input file not found: {input_path}")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     if not config.force:
@@ -43,11 +43,11 @@ def build_manifests(config: ManifestBuildConfig) -> None:
                     f"Output file {out_path} already exists. Set force=true to overwrite."
                 )
 
-    df = pd.read_parquet(input_path)
+    df = pd.read_json(input_path, orient="records", lines=True)
 
     _ensure_columns(df)
 
-    df = df.dropna(subset=dataset_schema.EXPECTED_COLUMNS).reset_index(drop=True)
+    df = df.dropna(subset=schema.EXPECTED_COLUMNS).reset_index(drop=True)
 
     if len(df) < 3:
         raise RuntimeError("Need at least 3 fully labeled rows to perform splits.")
@@ -64,7 +64,7 @@ def build_manifests(config: ManifestBuildConfig) -> None:
     if train_ratio <= 0:
         raise RuntimeError("Validation + test ratios must be < 1.")
 
-    stratify_labels = df[dataset_schema.TARGET_COLUMN].astype(str)
+    stratify_labels = df[schema.TARGET_COLUMN].astype(str)
     train_val_df, test_df, train_val_labels, _ = _split(
         df,
         stratify_labels,
@@ -97,10 +97,10 @@ def build_manifests(config: ManifestBuildConfig) -> None:
 
 
 def _ensure_columns(df: pd.DataFrame) -> None:
-    missing = [c for c in dataset_schema.EXPECTED_COLUMNS if c not in df.columns]
+    missing = [c for c in schema.EXPECTED_COLUMNS if c not in df.columns]
     if missing:
         raise RuntimeError(
-            f"Input is missing expected columns: {', '.join(missing)}. Re-run the pull step."
+            f"Input is missing expected columns: {', '.join(missing)}. Re-run the download step."
         )
 
 
@@ -128,9 +128,16 @@ def _split(df, labels, fraction, seed):
 
 def _write_manifest(df: pd.DataFrame, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    records = df[dataset_schema.EXPECTED_COLUMNS].to_dict(orient="records")
     with path.open("w", encoding="utf-8") as fh:
-        for record in records:
+        for _, row in df.iterrows():
+            video_path = str(row[schema.VIDEO_COLUMN])
+            record = {
+                "video_id": Path(video_path).name,
+                "s3_path": video_path,
+                schema.TARGET_COLUMN: row[schema.TARGET_COLUMN],
+            }
+            for col in schema.CONTEXT_COLUMNS:
+                record[col] = row[col]
             fh.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
@@ -138,7 +145,7 @@ def _build_vocab_metadata(
     df: pd.DataFrame,
 ) -> dict[str, dict[str, dict[str, str] | list[str]]]:
     payload = {}
-    for col in dataset_schema.CATEGORICAL_COLUMNS:
+    for col in schema.CATEGORICAL_COLUMNS:
         labels = sorted(df[col].dropna().astype(str).unique().tolist())
         payload[col] = {
             "labels": labels,

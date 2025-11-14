@@ -1,14 +1,8 @@
 defaults:
-  - label_studio: default
-  - manifests: default
+  - data: default
   - _self_
 
-seed: 1337
 backbone: OpenGVLab/VideoMAEv2-Base
-
-tasks:
-  pull_ls: true
-  build_manifests: true
 
 paths:
   project_root: ${hydra:runtime.cwd}

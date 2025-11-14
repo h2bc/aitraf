@@ -10,7 +10,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from label_studio_sdk import LabelStudio
 
-from aitraf import dataset_schema
+from aitraf.data import schema
 
 
 @dataclass
@@ -24,7 +24,7 @@ class LabelStudioExportConfig:
         self.output_path = Path(self.output_path)
 
 
-def pull_label_studio(config: LabelStudioExportConfig) -> Path:
+def download_labels(config: LabelStudioExportConfig) -> Path:
     """Download a Label Studio export based on env/config settings."""
     load_dotenv()
 
@@ -44,14 +44,17 @@ def pull_label_studio(config: LabelStudioExportConfig) -> Path:
     client = LabelStudio(base_url=base_url, api_key=token.strip())
     df: pd.DataFrame = client.projects.exports.as_pandas(int(project_id))
 
-    missing_cols = [
-        col for col in dataset_schema.EXPECTED_COLUMNS if col not in df.columns
-    ]
+    missing_cols = [col for col in schema.EXPECTED_COLUMNS if col not in df.columns]
     if missing_cols:
         raise RuntimeError(
             f"Export missing expected columns: {', '.join(missing_cols)}"
         )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(output_path, index=False)
+    df.to_json(
+        output_path,
+        orient="records",
+        lines=True,
+        force_ascii=False,
+    )
     return output_path

@@ -1,2 +1,0 @@
-output_path: ${paths.data_dir}/raw/labelstudio.parquet
-force: true

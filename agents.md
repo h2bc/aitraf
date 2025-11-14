@@ -3,21 +3,21 @@
 This repo houses the small data-engineering pipeline that powers aggressive inline trick recognition. The flow is now Hydra-managed: we pull exports from Label Studio, validate them against a shared schema, and generate train/val/test manifests plus vocab metadata consumed by notebooks and future model training runs.
 
 ## Project Flow
-1. `make data` (or `uv run python scripts/data_pipeline.py`) launches the Hydra entrypoint in `scripts/data_pipeline.py`. `configs/config.yaml` toggles `tasks.pull_ls` / `tasks.build_manifests` and wires the `label_studio`/`manifests` config groups that fill in concrete paths, split ratios, and `force` behavior.
-2. When `tasks.pull_ls` is enabled, `aitraf.data.pull_ls.pull_label_studio` loads `.env` or shell `LABEL_STUDIO_URL`, `LABEL_STUDIO_TOKEN`, and `LABEL_STUDIO_PROJECT_ID`, downloads the export with `label-studio-sdk`, enforces the schema from `aitraf.dataset_schema`, and writes `data/raw/labelstudio.parquet`.
-3. When `tasks.build_manifests` is enabled, `aitraf.data.build_manifests.build_manifests` reads that parquet, drops incomplete rows, stratifies train/val/test splits (skating trick label as the stratification target), and emits JSONL manifests plus `labels.json` vocab metadata under `data/manifests/`.
+1. `make data` (or `uv run python scripts/data_pipeline.py`) launches the Hydra entrypoint in `scripts/data_pipeline.py`. `configs/config.yaml` (general defaults) simply includes `configs/data/default.yaml`, so all pipeline toggles live under `cfg.data.tasks` and the per-stage knobs (`cfg.data.download_labels`, `cfg.data.create_manifests`) sit in that one data config file.
+2. When `cfg.data.tasks.download_labels` is true, `aitraf.data.download_labels.download_labels` loads `.env` or shell `LABEL_STUDIO_URL`, `LABEL_STUDIO_TOKEN`, and `LABEL_STUDIO_PROJECT_ID`, downloads the export with `label-studio-sdk`, enforces the schema from `aitraf.data.schema`, and writes `data/labels.jsonl`.
+3. When `cfg.data.tasks.create_manifests` is true, `aitraf.data.create_manifests.create_manifests` reads that JSONL export, drops incomplete rows, stratifies train/val/test splits (skating trick label as the stratification target), and emits JSONL manifests plus `labels.json` vocab metadata under `data/manifests/`; each manifest row includes `video_id`, `s3_path`, `trick`, `key_foot`, and `person`.
 4. Research notebooks in `notebooks/` and pose weights in `models/` rely on those manifests, so regenerating them keeps downstream experiments in sync.
 
 ## Key Components
 - `scripts/data_pipeline.py` — Hydra entrypoint that orchestrates the individual tasks while keeping command-lines short.
-- `configs/` — Hydra defaults and overrides: `config.yaml` defines repo-wide paths/toggles; `label_studio/*.yaml` handles export destinations and force flags; `manifests/*.yaml` captures split ratios, seeds, and output directories.
-- `src/aitraf/dataset_schema.py` — single source of truth for expected columns (`video`, `trick`, `key_foot`, `person`) and categorical vocab lists, reducing drift between tasks.
-- `src/aitraf/data/pull_ls.py` — Label Studio ingestion helper built on `label-studio-sdk` and `python-dotenv`; refuses to overwrite unless `force` is set.
-- `src/aitraf/data/build_manifests.py` — manifest/vocab builder that validates ratios, catches undersized datasets, and writes JSONL + `labels.json`.
+- `configs/config.yaml` + `configs/data/default.yaml` — two-file Hydra setup: the general config pulls in the `data` group (default), which owns every download/manifests knob and task toggle.
+- `src/aitraf/data/schema.py` — single source of truth for expected columns (`video`, `trick`, `key_foot`, `person`) and categorical vocab lists, reducing drift between tasks.
+- `src/aitraf/data/download_labels.py` — Label Studio ingestion helper built on `label-studio-sdk` and `python-dotenv`; refuses to overwrite unless `force` is set.
+- `src/aitraf/data/create_manifests.py` — manifest/vocab builder that validates ratios, catches undersized datasets, and writes JSONL + `labels.json`.
 - `pyproject.toml` — managed via `uv`; declares the DL/tooling stack (torch, Ultralytics, transformers, Hydra, pandas/sklearn, datasets, FFmpeg helpers, boto3, etc.) plus dev extras (`ruff`, `pytest`, `ipykernel`, `ipywidgets`).
 
 ## Assets & Artifacts
-- `data/raw/labelstudio.parquet` — canonical export written by the pull step.
+- `data/labels.jsonl` — canonical export written by the download step.
 - `data/manifests/{train,val,test}.jsonl` + `data/manifests/labels.json` — downstream-ready splits and vocab metadata.
 - `data/hydra/*` — Hydra run directories/logs produced by `make data`.
 - `models/yolo11n-pose.pt` — YOLO pose weights referenced in notebooks.

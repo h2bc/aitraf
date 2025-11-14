@@ -6,7 +6,7 @@ VIDEO_COLUMN = "video"
 TARGET_COLUMN = "trick"
 CONTEXT_COLUMNS = ["key_foot", "person"]
 
-# Columns expected in every exported/parquet row, in canonical order.
+# Columns expected in every exported row, in canonical order.
 EXPECTED_COLUMNS = [VIDEO_COLUMN, TARGET_COLUMN, *CONTEXT_COLUMNS]
 
 # Categorical columns for vocab metadata / label stats (excludes video paths).

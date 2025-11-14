@@ -4,28 +4,28 @@ from __future__ import annotations
 
 from hydra import main
 from omegaconf import DictConfig
-from aitraf.data.pull_ls import LabelStudioExportConfig, pull_label_studio
-from aitraf.data.build_manifests import ManifestBuildConfig, build_manifests
+from aitraf.data.download_labels import LabelStudioExportConfig, download_labels
+from aitraf.data.create_manifests import ManifestBuildConfig, create_manifests
 
 
 @main(config_path="../configs", config_name="config", version_base=None)
 def run(cfg: DictConfig) -> None:
-    if cfg.tasks.pull_ls:
-        pull_label_studio(
+    if cfg.data.tasks.download_labels:
+        download_labels(
             LabelStudioExportConfig(
-                output_path=cfg.label_studio.output_path,
-                force=cfg.label_studio.force,
+                output_path=cfg.data.download_labels.output_path,
+                force=cfg.data.download_labels.force,
             )
         )
-    if cfg.tasks.build_manifests:
-        build_manifests(
+    if cfg.data.tasks.create_manifests:
+        create_manifests(
             ManifestBuildConfig(
-                input_path=cfg.manifests.input_path,
-                output_dir=cfg.manifests.output_dir,
-                val_ratio=cfg.manifests.val_ratio,
-                test_ratio=cfg.manifests.test_ratio,
-                seed=cfg.manifests.seed,
-                force=cfg.manifests.force,
+                input_path=cfg.data.create_manifests.input_path,
+                output_dir=cfg.data.create_manifests.output_dir,
+                val_ratio=cfg.data.create_manifests.val_ratio,
+                test_ratio=cfg.data.create_manifests.test_ratio,
+                seed=cfg.data.create_manifests.seed,
+                force=cfg.data.create_manifests.force,
             )
         )
 

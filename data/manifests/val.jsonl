@@ -1,3 +1,20 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:9f362608ef2f4ad70ef9278cd43e78d40c48b61209a2a407617910c35fa65c4d
-size 2962
+{"video_id": "IMG_5683-00.06.06.441-00.06.11.855-seg11.mp4", "s3_path": "s3://aitraf/clips/IMG_5683-00.06.06.441-00.06.11.855-seg11.mp4", "trick": "fs-savanah", "key_foot": "right", "person": "Henrikas"}
+{"video_id": "25-11-02 19-14-55 5695-00.03.51.475-00.03.56.138-seg15.mp4", "s3_path": "s3://aitraf/clips/25-11-02 19-14-55 5695-00.03.51.475-00.03.56.138-seg15.mp4", "trick": "soul", "key_foot": "right", "person": "Justas"}
+{"video_id": "25-11-02 19-14-55 5695-00.02.15.114-00.02.19.614-seg10.mp4", "s3_path": "s3://aitraf/clips/25-11-02 19-14-55 5695-00.02.15.114-00.02.19.614-seg10.mp4", "trick": "soul", "key_foot": "right", "person": "Romka"}
+{"video_id": "25-10-31 19-46-26 5688-00.05.22.274-00.05.27.599-seg17.mp4", "s3_path": "s3://aitraf/clips/25-10-31 19-46-26 5688-00.05.22.274-00.05.27.599-seg17.mp4", "trick": "bs-royale", "key_foot": "right", "person": "Max"}
+{"video_id": "25-10-31 19-54-19 5689-00.05.42.439-00.05.47.048-seg10.mp4", "s3_path": "s3://aitraf/clips/25-10-31 19-54-19 5689-00.05.42.439-00.05.47.048-seg10.mp4", "trick": "top-soul", "key_foot": "right", "person": "Max"}
+{"video_id": "IMG_5540-00.00.09.541-00.00.14.610-seg1.mp4", "s3_path": "s3://aitraf/clips/IMG_5540-00.00.09.541-00.00.14.610-seg1.mp4", "trick": "soul", "key_foot": "right", "person": "Henrikas"}
+{"video_id": "25-11-02 19-14-55 5695-00.05.10.931-00.05.16.180-seg22.mp4", "s3_path": "s3://aitraf/clips/25-11-02 19-14-55 5695-00.05.10.931-00.05.16.180-seg22.mp4", "trick": "fs-savanah", "key_foot": "right", "person": "Henrikas"}
+{"video_id": "25-11-02 19-14-55 5695-00.13.53.445-00.13.58.205-seg48.mp4", "s3_path": "s3://aitraf/clips/25-11-02 19-14-55 5695-00.13.53.445-00.13.58.205-seg48.mp4", "trick": "mizou", "key_foot": "left", "person": "Henrikas"}
+{"video_id": "25-10-31 19-54-19 5689-00.04.30.676-00.04.36.376-seg08.mp4", "s3_path": "s3://aitraf/clips/25-10-31 19-54-19 5689-00.04.30.676-00.04.36.376-seg08.mp4", "trick": "top-soul", "key_foot": "right", "person": "Henrikas"}
+{"video_id": "25-11-07 16-03-18 5701-00.10.34.609-00.10.39.660-seg19.mp4", "s3_path": "s3://aitraf/clips/25-11-07 16-03-18 5701-00.10.34.609-00.10.39.660-seg19.mp4", "trick": "fs-savanah", "key_foot": "right", "person": "Henrikas"}
+{"video_id": "25-10-31 19-54-19 5689-00.03.16.913-00.03.22.791-seg06.mp4", "s3_path": "s3://aitraf/clips/25-10-31 19-54-19 5689-00.03.16.913-00.03.22.791-seg06.mp4", "trick": "mizou", "key_foot": "right", "person": "Max"}
+{"video_id": "25-11-02 19-14-55 5695-00.05.54.650-00.05.58.815-seg27.mp4", "s3_path": "s3://aitraf/clips/25-11-02 19-14-55 5695-00.05.54.650-00.05.58.815-seg27.mp4", "trick": "ao-soul", "key_foot": "left", "person": "Romka"}
+{"video_id": "25-11-02 19-14-55 5695-00.02.08.653-00.02.13.517-seg09.mp4", "s3_path": "s3://aitraf/clips/25-11-02 19-14-55 5695-00.02.08.653-00.02.13.517-seg09.mp4", "trick": "fs-royale", "key_foot": "right", "person": "Henrikas"}
+{"video_id": "25-11-02 19-14-55 5695-00.07.23.460-00.07.28.433-seg31.mp4", "s3_path": "s3://aitraf/clips/25-11-02 19-14-55 5695-00.07.23.460-00.07.28.433-seg31.mp4", "trick": "fs-savanah", "key_foot": "right", "person": "Henrikas"}
+{"video_id": "25-11-02 19-14-55 5695-00.11.26.628-00.11.31.876-seg40.mp4", "s3_path": "s3://aitraf/clips/25-11-02 19-14-55 5695-00.11.26.628-00.11.31.876-seg40.mp4", "trick": "top-soul", "key_foot": "right", "person": "Romka"}
+{"video_id": "25-10-31 19-54-19 5689-00.08.30.244-00.08.34.319-seg16.mp4", "s3_path": "s3://aitraf/clips/25-10-31 19-54-19 5689-00.08.30.244-00.08.34.319-seg16.mp4", "trick": "ao-soul", "key_foot": "right", "person": "Max"}
+{"video_id": "IMG_5683-00.05.10.739-00.05.16.783-seg09.mp4", "s3_path": "s3://aitraf/clips/IMG_5683-00.05.10.739-00.05.16.783-seg09.mp4", "trick": "fs-savanah", "key_foot": "right", "person": "Henrikas"}
+{"video_id": "IMG_5679-00.00.17.122-00.00.21.665-seg1.mp4", "s3_path": "s3://aitraf/clips/IMG_5679-00.00.17.122-00.00.21.665-seg1.mp4", "trick": "bs-royale", "key_foot": "right", "person": "Henrikas"}
+{"video_id": "25-10-31 19-54-19 5689-00.02.32.966-00.02.38.141-seg05.mp4", "s3_path": "s3://aitraf/clips/25-10-31 19-54-19 5689-00.02.32.966-00.02.38.141-seg05.mp4", "trick": "ao-soul", "key_foot": "right", "person": "Max"}
+{"video_id": "IMG_5678-00.02.14.873-00.02.20.717-seg5.mp4", "s3_path": "s3://aitraf/clips/IMG_5678-00.02.14.873-00.02.20.717-seg5.mp4", "trick": "fs-royale", "key_foot": "right", "person": "Henrikas"}

@@ -1,6 +1,0 @@
-input_path: ${label_studio.output_path}
-output_dir: ${paths.manifests_dir}
-val_ratio: 0.1
-test_ratio: 0.1
-seed: 42
-force: true
