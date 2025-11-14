@@ -8,6 +8,11 @@ create_manifests:
   test_ratio: 0.1
   seed: 42
   force: true
+download_clips:
+  labels_path: ${data.download_labels.output_path}
+  output_dir: ${paths.data_dir}/clips
+  force: true
 tasks:
   download_labels: true
   create_manifests: true
+  download_clips: true
