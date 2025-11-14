@@ -1,13 +1,6 @@
 # Deep Learning-Based Aggressive Inline Trick Recognition and Performance Feedback
 
-We are building a trick recognizer for aggressive inline skating. Right now the plan is to fine-tune VideoMAE (starting with `OpenGVLab/VideoMAEv2-Base`) on the new dataset we recorded and labeled ourselves.
-
-`make data` kicks off the Hydra pipeline that:
-1. downloads the latest labels from Label Studio,
-2. checks the schema and writes train/val/test manifests, and
-3. pulls the raw videos from S3, then runs the same 1:1 crop + clip slicing we use for VideoMAE training so finetuning jobs get clean inputs.
-
-The rest is still up in the air. If finetuning falls short we may try GenAI-style models, pure pose inputs, cropped-person classifiers, or mixes of video + metadata. We’ll update this file as we learn more.
+TODO
 
 ## Prerequisites
 
