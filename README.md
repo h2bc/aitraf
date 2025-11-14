@@ -11,7 +11,7 @@ TODO
 
 ## Installation / Setup
 
-1. `uv sync`
+1. `make install`
 2. Run project commands with `uv run <cmd>` (e.g. `uv run pytest`, `uv run bash`)
 
 ## Code Quality
