@@ -5,13 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "aitraf"
 version = "0.1.0"
-requires-python = ">=3.12"
+requires-python = ">=3.9,<3.14"
 dependencies = [
-    "torch",
-    "torchvision",
-    "torchaudio",
-    "torchcodec",
-    "ultralytics",
     "python-dotenv",
     "loguru",
     "transformers",
@@ -21,9 +16,7 @@ dependencies = [
     "scikit-learn",
     "label-studio-sdk",
     "datasets",
-    "s3fs>=2025",
     "av",
-    "imageio[ffmpeg]",
     "boto3",
     "numpy"
 ]

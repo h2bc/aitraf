@@ -22,7 +22,7 @@ class VideoMAETrainingConfig:
     batch_size: int = 2
     num_workers: int = 0
     num_frames: int = 16
-    label_column: str = "trick"
+    device: str = "cuda"
     max_batches: int = 2
 
     def __post_init__(self) -> None:
@@ -46,7 +46,6 @@ def run_training(config: VideoMAETrainingConfig) -> None:
             processor=processor,
             clips_dir=config.clips_dir,
             num_frames=config.num_frames,
-            label_column=config.label_column,
             device=config.device,
         ),
     )
@@ -67,7 +66,7 @@ def _read_dataset(manifest_path: Path) -> list[dict[str, Any]]:
     return df.to_dict(orient="records")
 
 
-def _collate(batch, *, processor, clips_dir, num_frames, label_column, device):
+def _collate(batch, *, processor, clips_dir, num_frames, device):
     processed = []
     for row in batch:
         try:
@@ -76,7 +75,6 @@ def _collate(batch, *, processor, clips_dir, num_frames, label_column, device):
                 processor=processor,
                 clips_dir=clips_dir,
                 num_frames=num_frames,
-                label_column=label_column,
                 device=device,
             )
         except (ValueError, FileNotFoundError) as exc:

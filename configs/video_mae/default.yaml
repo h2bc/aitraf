@@ -2,8 +2,7 @@ backbone: OpenGVLab/VideoMAEv2-Base
 
 training:
   manifest: ${paths.manifests_dir}/train.jsonl
-  batch_size: 2
-  num_workers: 0
+  batch_size: 4
+  num_workers: 2
   num_frames: 16
-  label_column: trick
   device: cuda
