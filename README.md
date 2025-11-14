@@ -1,7 +1,13 @@
 # Deep Learning-Based Aggressive Inline Trick Recognition and Performance Feedback
 
-TODO
+We are building a trick recognizer for aggressive inline skating. Right now the plan is to fine-tune VideoMAE (starting with `OpenGVLab/VideoMAEv2-Base`) on the new dataset we recorded and labeled ourselves.
 
+`make data` kicks off the Hydra pipeline that:
+1. downloads the latest labels from Label Studio,
+2. checks the schema and writes train/val/test manifests, and
+3. pulls the raw videos from S3, then runs the same 1:1 crop + clip slicing we use for VideoMAE training so finetuning jobs get clean inputs.
+
+The rest is still up in the air. If finetuning falls short we may try GenAI-style models, pure pose inputs, cropped-person classifiers, or mixes of video + metadata. We’ll update this file as we learn more.
 
 ## Prerequisites
 
@@ -25,26 +31,6 @@ TODO
 ## Jupyter Notebook
 
 - `make jupyter` – launch a notebook server inside the uv-managed env
-
-## Git LFS
-
-We use lfs storage for storing `data` and oter large files directories.
-
-1. Install Git LFS and run the one-time setup:
-	```bash
-	sudo apt install git-lfs   # or brew install git-lfs
-	git lfs install
-	```
-2. After cloning or pulling, fetch the large files:
-	```bash
-	git lfs pull
-	```
-3. When committing new heavy artifacts, track them before the first commit:
-	```bash
-	git lfs track "models/*.pt"
-	git add .gitattributes models/my_new_model.pt
-	```
-   Use `git lfs ls-files` to verify what is tracked.
 
 ## Project Resources
 
