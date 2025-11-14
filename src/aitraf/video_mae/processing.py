@@ -22,7 +22,7 @@ def load_clip(
     """Load a local clip referenced by a manifest row and prepare VideoMAE inputs."""
 
     clip_path = _resolve_clip(row=row, clips_dir=clips_dir)
-    decoder = _decode_clip(clip_path, device)
+    decoder = _load_decoder(clip_path, device)
     frames = _sample_frames(decoder, num_frames, clip_path)
     processed = processor(frames, return_tensors="pt")
     label = _resolve_label_id(row, label2id)
@@ -49,7 +49,7 @@ def _resolve_clip(*, row: dict[str, Any], clips_dir: str | Path) -> Path:
     return clip_path
 
 
-def _decode_clip(clip_path: Path, device: str) -> VideoDecoder:
+def _load_decoder(clip_path: Path, device: str) -> VideoDecoder:
     if device.startswith("cuda") and not torch.cuda.is_available():
         raise RuntimeError("CUDA requested but not available for video decoding")
 
