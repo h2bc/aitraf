@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -14,6 +13,7 @@ from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
 from aitraf.data import schema
+from aitraf.logging import logger
 
 
 @dataclass
@@ -37,7 +37,9 @@ def download_clips(config: ClipDownloadConfig) -> None:
         raise RuntimeError(f"Labels file not found: {labels_path}")
 
     clip_uris = _collect_clip_uris(labels_path)
-    if not clip_uris:
+    total_clips = len(clip_uris)
+    if not total_clips:
+        logger.info("No clip URIs found in {}", labels_path)
         return
 
     endpoint_url = os.getenv("AWS_ENDPOINT_URL")
@@ -53,19 +55,42 @@ def download_clips(config: ClipDownloadConfig) -> None:
         region_name=region_name,
     )
     output_dir = config.output_dir
+    logger.info("Downloading {} clips into {}", total_clips, output_dir)
+    success_count = 0
+    failure_count = 0
+    skipped_count = 0
 
-    for uri in clip_uris:
+    progress_step = max(1, total_clips // 10)
+
+    for idx, uri in enumerate(sorted(clip_uris), start=1):
         bucket, key = _parse_s3_uri(uri)
         relative_key = _strip_prefix(Path(key))
         destination = output_dir / relative_key
         if destination.exists() and not config.force:
+            skipped_count += 1
             continue
 
         destination.parent.mkdir(parents=True, exist_ok=True)
         try:
             s3_client.download_file(bucket, key, str(destination))
         except ClientError as exc:  # pragma: no cover - network path log
-            logging.warning("Failed to download %s: %s", uri, exc)
+            failure_count += 1
+            logger.warning("Failed to download {}: {}", uri, exc)
+        else:
+            success_count += 1
+            if idx == total_clips or idx % progress_step == 0:
+                pct = (idx / total_clips) * 100
+                logger.info(
+                    "Clip download progress: {}/{} ({:.1f}%)", idx, total_clips, pct
+                )
+
+    logger.info(
+        "Clip download summary: {} downloaded, {} skipped, {} failed (total {})",
+        success_count,
+        skipped_count,
+        failure_count,
+        total_clips,
+    )
 
 
 def _collect_clip_uris(labels_path: Path) -> set[str]:

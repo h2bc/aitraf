@@ -11,7 +11,7 @@ create_manifests:
 download_clips:
   labels_path: ${data.download_labels.output_path}
   output_dir: ${paths.data_dir}/clips
-  force: true
+  force: false
 tasks:
   download_labels: true
   create_manifests: true

@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from label_studio_sdk import LabelStudio
 
 from aitraf.data import schema
+from aitraf.logging import logger
 
 
 @dataclass
@@ -30,6 +31,7 @@ def download_labels(config: LabelStudioExportConfig) -> Path:
 
     output_path = config.output_path
     if output_path.exists() and not config.force:
+        logger.info("Labels already exist at {}; skipping", output_path)
         return output_path
 
     base_url = os.getenv("LABEL_STUDIO_URL")
@@ -57,4 +59,5 @@ def download_labels(config: LabelStudioExportConfig) -> Path:
         lines=True,
         force_ascii=False,
     )
+    logger.info("Saved {} labeled rows to {}", len(df), output_path)
     return output_path

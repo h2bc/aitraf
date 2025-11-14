@@ -13,6 +13,7 @@ dependencies = [
     "torchcodec",
     "ultralytics",
     "python-dotenv",
+    "loguru",
     "transformers",
     "huggingface-hub>=0.34,<1.0",
     "hydra-core",

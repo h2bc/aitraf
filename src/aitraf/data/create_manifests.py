@@ -10,6 +10,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from aitraf.data import schema
+from aitraf.logging import logger
 
 
 @dataclass
@@ -43,11 +44,13 @@ def create_manifests(config: ManifestBuildConfig) -> None:
                     f"Output file {out_path} already exists. Set force=true to overwrite."
                 )
 
+    logger.info("Loading labels from {}", input_path)
     df = pd.read_json(input_path, orient="records", lines=True)
 
     _ensure_columns(df)
 
     df = df.dropna(subset=schema.EXPECTED_COLUMNS).reset_index(drop=True)
+    logger.info("Preparing manifests from {} labeled rows", len(df))
 
     if len(df) < 3:
         raise RuntimeError("Need at least 3 fully labeled rows to perform splits.")
@@ -87,13 +90,16 @@ def create_manifests(config: ManifestBuildConfig) -> None:
     }
 
     for name, split_df in outputs.items():
-        _write_manifest(split_df, output_dir / f"{name}.jsonl")
+        out_path = output_dir / f"{name}.jsonl"
+        _write_manifest(split_df, out_path)
+        logger.info("Wrote {} ({} rows)", out_path, len(split_df))
 
     labels_path = output_dir / "labels.json"
     labels_path.write_text(
         json.dumps(_build_vocab_metadata(df), ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    logger.info("Wrote vocab metadata to {}", labels_path)
 
 
 def _ensure_columns(df: pd.DataFrame) -> None:
