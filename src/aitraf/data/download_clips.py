@@ -1,7 +1,5 @@
 """Utilities for downloading referenced clip videos from S3."""
 
-from __future__ import annotations
-
 import json
 import os
 from dataclasses import dataclass

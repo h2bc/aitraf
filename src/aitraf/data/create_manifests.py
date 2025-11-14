@@ -1,7 +1,5 @@
 """Split Label Studio export into train/val/test manifests."""
 
-from __future__ import annotations
-
 import json
 from dataclasses import dataclass
 from pathlib import Path

@@ -1,7 +1,5 @@
 """Minimal loguru-backed logging helpers for project scripts."""
 
-from __future__ import annotations
-
 import logging
 import sys
 from typing import Any

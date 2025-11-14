@@ -1,7 +1,5 @@
 """Hydra-managed data pipeline entrypoint."""
 
-from __future__ import annotations
-
 from hydra import main
 from omegaconf import DictConfig
 from aitraf.data.download_labels import LabelStudioExportConfig, download_labels
@@ -10,7 +8,7 @@ from aitraf.data.download_clips import ClipDownloadConfig, download_clips
 from aitraf.logging import setup_logging, heading
 
 
-@main(config_path="../configs", config_name="config", version_base=None)
+@main(config_path="../configs", config_name="data", version_base=None)
 def run(cfg: DictConfig) -> None:
     setup_logging()
 
