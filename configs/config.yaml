@@ -1,30 +1,20 @@
-# Base Hydra configuration for VideoMAE fine-tuning experiments.
-
 defaults:
-  - dataset: manifests
-  - model: videomae_base
-  - training: default
-  - logging: wandb
+  - label_studio: default
+  - manifests: default
   - _self_
 
 seed: 1337
+backbone: OpenGVLab/VideoMAEv2-Base
+
+tasks:
+  pull_ls: true
+  build_manifests: true
 
 paths:
-  project_root: ${oc.env:PROJECT_ROOT}
-  data_dir: ${oc.env:DATA_DIR}
+  project_root: ${hydra:runtime.cwd}
+  data_dir: ${paths.project_root}/data
   manifests_dir: ${paths.data_dir}/manifests
-  models_dir: ${oc.env:MODELS_DIR}
-  notebooks_dir: ${paths.project_root}/notebooks
-  checkpoints_dir: ${oc.env:RUNS_DIR}/checkpoints
-  logs_dir: ${oc.env:RUNS_DIR}/logs
-
-experiment:
-  name: videomae_finetune
-  output_dir: ${paths.checkpoints_dir}/${experiment.name}/${now:%Y%m%d-%H%M%S}
 
 hydra:
   run:
-    dir: ${paths.logs_dir}/${hydra.job.name}/${now:%Y%m%d-%H%M%S}
-  sweep:
-    dir: ${paths.logs_dir}/multirun
-    subdir: ${hydra.job.name}/${now:%Y%m%d-%H%M%S}
+    dir: ${paths.data_dir}/hydra/${now:%Y%m%d-%H%M%S}

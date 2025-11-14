@@ -15,6 +15,7 @@ dependencies = [
     "python-dotenv",
     "transformers",
     "huggingface-hub>=0.34,<1.0",
+    "hydra-core",
     "pandas",
     "scikit-learn",
     "label-studio-sdk",

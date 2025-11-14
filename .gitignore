@@ -200,5 +200,7 @@ pyrightconfig.json
 .history
 .ionide
 
-runs
-models
+/runs
+/models
+/data
+/notebooks/runs
