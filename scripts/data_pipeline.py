@@ -7,7 +7,7 @@ from omegaconf import DictConfig
 from aitraf.data.download_labels import LabelStudioExportConfig, download_labels
 from aitraf.data.create_manifests import ManifestBuildConfig, create_manifests
 from aitraf.data.download_clips import ClipDownloadConfig, download_clips
-from aitraf.logging import setup_logging, heading, spacer
+from aitraf.logging import setup_logging, heading
 
 
 @main(config_path="../configs", config_name="config", version_base=None)
