@@ -5,34 +5,26 @@ TODO
 
 ## Prerequisites
 
-- Ensure `uv` is installed and available on your PATH.
+- `uv` on your PATH
+- `make` for the convenience targets (optional)
 
 ## Installation / Setup
 
-1. **Sync project dependencies**
-	```bash
-	uv sync --group dev
-	```
-	This creates the local `.venv` managed by uv. Omit `--group dev` if you only need the runtime dependencies.
-
-2. **Install the project package (editable)**
-	```bash
-	uv pip install -e .
-	```
-	This makes the `aitraf` package importable in scripts, notebooks, and Hydra jobs.
-
-3. **Use the virtual environment**
-	Activate it with `source .venv/bin/activate`, or prefix commands with `uv run`, e.g. `uv run pytest`.
-
-4. **Jupyter Notebook**
-	Launch Jupyter inside the environment:
-	```bash
-	uv run jupyter notebook
-	```
+1. `uv sync`
+2. Run project commands with `uv run <cmd>` (e.g. `uv run pytest`, `uv run bash`)
 
 ## Code Quality
 
-- **Ruff** (lint & format): `uv run ruff check .` to lint, `uv run ruff format .` to apply formatting.
+- `make lint` – run Ruff checks
+- `make format` – apply Ruff formatting
+
+## Pipelines
+
+- `make data` – execute the Hydra data pipeline entrypoint
+
+## Jupyter Notebook
+
+- `make jupyter` – launch a notebook server inside the uv-managed env
 
 ## Git LFS
 

@@ -1,10 +1,8 @@
 PYTHON ?= uv run python
 RUFF ?= uv run ruff
-HYDRA_ENTRY := scripts/data_pipeline.py
+JUPYTER ?= uv run jupyter notebook
 
-.PHONY: install lint format data
-install:
-	uv sync
+.PHONY: lint format data jupyter
 
 lint:
 	$(RUFF) check .
@@ -13,4 +11,7 @@ format:
 	$(RUFF) format .
 
 data:
-	$(PYTHON) $(HYDRA_ENTRY) $(ARGS)
+	$(PYTHON) scripts/data_pipeline.py
+
+jupyter:
+	$(JUPYTER)
