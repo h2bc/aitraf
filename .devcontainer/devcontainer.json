@@ -1,0 +1,20 @@
+{
+  "name": "aitraf-dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "runArgs": ["--gpus=all"],
+  "workspaceFolder": "/workspace",
+  "postCreateCommand": "make install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "charliermarsh.ruff",
+        "openai.chatgpt"
+      ]
+    }
+  }
+}
