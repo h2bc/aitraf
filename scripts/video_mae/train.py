@@ -18,6 +18,7 @@ def run(cfg: DictConfig) -> None:
         num_workers=cfg.video_mae.training.num_workers,
         num_frames=cfg.video_mae.training.num_frames,
         device=cfg.video_mae.training.device,
+        output_dir=cfg.video_mae.training.output_dir,
     )
 
     run_training(training_cfg)

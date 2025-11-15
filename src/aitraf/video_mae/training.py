@@ -6,7 +6,13 @@ from typing import Any
 
 import pandas as pd
 from torch.utils.data import DataLoader
-from transformers import VideoMAEImageProcessor
+from transformers import (
+    AutoConfig,
+    AutoModelForVideoClassification,
+    Trainer,
+    TrainingArguments,
+    VideoMAEImageProcessor,
+)
 
 from aitraf.logging import logger
 from aitraf.video_mae.processing import load_clip
@@ -23,17 +29,33 @@ class VideoMAETrainingConfig:
     num_workers: int = 0
     num_frames: int = 16
     device: str = "cuda"
+    output_dir: Path | str = "runs/video_mae"
     max_batches: int = 2
 
     def __post_init__(self) -> None:
         self.manifest_path = Path(self.manifest_path)
         self.clips_dir = Path(self.clips_dir)
+        self.output_dir = Path(self.output_dir)
 
 
 def run_training(config: VideoMAETrainingConfig) -> None:
     """Load a couple of batches and print their contents (no training yet)."""
 
     processor = VideoMAEImageProcessor.from_pretrained(config.backbone)
+    model_config = AutoConfig.from_pretrained(config.backbone, trust_remote_code=True)
+    model = AutoModelForVideoClassification.from_pretrained(
+        config.backbone, config=model_config, trust_remote_code=True
+    ).to(config.device)
+
+    training_args = TrainingArguments(
+        output_dir=str(config.output_dir),
+        per_device_train_batch_size=config.batch_size,
+        per_device_eval_batch_size=config.batch_size,
+        num_train_epochs=1,
+    )
+
+    trainer = Trainer(model=model, args=training_args)
+
     dataset = _read_dataset(config.manifest_path)
 
     loader = DataLoader(

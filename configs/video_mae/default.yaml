@@ -1,4 +1,4 @@
-backbone: OpenGVLab/VideoMAEv2-Base
+backbone: MCG-NJU/videomae-base
 
 training:
   manifest: ${paths.manifests_dir}/train.jsonl
@@ -6,3 +6,4 @@ training:
   num_workers: 2
   num_frames: 16
   device: cuda
+  output_dir: ${paths.project_root}/runs/video_mae

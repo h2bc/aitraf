@@ -5,20 +5,23 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "aitraf"
 version = "0.1.0"
-requires-python = ">=3.9,<3.14"
+requires-python = ">=3.10,<=3.13"
 dependencies = [
     "python-dotenv",
     "loguru",
     "transformers",
+    "datasets",
+    "accelerate>=0.26.0",
+    "ffmpeg-python",
     "huggingface-hub>=0.34,<1.0",
     "hydra-core",
     "pandas",
     "scikit-learn",
     "label-studio-sdk",
-    "datasets",
     "av",
     "boto3",
-    "numpy"
+    "numpy",
+    "ultralytics"
 ]
 
 [dependency-groups]
