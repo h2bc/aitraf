@@ -5,17 +5,8 @@ JUPYTER ?= uv run jupyter notebook
 .PHONY: lint format data jupyter train-video-mae
 
 install:
+	uv venv --system-site-packages
 	uv sync
-
-	uv pip install --force-reinstall \
-		--index-url https://download.pytorch.org/whl/cu126 \
-		torch \
-		torchvision \
-		torchcodec
-
-	conda install "ffmpeg<8"
-
-	
 
 lint:
 	$(RUFF) check .

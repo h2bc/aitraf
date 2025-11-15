@@ -18,7 +18,6 @@ dependencies = [
     "pandas",
     "scikit-learn",
     "label-studio-sdk",
-    "av",
     "boto3",
     "numpy",
     "ultralytics"
