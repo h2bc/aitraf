@@ -4,10 +4,6 @@ JUPYTER ?= uv run jupyter notebook
 
 .PHONY: lint format data jupyter train-video-mae
 
-install:
-	uv venv --system-site-packages
-	uv sync
-
 lint:
 	$(RUFF) check .
 

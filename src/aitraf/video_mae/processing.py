@@ -16,13 +16,12 @@ def load_clip(
     processor: VideoMAEImageProcessor,
     clips_dir: str | Path,
     num_frames: int = 16,
-    device: str = "cuda",
     label2id: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     """Load a local clip referenced by a manifest row and prepare VideoMAE inputs."""
 
     clip_path = _resolve_clip(row=row, clips_dir=clips_dir)
-    decoder = _load_decoder(clip_path, device)
+    decoder = _load_decoder(clip_path)
     frames = _sample_frames(decoder, num_frames, clip_path)
     processed = processor(frames, return_tensors="pt")
     label = _resolve_label_id(row, label2id)
@@ -49,11 +48,8 @@ def _resolve_clip(*, row: dict[str, Any], clips_dir: str | Path) -> Path:
     return clip_path
 
 
-def _load_decoder(clip_path: Path, device: str) -> VideoDecoder:
-    if device.startswith("cuda") and not torch.cuda.is_available():
-        raise RuntimeError("CUDA requested but not available for video decoding")
-
-    return VideoDecoder(str(clip_path), dimension_order="NHWC", device=device)
+def _load_decoder(clip_path: Path) -> VideoDecoder:
+    return VideoDecoder(str(clip_path), dimension_order="NHWC")
 
 
 def _sample_frames(decoder: VideoDecoder, num_frames: int, clip_path: Path) -> list:
@@ -65,7 +61,7 @@ def _sample_frames(decoder: VideoDecoder, num_frames: int, clip_path: Path) -> l
         )
 
     indices = torch.linspace(0, total_frames - 1, steps=num_frames).long().tolist()
-    frames = [decoder[int(idx)].cpu().numpy() for idx in indices]
+    frames = [decoder[int(idx)].numpy() for idx in indices]
 
     return frames
 

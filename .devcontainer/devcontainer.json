@@ -2,18 +2,25 @@
   "name": "aitraf-dev",
   "build": {
     "dockerfile": "Dockerfile",
-    "context": "."
+    "context": ".."
   },
-  "runArgs": ["--gpus=all"],
+  "runArgs": [
+    "--gpus=all",
+    "--shm-size=2g"
+  ],
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "make install",
+  "mounts": [
+    "type=bind,source=${localWorkspaceFolder},target=/workspace"
+  ],
+  "postCreateCommand": "uv sync --frozen",
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-python.python",
         "ms-toolsai.jupyter",
         "charliermarsh.ruff",
-        "openai.chatgpt"
+        "openai.chatgpt",
+        "tamasfe.even-better-toml"
       ]
     }
   }

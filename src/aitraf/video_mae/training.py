@@ -26,7 +26,7 @@ class VideoMAETrainingConfig:
     manifest_path: Path | str
     clips_dir: Path | str
     batch_size: int = 2
-    num_workers: int = 0
+    num_workers: int = 4
     num_frames: int = 16
     device: str = "cuda"
     output_dir: Path | str = "runs/video_mae"
@@ -68,7 +68,6 @@ def run_training(config: VideoMAETrainingConfig) -> None:
             processor=processor,
             clips_dir=config.clips_dir,
             num_frames=config.num_frames,
-            device=config.device,
         ),
     )
 
@@ -88,7 +87,7 @@ def _read_dataset(manifest_path: Path) -> list[dict[str, Any]]:
     return df.to_dict(orient="records")
 
 
-def _collate(batch, *, processor, clips_dir, num_frames, device):
+def _collate(batch, *, processor, clips_dir, num_frames):
     processed = []
     for row in batch:
         try:
@@ -97,7 +96,6 @@ def _collate(batch, *, processor, clips_dir, num_frames, device):
                 processor=processor,
                 clips_dir=clips_dir,
                 num_frames=num_frames,
-                device=device,
             )
         except (ValueError, FileNotFoundError) as exc:
             logger.warning("Skipping row due to {}", exc)
