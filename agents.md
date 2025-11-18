@@ -1,36 +1,45 @@
 # Agents Overview
 
-This repo houses the small data-engineering pipeline that powers aggressive inline trick recognition. The flow is now Hydra-managed: we pull exports from Label Studio, validate them against a shared schema, and generate train/val/test manifests plus vocab metadata consumed by notebooks and future model training runs.
+This repository contains two parallel tracks for aggressive inline trick recognition:
 
-## Project Flow
-1. `make data` (or `uv run python scripts/data_pipeline.py`) launches the Hydra entrypoint in `scripts/data_pipeline.py`. `configs/config.yaml` (general defaults) simply includes `configs/data/default.yaml`, so all pipeline toggles live under `cfg.data.tasks` and the per-stage knobs (`cfg.data.download_labels`, `cfg.data.create_manifests`) sit in that one data config file.
-2. When `cfg.data.tasks.download_labels` is true, `aitraf.data.download_labels.download_labels` loads `.env` or shell `LABEL_STUDIO_URL`, `LABEL_STUDIO_TOKEN`, and `LABEL_STUDIO_PROJECT_ID`, downloads the export with `label-studio-sdk`, enforces the schema from `aitraf.data.schema`, and writes `data/labels.jsonl`.
-3. When `cfg.data.tasks.download_clips` is true, `aitraf.data.download_clips.download_clips` walks the labels file right after the download step, deduplicates S3 clip paths, and pulls each media file down to `data/clips/` via `boto3`; reruns skip files unless `force` is set.
-4. When `cfg.data.tasks.create_manifests` is true, `aitraf.data.create_manifests.create_manifests` reads the JSONL export (and optionally the freshly downloaded clips), drops incomplete rows, stratifies train/val/test splits (skating trick label as the stratification target), and emits JSONL manifests plus `labels.json` vocab metadata under `data/manifests/`; each manifest row includes `video_id`, `s3_path`, `trick`, `key_foot`, and `person`.
-5. Research notebooks in `notebooks/` and pose weights in `models/` rely on those manifests/clips, so regenerating/downloading them keeps downstream experiments in sync.
+1. A Hydra-managed data engineering pipeline that mirrors Label Studio exports locally, validates schemas, builds manifests/vocab metadata, and optionally downloads every referenced clip from S3.
+2. Early VideoMAE experimentation code that consumes those manifests/clips to stand up PyTorch + Transformers training loops.
 
-## Key Components
-- `scripts/data_pipeline.py` — Hydra entrypoint that orchestrates the individual tasks while keeping command-lines short.
-- `configs/config.yaml` + `configs/data/default.yaml` — two-file Hydra setup: the general config pulls in the `data` group (default), which owns every download/manifests knob and task toggle.
-- `src/aitraf/data/schema.py` — single source of truth for expected columns (`video`, `trick`, `key_foot`, `person`) and categorical vocab lists, reducing drift between tasks.
-- `src/aitraf/data/download_labels.py` — Label Studio ingestion helper built on `label-studio-sdk` and `python-dotenv`; refuses to overwrite unless `force` is set.
-- `src/aitraf/data/create_manifests.py` — manifest/vocab builder that validates ratios, catches undersized datasets, and writes JSONL + `labels.json`.
-- `src/aitraf/data/download_clips.py` — S3 clip downloader driven by the labels file; mirrors referenced media under `data/clips/`.
-- `pyproject.toml` — managed via `uv`; declares the DL/tooling stack (torch, Ultralytics, transformers, Hydra, pandas/sklearn, datasets, FFmpeg helpers, boto3, etc.) plus dev extras (`ruff`, `pytest`, `ipykernel`, `ipywidgets`).
+Everything runs through `uv` and simple `make` targets so agents can reproduce results quickly.
 
-## Assets & Artifacts
-- `data/labels.jsonl` — canonical export written by the download step.
-- `data/manifests/{train,val,test}.jsonl` + `data/manifests/labels.json` — downstream-ready splits and vocab metadata.
-- `data/clips/` — optional working set of downloaded S3 clips (ignored by git).
-- `data/hydra/*` — Hydra run directories/logs produced by `make data`.
-- `models/yolo11n-pose.pt` — YOLO pose weights referenced in notebooks.
-- `runs/pose/*` — historical Ultralytics pose experiments (predict outputs, etc.).
-- `notebooks/*.ipynb` — exploratory notebooks (pose testing, clip EDA) that consume the manifests and models.
+## Pipelines & Entrypoints
+- `make data` → `scripts/data_pipeline.py` drives the Label Studio → manifests flow. The Hydra config is defined by `configs/data.yaml`, which in turn includes `configs/base.yaml` (paths/hydra dirs) and `configs/data/default.yaml` (per-stage options).
+- `make train-video-mae` → `scripts/video_mae/train.py` launches a Hydra-configured VideoMAE run (`configs/video_mae.yaml`). The current implementation focuses on loading batches, running them through the processor/decoder stack, and logging clip metadata—it is scaffolding for real training.
+- `make lint` / `make format` run Ruff, and `make jupyter` exposes notebooks inside the uv-managed virtual environment.
+
+## Data Pipeline Details
+1. **Download labels** (`cfg.data.tasks.download_labels`): `aitraf.data.download_labels.download_labels` loads Label Studio credentials from `.env` or the shell (`LABEL_STUDIO_URL`, `LABEL_STUDIO_TOKEN`, `LABEL_STUDIO_PROJECT_ID`), downloads the export via `label-studio-sdk`, validates required columns from `aitraf.data.schema`, and writes `data/labels.jsonl`. Existing files are skipped unless `force` is true.
+2. **Download clips** (`cfg.data.tasks.download_clips`): `aitraf.data.download_clips.download_clips` scans the JSONL’s `video` column for `s3://` URIs, deduplicates them, and streams the media into `data/clips/` using `boto3`. Requires `AWS_ENDPOINT_URL` + `AWS_DEFAULT_REGION` (and whichever AWS creds the SDK picks up). Existing files are skipped unless `force` is set.
+3. **Create manifests** (`cfg.data.tasks.create_manifests`): `aitraf.data.create_manifests.create_manifests` drops incomplete rows, enforces minimum dataset sizes, performs stratified `train/val/test` splits, and writes JSONL manifests plus `labels.json` vocab metadata under `data/manifests/`. Each row includes `video_id`, `s3_path`, `trick`, `key_foot`, and `person`.
+
+Hydra run outputs land under `data/hydra/<timestamp>`, and overrides can be applied the usual Hydra way (e.g., `uv run python scripts/data_pipeline.py data.tasks.download_clips=false`).
+
+## VideoMAE Experimentation
+- **Entrypoint**: `scripts/video_mae/train.py` reads `configs/video_mae/default.yaml` (default backbone `MCG-NJU/videomae-base`, manifest path `data/manifests/train.jsonl`, GPU device, etc.) and prepares a `VideoMAETrainingConfig`.
+- **Processing helpers**: `src/aitraf/video_mae/processing.py` exposes `load_clip`, which resolves a manifest row to a local clip, decodes frames with `torchcodec`, samples evenly spaced frames, runs them through a `VideoMAEImageProcessor`, and attaches label metadata.
+- **Training stub**: `src/aitraf/video_mae/training.py` wires the processor/model from Hugging Face Transformers, creates a PyTorch `DataLoader`, logs batches, and is the starting point for full fine-tuning. It respects `batch_size`, `num_workers`, `num_frames`, `device`, `output_dir`, and currently limits iterations via `max_batches`.
+
+These modules depend on local clips existing under `data/clips/` (matching the downloaded filenames) and the manifest produced by the data pipeline.
+
+## Configuration & Modules
+- `configs/base.yaml` centralizes project/manifests directories and Hydra run dirs. Both `configs/data.yaml` and `configs/video_mae.yaml` use it so relative paths stay consistent.
+- `src/aitraf/data/schema.py` defines canonical column names and vocab columns shared across scripts, preventing drift between download/manifests/training.
+- `src/aitraf/logging.py` wraps Loguru with helper functions (`setup_logging`, `heading`, `spacer`) so CLI entrypoints get consistent colored output while muting noisy dependencies (`httpx`, `boto3`, etc.).
+- `pyproject.toml` (consumed by `uv`) pins the Python stack: torch/torchvision/torchcodec from the CUDA 12.6 index, Transformers/Hydra/pandas/scikit-learn, AWS + Label Studio clients, and dev extras (`ruff`, `pytest`, `ipykernel`, `ipywidgets`).
+
+## Assets & Directories
+- `data/labels.jsonl` — canonical export from Label Studio; `data/clips/` mirrors referenced S3 files; `data/manifests/{train,val,test}.jsonl` + `labels.json` feed downstream work; `data/hydra/*` stores Hydra run metadata.
+- `models/` ships reference weights (e.g., `yolo11n-pose.pt`) used by notebooks.
+- `runs/*` hosts experiment outputs (`runs/video_mae` for VideoMAE scaffolding, `runs/pose/*` for historical Ultralytics tests).
+- `notebooks/` contains exploratory notebooks that expect manifests/clips to exist locally.
 
 ## Operational Notes
-- Provide `LABEL_STUDIO_URL`, `LABEL_STUDIO_TOKEN`, and `LABEL_STUDIO_PROJECT_ID` via environment or `.env` before running `make data`; the pull task errors early if any are missing.
-- `download_clips` relies on standard AWS credentials (env vars, default profile, etc.); keep the task disabled unless you actually need the local media since it pulls every referenced clip.
-- Config defaults currently set `force: true` for both the pull and manifest steps, so reruns overwrite artifacts; flip them to `false` when you want to preserve previous outputs.
-- Hydra run folders land under `data/hydra/<timestamp>`; override `hydra.run.dir` when you need deterministic paths.
-- Quality-of-life targets live in the `Makefile`: `make lint`/`make format` (Ruff) and `make jupyter` to launch notebooks inside the `uv`-managed environment.
-- README still needs a fuller explainer; point teammates here for now when they ask how the data flow works.
+- Always provide `LABEL_STUDIO_URL`, `LABEL_STUDIO_TOKEN`, and `LABEL_STUDIO_PROJECT_ID` before running the data pipeline; the job fails early if any are missing.
+- Clip downloads require valid AWS credentials plus `AWS_ENDPOINT_URL`/`AWS_DEFAULT_REGION`. Disable `data.tasks.download_clips` if you only need manifests—the step pulls every referenced clip.
+- Defaults currently set `force: true` for labels/manifests and `force: false` for clips. Adjust per run when you need to preserve previous artifacts.
+- Use `uv run <command>` (see README) to ensure dependencies resolve via the project lockfile; the Makefile already wraps `uv run` for common targets.
