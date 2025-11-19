@@ -2,17 +2,16 @@
 
 TODO
 
-## Prerequisites
+## Prerequisities
 
-- Linux environment with NVIDIA GPU
-- `uv` on your PATH
-- `make`
+- Nvidia GPU
+- Docker
+
 
 
 ## Installation / Setup
 
-1. `make install`
-2. Run project commands with `uv run <cmd>` (e.g. `uv run pytest`, `uv run bash`)
+Start the `dev-container`
 
 ## Code Quality
 
@@ -34,3 +33,8 @@ TODO
   - bucket: aitraf
 - **Label Studio**
   - https://label.h2bcweb.com/
+- **ML flow**
+  - https://mlops.h2bcweb.com/
+
+  
+  
