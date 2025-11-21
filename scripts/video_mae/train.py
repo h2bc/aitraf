@@ -12,13 +12,16 @@ from aitraf.video_mae.training import VideoMAETrainingConfig, run_training
 def run(cfg: DictConfig) -> None:
     training_cfg = VideoMAETrainingConfig(
         backbone=cfg.video_mae.backbone,
-        manifest_path=cfg.video_mae.training.manifest,
+        manifests_dir=cfg.video_mae.manifests_dir,
         clips_dir=Path(cfg.paths.data_dir) / "clips",
         batch_size=cfg.video_mae.training.batch_size,
         num_workers=cfg.video_mae.training.num_workers,
-        num_frames=cfg.video_mae.training.num_frames,
+        sample_frames=cfg.video_mae.training.sample_frames,
         device=cfg.video_mae.training.device,
         output_dir=cfg.video_mae.training.output_dir,
+        epochs=cfg.video_mae.training.epochs,
+        experiment_name=cfg.video_mae.training.experiment_name,
+        run_name=cfg.video_mae.training.run_name,
     )
 
     run_training(training_cfg)

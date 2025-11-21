@@ -10,42 +10,25 @@ from transformers import VideoMAEImageProcessor
 from aitraf.data import schema
 
 
-def load_clip(
-    *,
-    row: dict[str, Any],
+def process_clip(
+    manifest_row: dict[str, Any],
     processor: VideoMAEImageProcessor,
-    clips_dir: str | Path,
-    num_frames: int = 16,
-    label2id: dict[str, int] | None = None,
+    local_clips_dir: str | Path,
+    label2id: dict[str, int],
+    num_frames: int,
 ) -> dict[str, Any]:
     """Load a local clip referenced by a manifest row and prepare VideoMAE inputs."""
 
-    clip_path = _resolve_clip(row=row, clips_dir=clips_dir)
+    clip_path = local_clips_dir / manifest_row["video_id"]
     decoder = _load_decoder(clip_path)
     frames = _sample_frames(decoder, num_frames, clip_path)
     processed = processor(frames, return_tensors="pt")
-    label = _resolve_label_id(row, label2id)
-    metadata = {k: v for k, v in row.items() if k != schema.TARGET_COLUMN}
+    label = manifest_row[schema.TARGET_COLUMN]
 
     return {
         "pixel_values": processed["pixel_values"][0],
-        "label": label,
-        "metadata": metadata,
-        "clip_path": clip_path,
+        "labels": torch.tensor(label2id[label]),
     }
-
-
-def _resolve_clip(*, row: dict[str, Any], clips_dir: str | Path) -> Path:
-    clip_id = row.get("video_id")
-
-    if not clip_id:
-        raise KeyError("Manifest row missing 'video_id'.")
-
-    clip_path = Path(clips_dir) / clip_id
-
-    if not clip_path.exists():
-        raise FileNotFoundError(f"Clip not found: {clip_path}")
-    return clip_path
 
 
 def _load_decoder(clip_path: Path) -> VideoDecoder:
@@ -64,10 +47,3 @@ def _sample_frames(decoder: VideoDecoder, num_frames: int, clip_path: Path) -> l
     frames = [decoder[int(idx)].numpy() for idx in indices]
 
     return frames
-
-
-def _resolve_label_id(row: dict[str, Any], label2id: dict[str, int] | None) -> Any:
-    label = row[schema.TARGET_COLUMN]
-    if label2id is not None:
-        label = label2id[label]
-    return label

@@ -22,7 +22,9 @@ dependencies = [
     "boto3",
     "python-dotenv",
     "loguru",
+    "mlflow",
     # "ultralytics"
+    "evaluate>=0.4.6",
 ]
 
 [dependency-groups]

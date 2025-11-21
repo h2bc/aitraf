@@ -21,6 +21,7 @@ Start the `dev-container`
 ## Pipelines
 
 - `make data` – execute the Hydra data pipeline entrypoint
+- `make train-video-mae` - execute Hydra finetuning pipeline
 
 ## Jupyter Notebook
 

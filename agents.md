@@ -22,7 +22,7 @@ Hydra run outputs land under `data/hydra/<timestamp>`, and overrides can be appl
 ## VideoMAE Experimentation
 - **Entrypoint**: `scripts/video_mae/train.py` reads `configs/video_mae/default.yaml` (default backbone `MCG-NJU/videomae-base`, manifest path `data/manifests/train.jsonl`, GPU device, etc.) and prepares a `VideoMAETrainingConfig`.
 - **Processing helpers**: `src/aitraf/video_mae/processing.py` exposes `load_clip`, which resolves a manifest row to a local clip, decodes frames with `torchcodec`, samples evenly spaced frames, runs them through a `VideoMAEImageProcessor`, and attaches label metadata.
-- **Training stub**: `src/aitraf/video_mae/training.py` wires the processor/model from Hugging Face Transformers, creates a PyTorch `DataLoader`, logs batches, and is the starting point for full fine-tuning. It respects `batch_size`, `num_workers`, `num_frames`, `device`, `output_dir`, and currently limits iterations via `max_batches`.
+- **Training stub**: `src/aitraf/video_mae/training.py` wires the processor/model from Hugging Face Transformers, creates a PyTorch `DataLoader`, logs batches, and is the starting point for full fine-tuning. It respects `batch_size`, `num_workers`, `num_frames`, `device`, and `output_dir`.
 
 These modules depend on local clips existing under `data/clips/` (matching the downloaded filenames) and the manifest produced by the data pipeline.
 
