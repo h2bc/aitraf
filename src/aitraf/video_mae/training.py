@@ -3,9 +3,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from functools import reduce
 import torch
-import evaluate
 
 
 from transformers import (
@@ -17,16 +15,14 @@ from transformers import (
 )
 
 from aitraf.video_mae.processing import process_clip
-import json
+from aitraf.video_mae.common import load_target_label_mappings, build_collate
+from aitraf.video_mae.metrics import build_compute_metrics
 
 from datasets import load_dataset
 
-from aitraf.data import schema
 from dotenv import load_dotenv
 import mlflow
 from mlflow.data import from_huggingface
-
-import numpy as np
 
 
 @dataclass
@@ -44,6 +40,7 @@ class VideoMAETrainingConfig:
     epochs: int
     experiment_name: str
     run_name: str
+    max_train_samples: int | None = None
 
     def __post_init__(self) -> None:
         self.manifests_dir = Path(self.manifests_dir)
@@ -51,11 +48,10 @@ class VideoMAETrainingConfig:
         self.output_dir = Path(self.output_dir)
 
 
-def run_training(config: VideoMAETrainingConfig) -> None:
+def run_training(config: VideoMAETrainingConfig) -> tuple[str, dict[str, Any]]:
     """Load a couple of batches and print their contents (no training yet)."""
 
     load_dotenv()
-    mlflow.set_experiment(config.experiment_name)
 
     dataset = load_dataset(
         "json",
@@ -64,10 +60,12 @@ def run_training(config: VideoMAETrainingConfig) -> None:
             "validation": str(config.manifests_dir / "val.jsonl"),
         },
     )
+    if config.max_train_samples is not None:
+        dataset["train"] = dataset["train"].select(
+            range(min(config.max_train_samples, len(dataset["train"])))
+        )
 
-    labels_config = _read_json(config.manifests_dir / "labels.json")
-    label2id = labels_config[schema.TARGET_COLUMN]["label2id"]
-    id2label = labels_config[schema.TARGET_COLUMN]["id2label"]
+    label2id, id2label = load_target_label_mappings(config.manifests_dir)
 
     processor = VideoMAEImageProcessor.from_pretrained(config.backbone)
     model_config = AutoConfig.from_pretrained(
@@ -82,30 +80,7 @@ def run_training(config: VideoMAETrainingConfig) -> None:
         config.backbone, config=model_config, trust_remote_code=True
     ).to(config.device)
 
-    accuracy_metric = evaluate.load("accuracy")
-    weighted_metrics = evaluate.combine(["precision", "recall", "f1"])
-
-    def _compute_metrics(eval_pred):
-        logits, labels = eval_pred
-        preds = np.argmax(logits, axis=-1)
-
-        accuracy = accuracy_metric.compute(
-            predictions=preds,
-            references=labels,
-        )["accuracy"]
-
-        weighted = weighted_metrics.compute(
-            predictions=preds,
-            references=labels,
-            average="weighted",
-        )
-
-        return {
-            "accuracy": accuracy,
-            "precision_weighted": weighted["precision"],
-            "recall_weighted": weighted["recall"],
-            "f1_weighted": weighted["f1"],
-        }
+    compute_metrics = build_compute_metrics()
 
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),
@@ -122,32 +97,22 @@ def run_training(config: VideoMAETrainingConfig) -> None:
         run_name=config.run_name,
     )
 
-    def _collate(batch):
-        # [{pixels, label}, {pixels, label} .. ]
-        processed_batch = [
-            process_clip(
-                row, processor, config.clips_dir, label2id, config.sample_frames
-            )
-            for row in batch
-        ]
-
-        # {pixels: [], labels: []}
-        pivot = reduce(
-            lambda acc, x: {k: acc.get(k, []) + [x[k]] for k in x}, processed_batch, {}
-        )
-
-        return {k: torch.stack(v) for k, v in pivot.items()}
+    data_collator = build_collate(
+        processor, config.clips_dir, label2id, config.sample_frames
+    )
 
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=dataset["train"],
         eval_dataset=dataset["validation"],
-        data_collator=_collate,
-        compute_metrics=_compute_metrics,
+        data_collator=data_collator,
+        compute_metrics=compute_metrics,
     )
 
-    with mlflow.start_run(run_name=config.run_name):
+    mlflow.set_experiment(config.experiment_name)
+
+    with mlflow.start_run(run_name=config.run_name) as run:
         mlflow.log_input(
             from_huggingface(dataset["train"], name="train"), context="training"
         )
@@ -156,7 +121,7 @@ def run_training(config: VideoMAETrainingConfig) -> None:
             context="validation",
         )
 
-        trainer.train()
+        train_output = trainer.train()
 
         sample_clip = process_clip(
             dataset["train"][0],
@@ -180,9 +145,4 @@ def run_training(config: VideoMAETrainingConfig) -> None:
             },
         )
 
-
-def _read_json(json_path: Path) -> dict[str, Any]:
-    with open(json_path) as f:
-        data = json.load(f)
-
-    return data
+        return run.info.run_id, train_output.metrics

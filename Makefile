@@ -2,7 +2,7 @@ PYTHON ?= uv run python
 RUFF ?= uv run ruff
 JUPYTER ?= uv run jupyter notebook
 
-.PHONY: lint format data jupyter train-video-mae
+.PHONY: lint format data jupyter train-video-mae eval-video-mae
 
 lint:
 	$(RUFF) check .
@@ -18,3 +18,6 @@ jupyter:
 
 train-video-mae:
 	$(PYTHON) scripts/video_mae/train.py
+
+eval-video-mae:
+	$(PYTHON) scripts/video_mae/eval.py
