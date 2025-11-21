@@ -1,5 +1,6 @@
 backbone: MCG-NJU/videomae-base
 manifests_dir: ${paths.manifests_dir}
+experiment_name: aitraf_video_mae
 
 training:
   sample_frames: 16
@@ -8,5 +9,4 @@ training:
   num_workers: 4
   output_dir: ${paths.project_root}/runs/video_mae
   epochs: 1
-  experiment_name: video_mae
-  run_name: run1
+  run_name: base_test

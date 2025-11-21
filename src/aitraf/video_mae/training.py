@@ -1,4 +1,4 @@
-"""VideoMAE data-loading scaffolding used by the CLI entrypoint."""
+"""VideoMAE finte-tuning pipeline"""
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,6 +24,7 @@ from datasets import load_dataset
 from aitraf.data import schema
 from dotenv import load_dotenv
 import mlflow
+from mlflow.data import from_huggingface
 
 import numpy as np
 
@@ -146,7 +147,38 @@ def run_training(config: VideoMAETrainingConfig) -> None:
         compute_metrics=_compute_metrics,
     )
 
-    trainer.train()
+    with mlflow.start_run(run_name=config.run_name):
+        mlflow.log_input(
+            from_huggingface(dataset["train"], name="train"), context="training"
+        )
+        mlflow.log_input(
+            from_huggingface(dataset["validation"], name="validation"),
+            context="validation",
+        )
+
+        trainer.train()
+
+        sample_clip = process_clip(
+            dataset["train"][0],
+            processor,
+            config.clips_dir,
+            label2id,
+            config.sample_frames,
+        )
+
+        mlflow.transformers.log_model(
+            transformers_model={
+                "model": model,
+                "image_processor": processor,
+            },
+            name=f"{config.experiment_name}_{config.run_name}",
+            input_example={
+                "pixel_values": sample_clip["pixel_values"]
+                .unsqueeze(0)
+                .numpy()
+                .tolist()
+            },
+        )
 
 
 def _read_json(json_path: Path) -> dict[str, Any]:

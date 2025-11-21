@@ -25,6 +25,7 @@ dependencies = [
     "mlflow",
     # "ultralytics"
     "evaluate>=0.4.6",
+    "av>=16.0.1",
 ]
 
 [dependency-groups]

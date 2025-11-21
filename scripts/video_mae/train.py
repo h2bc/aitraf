@@ -20,7 +20,7 @@ def run(cfg: DictConfig) -> None:
         device=cfg.video_mae.training.device,
         output_dir=cfg.video_mae.training.output_dir,
         epochs=cfg.video_mae.training.epochs,
-        experiment_name=cfg.video_mae.training.experiment_name,
+        experiment_name=cfg.video_mae.experiment_name,
         run_name=cfg.video_mae.training.run_name,
     )
 
