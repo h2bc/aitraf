@@ -11,7 +11,9 @@ TODO
 
 ## Installation / Setup
 
-Start the `dev-container`
+1. Start the `dev-container`
+2. Copy `.env.example` as  `.env` and set environment variables
+3. Now you can run notebooks & finetuning pipelines
 
 ## Code Quality
 
