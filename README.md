@@ -4,7 +4,7 @@ TODO
 
 ## Prerequisities
 
-- Nvidia GPU
+- Nvidia GPU with drivers supporting CUDA 12.6 or higher
 - Docker
 
 
