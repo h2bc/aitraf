@@ -1,4 +1,4 @@
-# Aggressive Inline Trick Recognition and Feedback
+# AITRAF: Aggressive Inline Trick Recognition and Feedback
 
 TODO
 
