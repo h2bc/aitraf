@@ -1,4 +1,4 @@
-# Aggressive Inline Trick Recognition and Performance Feedback
+# Aggressive Inline Trick Recognition and Feedback
 
 TODO
 
