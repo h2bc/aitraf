@@ -2,8 +2,6 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
-import torch
 
 
 from transformers import (
@@ -48,9 +46,7 @@ class VideoMAETrainingConfig:
         self.output_dir = Path(self.output_dir)
 
 
-def run_training(config: VideoMAETrainingConfig) -> tuple[str, dict[str, Any]]:
-    """Load a couple of batches and print their contents (no training yet)."""
-
+def run_training(config: VideoMAETrainingConfig) -> str:
     load_dotenv()
 
     dataset = load_dataset(
@@ -112,7 +108,7 @@ def run_training(config: VideoMAETrainingConfig) -> tuple[str, dict[str, Any]]:
 
     mlflow.set_experiment(config.experiment_name)
 
-    with mlflow.start_run(run_name=config.run_name) as run:
+    with mlflow.start_run(run_name=config.run_name):
         mlflow.log_input(
             from_huggingface(dataset["train"], name="train"), context="training"
         )
@@ -121,7 +117,7 @@ def run_training(config: VideoMAETrainingConfig) -> tuple[str, dict[str, Any]]:
             context="validation",
         )
 
-        train_output = trainer.train()
+        trainer.train()
 
         sample_clip = process_clip(
             dataset["train"][0],
@@ -131,7 +127,7 @@ def run_training(config: VideoMAETrainingConfig) -> tuple[str, dict[str, Any]]:
             config.sample_frames,
         )
 
-        mlflow.transformers.log_model(
+        model_info = mlflow.transformers.log_model(
             transformers_model={
                 "model": model,
                 "image_processor": processor,
@@ -145,4 +141,4 @@ def run_training(config: VideoMAETrainingConfig) -> tuple[str, dict[str, Any]]:
             },
         )
 
-        return run.info.run_id, train_output.metrics
+        return model_info.model_uri

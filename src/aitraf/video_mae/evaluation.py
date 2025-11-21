@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from datasets import load_dataset
 from dotenv import load_dotenv
@@ -23,7 +22,7 @@ class VideoMAEEvalConfig:
     """Configuration for VideoMAE evaluation."""
 
     backbone: str
-    model_id: str
+    model_uri: str
     manifests_dir: Path | str
     clips_dir: Path | str
     batch_size: int
@@ -40,7 +39,7 @@ class VideoMAEEvalConfig:
         self.output_dir = Path(self.output_dir)
 
 
-def run_evaluation(config: VideoMAEEvalConfig) -> tuple[str, dict[str, Any]]:
+def run_evaluation(config: VideoMAEEvalConfig):
     """Evaluate a fine-tuned VideoMAE model."""
 
     load_dotenv()
@@ -55,7 +54,7 @@ def run_evaluation(config: VideoMAEEvalConfig) -> tuple[str, dict[str, Any]]:
     label2id, _ = load_target_label_mappings(config.manifests_dir)
 
     components = mlflow_transformers.load_model(
-        f"models:/{config.model_id}", return_type="components"
+        config.model_uri, return_type="components"
     )
     model = components["model"].to(config.device)
     processor = components["image_processor"]
@@ -85,9 +84,7 @@ def run_evaluation(config: VideoMAEEvalConfig) -> tuple[str, dict[str, Any]]:
 
     mlflow.set_experiment(config.experiment_name)
 
-    with mlflow.start_run(run_name=config.run_name) as run:
+    with mlflow.start_run(run_name=config.run_name):
         mlflow.log_input(from_huggingface(eval_dataset, name="test"), context="test")
         metrics = trainer.evaluate()
         mlflow.log_metrics(metrics)
-
-        return run.info.run_id, metrics

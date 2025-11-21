@@ -23,7 +23,9 @@ TODO
 ## Pipelines
 
 - `make data` – execute the Hydra data pipeline entrypoint
-- `make train-video-mae` - execute Hydra finetuning pipeline
+- `make train-video-mae` – execute Hydra finetuning pipeline
+- `make eval-video-mae` – run evaluation for an existing model URI
+- `make train-eval-video-mae` – run training then evaluation in one go
 
 ## Jupyter Notebook
 
