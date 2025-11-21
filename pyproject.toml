@@ -23,7 +23,7 @@ dependencies = [
     "python-dotenv",
     "loguru",
     "mlflow",
-    # "ultralytics"
+    "ultralytics",
     "evaluate>=0.4.6",
     "av>=16.0.1",
 ]
