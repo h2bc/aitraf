@@ -9,7 +9,7 @@ num_workers: 4
 training:
   run_name: base_train_test
   epochs: 1
-  max_train_samples: 10
+  max_train_samples: null
   output_dir: ${paths.project_root}/runs/video_mae_train
 
 evaluation:
