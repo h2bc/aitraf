@@ -61,7 +61,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
             range(min(config.max_train_samples, len(dataset["train"])))
         )
 
-    label2id, id2label = load_target_label_mappings(config.manifests_dir)
+    labels, label2id, id2label = load_target_label_mappings(config.manifests_dir)
 
     processor = VideoMAEImageProcessor.from_pretrained(config.backbone)
     model_config = AutoConfig.from_pretrained(
@@ -69,7 +69,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
         trust_remote_code=True,
         label2id=label2id,
         id2label=id2label,
-        num_labels=len(label2id),
+        num_labels=len(labels),
     )
 
     model = AutoModelForVideoClassification.from_pretrained(

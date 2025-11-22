@@ -16,7 +16,9 @@ from transformers import (
 from aitraf.video_mae.common import build_collate, load_target_label_mappings
 from aitraf.video_mae.metrics import (
     build_compute_metrics,
+    get_confusion_matrix_figure,
     get_target_distribution_figure,
+    get_per_class_f1_figure,
 )
 
 
@@ -54,7 +56,7 @@ def run_evaluation(config: VideoMAEEvalConfig):
 
     eval_dataset = dataset["test"]
 
-    label2id, id2label = load_target_label_mappings(config.manifests_dir)
+    labels, label2id, id2label = load_target_label_mappings(config.manifests_dir)
 
     components = mlflow_transformers.load_model(
         config.model_uri, return_type="components"
@@ -96,5 +98,11 @@ def run_evaluation(config: VideoMAEEvalConfig):
 
         mlflow.log_metrics(metrics)
 
-        dist_fig = get_target_distribution_figure(logits, label_ids, id2label)
+        dist_fig = get_target_distribution_figure(logits, label_ids, labels, id2label)
         mlflow.log_figure(dist_fig, "predicted_vs_actual_target_counts.png")
+
+        cm_fig = get_confusion_matrix_figure(logits, label_ids, labels)
+        mlflow.log_figure(cm_fig, "confusion_matrix.png")
+
+        f1_fig = get_per_class_f1_figure(logits, label_ids, labels)
+        mlflow.log_figure(f1_fig, "per_class_f1.png")

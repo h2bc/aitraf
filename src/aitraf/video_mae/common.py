@@ -15,10 +15,14 @@ def load_target_label_mappings(
     manifests_dir: Path | str,
 ) -> tuple[dict[str, int], dict[str, str]]:
     """Load label/id mappings from the labels manifest."""
+
     labels_config = _read_json(Path(manifests_dir) / "labels.json")
+
+    labels = labels_config[schema.TARGET_COLUMN]["labels"]
     label2id = labels_config[schema.TARGET_COLUMN]["label2id"]
     id2label = labels_config[schema.TARGET_COLUMN]["id2label"]
-    return label2id, id2label
+
+    return labels, label2id, id2label
 
 
 def build_collate(

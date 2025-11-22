@@ -9,10 +9,10 @@ num_workers: 4
 training:
   run_name: base_train_test
   epochs: 1
-  max_train_samples: null
+  max_train_samples: 10
   output_dir: ${paths.project_root}/runs/video_mae_train
 
 evaluation:
   run_name: base_eval_test
-  model_uri: models:/m-782b0f185437409daf663fc31008b259
+  model_uri: null # models:/model_id
   output_dir: ${paths.project_root}/runs/video_mae_eval

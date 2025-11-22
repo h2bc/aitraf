@@ -31,7 +31,7 @@ TODO
 
 - `make jupyter` – launch a notebook server inside the uv-managed env
 
-## Project Resources
+## Project integrations
 
 - **S3 storage**
   - https://storage.h2bcweb.com
