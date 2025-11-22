@@ -16,6 +16,7 @@ dependencies = [
     "huggingface-hub",
     "hydra-core",
     "numpy",
+    "matplotlib",
     "pandas",
     "scikit-learn",
     "label-studio-sdk",

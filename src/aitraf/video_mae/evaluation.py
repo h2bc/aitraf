@@ -14,7 +14,10 @@ from transformers import (
 )
 
 from aitraf.video_mae.common import build_collate, load_target_label_mappings
-from aitraf.video_mae.metrics import build_compute_metrics
+from aitraf.video_mae.metrics import (
+    build_compute_metrics,
+    get_target_distribution_figure,
+)
 
 
 @dataclass
@@ -51,7 +54,7 @@ def run_evaluation(config: VideoMAEEvalConfig):
 
     eval_dataset = dataset["test"]
 
-    label2id, _ = load_target_label_mappings(config.manifests_dir)
+    label2id, id2label = load_target_label_mappings(config.manifests_dir)
 
     components = mlflow_transformers.load_model(
         config.model_uri, return_type="components"
@@ -86,5 +89,12 @@ def run_evaluation(config: VideoMAEEvalConfig):
 
     with mlflow.start_run(run_name=config.run_name):
         mlflow.log_input(from_huggingface(eval_dataset, name="test"), context="test")
-        metrics = trainer.evaluate()
+
+        logits, label_ids, metrics = trainer.predict(
+            eval_dataset, metric_key_prefix="eval"
+        )
+
         mlflow.log_metrics(metrics)
+
+        dist_fig = get_target_distribution_figure(logits, label_ids, id2label)
+        mlflow.log_figure(dist_fig, "predicted_vs_actual_target_counts.png")

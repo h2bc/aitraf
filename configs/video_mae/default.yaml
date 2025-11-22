@@ -14,5 +14,5 @@ training:
 
 evaluation:
   run_name: base_eval_test
-  model_uri: null
+  model_uri: models:/m-782b0f185437409daf663fc31008b259
   output_dir: ${paths.project_root}/runs/video_mae_eval
