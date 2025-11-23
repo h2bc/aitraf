@@ -7,6 +7,7 @@ from pathlib import Path
 from transformers import (
     AutoConfig,
     AutoModelForVideoClassification,
+    EvalPrediction,
     Trainer,
     TrainingArguments,
     VideoMAEImageProcessor,
@@ -14,7 +15,7 @@ from transformers import (
 
 from aitraf.video_mae.processing import process_clip
 from aitraf.video_mae.common import load_target_label_mappings, build_collate
-from aitraf.video_mae.metrics import build_compute_metrics
+from aitraf.video_mae.metrics import build_compute_metrics, compute_pred_ids
 
 from datasets import load_dataset
 
@@ -56,6 +57,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
             "validation": str(config.manifests_dir / "val.jsonl"),
         },
     )
+
     if config.max_train_samples is not None:
         dataset["train"] = dataset["train"].select(
             range(min(config.max_train_samples, len(dataset["train"])))
@@ -77,6 +79,13 @@ def run_training(config: VideoMAETrainingConfig) -> str:
     ).to(config.device)
 
     compute_metrics = build_compute_metrics()
+
+    def trainer_compute_metrics(prediction: EvalPrediction) -> dict[str, float]:
+        pred_logits, actual_ids = prediction
+
+        pred_ids = compute_pred_ids(pred_logits)
+
+        return compute_metrics(pred_ids, actual_ids)
 
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),
@@ -103,7 +112,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
         train_dataset=dataset["train"],
         eval_dataset=dataset["validation"],
         data_collator=data_collator,
-        compute_metrics=compute_metrics,
+        compute_metrics=trainer_compute_metrics,
     )
 
     mlflow.set_experiment(config.experiment_name)

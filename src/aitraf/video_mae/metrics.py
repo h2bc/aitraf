@@ -8,24 +8,32 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from sklearn.metrics import ConfusionMatrixDisplay, f1_score
+from collections import Counter
 
 
-def build_compute_metrics():
+def compute_pred_ids(logits: List[float]) -> List[int]:
+    return np.argmax(logits, axis=-1)
+
+
+def compute_dummy_pred_ids(actual_ids: List[int]) -> List[int]:
+    most_common = Counter(actual_ids).most_common(1)[0][0]
+
+    return np.full(len(actual_ids), most_common)
+
+
+def build_compute_metrics() -> dict[str, float]:
     accuracy = evaluate.load("accuracy")
     f1 = evaluate.load("f1")
 
-    def _compute_metrics(eval_pred):
-        logits, labels = eval_pred
-        preds = np.argmax(logits, axis=-1)
-
+    def _compute_metrics(pred_ids: List[int], actual_ids: List[int]):
         acc = accuracy.compute(
-            predictions=preds,
-            references=labels,
+            predictions=pred_ids,
+            references=actual_ids,
         )["accuracy"]
 
         macro_f1 = f1.compute(
-            predictions=preds,
-            references=labels,
+            predictions=pred_ids,
+            references=actual_ids,
             average="macro",
         )["f1"]
 
@@ -38,18 +46,20 @@ def build_compute_metrics():
 
 
 def get_target_distribution_figure(
-    logits: List[float],
-    label_ids: List[int],
+    pred_ids: List[int],
+    actual_ids: List[int],
     label_names: List[str],
     id2label: dict[str, str],
 ) -> Figure:
-    preds = np.argmax(logits, axis=-1)
+    actual_labels = [id2label[str(x)] for x in actual_ids]
+    predicted_labels = [id2label[str(x)] for x in pred_ids]
 
-    actual = [id2label[str(x)] for x in label_ids]
-    predicted = [id2label[str(x)] for x in preds]
-
-    actual_counts = pd.Series(actual).value_counts().reindex(label_names, fill_value=0)
-    pred_counts = pd.Series(predicted).value_counts().reindex(label_names, fill_value=0)
+    actual_counts = (
+        pd.Series(actual_labels).value_counts().reindex(label_names, fill_value=0)
+    )
+    pred_counts = (
+        pd.Series(predicted_labels).value_counts().reindex(label_names, fill_value=0)
+    )
 
     df_plot = pd.DataFrame(
         {"actual": actual_counts, "predicted": pred_counts}, index=label_names
@@ -62,17 +72,15 @@ def get_target_distribution_figure(
 
 
 def get_confusion_matrix_figure(
-    logits: List[float],
-    label_ids: List[int],
+    pred_ids: List[int],
+    actual_ids: List[int],
     label_names: List[str],
 ) -> Figure:
-    preds = np.argmax(logits, axis=-1)
-
     fig, ax = plt.subplots(figsize=(6, 5))
 
     ConfusionMatrixDisplay.from_predictions(
-        label_ids,
-        preds,
+        actual_ids,
+        pred_ids,
         labels=range(len(label_names)),
         display_labels=label_names,
         ax=ax,
@@ -86,15 +94,13 @@ def get_confusion_matrix_figure(
 
 
 def get_per_class_f1_figure(
-    logits,
-    label_ids,
-    label_names,
+    pred_ids: List[int],
+    actual_ids: List[int],
+    label_names: List[str],
 ):
-    preds = np.argmax(logits, axis=-1)
-
     f1_per_class = f1_score(
-        label_ids,
-        preds,
+        actual_ids,
+        pred_ids,
         average=None,
         labels=range(len(label_names)),
     )

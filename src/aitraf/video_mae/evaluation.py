@@ -19,6 +19,8 @@ from aitraf.video_mae.metrics import (
     get_confusion_matrix_figure,
     get_target_distribution_figure,
     get_per_class_f1_figure,
+    compute_pred_ids,
+    compute_dummy_pred_ids,
 )
 
 
@@ -84,7 +86,6 @@ def run_evaluation(config: VideoMAEEvalConfig):
         args=training_args,
         eval_dataset=eval_dataset,
         data_collator=data_collator,
-        compute_metrics=compute_metrics,
     )
 
     mlflow.set_experiment(config.experiment_name)
@@ -92,17 +93,27 @@ def run_evaluation(config: VideoMAEEvalConfig):
     with mlflow.start_run(run_name=config.run_name):
         mlflow.log_input(from_huggingface(eval_dataset, name="test"), context="test")
 
-        logits, label_ids, metrics = trainer.predict(
-            eval_dataset, metric_key_prefix="eval"
-        )
+        pred_logits, actual_ids, _ = trainer.predict(eval_dataset)
+
+        pred_ids = compute_pred_ids(pred_logits)
+        metrics = compute_metrics(pred_ids, actual_ids)
 
         mlflow.log_metrics(metrics)
 
-        dist_fig = get_target_distribution_figure(logits, label_ids, labels, id2label)
+        dummy_pred_ids = compute_dummy_pred_ids(actual_ids)
+        dummy_metrics = compute_metrics(dummy_pred_ids, actual_ids)
+
+        dummy_metrics_prefixed = {f"dummy_{k}": v for k, v in dummy_metrics.items()}
+
+        mlflow.log_metrics(dummy_metrics_prefixed)
+
+        dist_fig = get_target_distribution_figure(
+            pred_ids, actual_ids, labels, id2label
+        )
         mlflow.log_figure(dist_fig, "predicted_vs_actual_target_counts.png")
 
-        cm_fig = get_confusion_matrix_figure(logits, label_ids, labels)
+        cm_fig = get_confusion_matrix_figure(pred_ids, actual_ids, labels)
         mlflow.log_figure(cm_fig, "confusion_matrix.png")
 
-        f1_fig = get_per_class_f1_figure(logits, label_ids, labels)
+        f1_fig = get_per_class_f1_figure(pred_ids, actual_ids, labels)
         mlflow.log_figure(f1_fig, "per_class_f1.png")
