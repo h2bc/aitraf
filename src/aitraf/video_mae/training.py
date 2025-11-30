@@ -39,6 +39,7 @@ class VideoMAETrainingConfig:
     epochs: int
     experiment_name: str
     run_name: str
+    freeze_backbone: bool
     max_train_samples: int | None = None
 
     def __post_init__(self) -> None:
@@ -77,6 +78,10 @@ def run_training(config: VideoMAETrainingConfig) -> str:
     model = AutoModelForVideoClassification.from_pretrained(
         config.backbone, config=model_config, trust_remote_code=True
     ).to(config.device)
+
+    if config.freeze_backbone:
+        for param in model.base_model.parameters():
+            param.requires_grad = False
 
     compute_metrics = build_compute_metrics()
 

@@ -22,6 +22,7 @@ def run(cfg: DictConfig) -> None:
         epochs=cfg.video_mae.training.epochs,
         experiment_name=cfg.video_mae.experiment_name,
         run_name=cfg.video_mae.training.run_name,
+        freeze_backbone=cfg.video_mae.training.freeze_backbone,
         max_train_samples=cfg.video_mae.training.max_train_samples,
     )
 

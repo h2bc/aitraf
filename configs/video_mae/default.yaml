@@ -7,6 +7,7 @@ batch_size: 4
 num_workers: 4
 
 training:
+  freeze_backbone: False
   run_name: base_train_test
   epochs: 1
   max_train_samples: null
