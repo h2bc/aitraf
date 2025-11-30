@@ -3,12 +3,15 @@
 from hydra import main
 from omegaconf import DictConfig
 from pathlib import Path
+from dotenv import load_dotenv
 
 from aitraf.video_mae.evaluation import VideoMAEEvalConfig, run_evaluation
 
 
 @main(config_path="../../configs", config_name="video_mae", version_base=None)
 def run(cfg: DictConfig) -> None:
+    load_dotenv()
+
     if not cfg.video_mae.evaluation.model_uri:
         raise ValueError(
             "evaluation.model_uri must be set to a valid MLflow model URI."

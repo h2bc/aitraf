@@ -4,12 +4,15 @@ from hydra import main
 from omegaconf import DictConfig
 
 from pathlib import Path
+from dotenv import load_dotenv
 
 from aitraf.video_mae.training import VideoMAETrainingConfig, run_training
 
 
 @main(config_path="../../configs", config_name="video_mae", version_base=None)
 def run(cfg: DictConfig) -> None:
+    load_dotenv()
+
     training_cfg = VideoMAETrainingConfig(
         backbone=cfg.video_mae.backbone,
         manifests_dir=cfg.video_mae.manifests_dir,

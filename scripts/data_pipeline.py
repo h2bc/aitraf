@@ -2,6 +2,7 @@
 
 from hydra import main
 from omegaconf import DictConfig
+from dotenv import load_dotenv
 from aitraf.data.download_labels import LabelStudioExportConfig, download_labels
 from aitraf.data.create_manifests import ManifestBuildConfig, create_manifests
 from aitraf.data.download_clips import ClipDownloadConfig, download_clips
@@ -10,6 +11,7 @@ from aitraf.logging import setup_logging, heading
 
 @main(config_path="../configs", config_name="data", version_base=None)
 def run(cfg: DictConfig) -> None:
+    load_dotenv()
     setup_logging()
 
     if cfg.data.tasks.download_labels:
