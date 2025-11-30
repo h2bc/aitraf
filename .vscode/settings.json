@@ -1,4 +1,6 @@
 {
     "editor.defaultFormatter": "charliermarsh.ruff",
-    "python.terminal.useEnvFile": true
+    "python.terminal.useEnvFile": true,
+    "python.defaultInterpreterPath": ".venv/bin/python",
+    "python-envs.pythonProjects": []
 }

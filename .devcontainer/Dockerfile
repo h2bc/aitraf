@@ -16,8 +16,9 @@ ENV PATH="$CONDA_DIR/bin:$PATH"
 
 RUN conda install -y "ffmpeg>=4,<9" && conda clean -afy
 
+USER ubuntu
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-
-ENV PATH="/root/.local/bin:${PATH}"
+USER root
+ENV PATH="/home/ubuntu/.local/bin:${PATH}"
 
 WORKDIR /workspace
