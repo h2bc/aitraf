@@ -8,6 +8,7 @@ from transformers import (
     AutoConfig,
     AutoModelForVideoClassification,
     EvalPrediction,
+    EarlyStoppingCallback,
     Trainer,
     TrainingArguments,
     VideoMAEImageProcessor,
@@ -102,6 +103,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
         save_strategy="epoch",
         load_best_model_at_end=True,
         metric_for_best_model="accuracy",
+        greater_is_better=True,
         remove_unused_columns=False,
         report_to=["mlflow"],
         run_name=config.run_name,
@@ -118,6 +120,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
         eval_dataset=dataset["validation"],
         data_collator=data_collator,
         compute_metrics=trainer_compute_metrics,
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=2)],
     )
 
     mlflow.set_experiment(config.experiment_name)
