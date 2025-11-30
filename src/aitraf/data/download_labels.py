@@ -33,7 +33,7 @@ def download_labels(config: LabelStudioExportConfig) -> Path:
         return output_path
 
     base_url = os.getenv("LABEL_STUDIO_URL")
-    token = os.getenv("LABEL_STUDIO_TOKEN")
+    token = os.getenv("LABEL_STUDIO_API_KEY")
     project_id = os.getenv("LABEL_STUDIO_PROJECT_ID")
 
     if not base_url or not token or not project_id:
