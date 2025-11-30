@@ -49,7 +49,8 @@
       "Justas",
       "Max",
       "Romka",
-      "Rytis"
+      "Rytis",
+      "Vilius"
     ],
     "label2id": {
       "Andrej": 0,
@@ -57,7 +58,8 @@
       "Justas": 2,
       "Max": 3,
       "Romka": 4,
-      "Rytis": 5
+      "Rytis": 5,
+      "Vilius": 6
     },
     "id2label": {
       "0": "Andrej",
@@ -65,7 +67,8 @@
       "2": "Justas",
       "3": "Max",
       "4": "Romka",
-      "5": "Rytis"
+      "5": "Rytis",
+      "6": "Vilius"
     }
   }
 }
