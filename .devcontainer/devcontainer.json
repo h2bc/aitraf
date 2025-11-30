@@ -10,7 +10,8 @@
   ],
   "workspaceFolder": "/workspace",
   "mounts": [
-    "type=bind,source=${localWorkspaceFolder},target=/workspace"
+    "type=bind,source=${localWorkspaceFolder},target=/workspace",
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,readonly,type=bind"
   ],
   "postCreateCommand": "uv sync --frozen",
   "customizations": {
@@ -24,5 +25,6 @@
         "ms-vscode.makefile-tools"
       ]
     }
-  }
+  },
+  "remoteUser": "ubuntu"
 }
