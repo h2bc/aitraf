@@ -1,0 +1,7 @@
+defaults:
+  - default
+  - _self_
+
+run_name: base_head_s440
+training:
+  freeze_backbone: True

@@ -99,6 +99,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
         per_device_train_batch_size=config.batch_size,
         per_device_eval_batch_size=config.batch_size,
         num_train_epochs=config.epochs,
+        logging_strategy="epoch",
         eval_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,

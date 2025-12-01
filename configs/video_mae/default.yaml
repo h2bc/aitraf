@@ -5,15 +5,16 @@ sample_frames: 16
 device: cuda
 batch_size: 4
 num_workers: 4
+run_name: base_test
 
 training:
   freeze_backbone: False
-  run_name: base_train_test
-  epochs: 1
+  run_name: train_${..run_name}
+  epochs: 10
   max_train_samples: null
   output_dir: ${paths.project_root}/runs/video_mae_train
 
 evaluation:
-  run_name: base_eval_test
+  run_name: eval_${..run_name}
   model_uri: null # models:/model_id
   output_dir: ${paths.project_root}/runs/video_mae_eval
