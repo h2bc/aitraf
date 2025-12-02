@@ -21,6 +21,7 @@ from aitraf.video_mae.metrics import (
     get_per_class_f1_figure,
     compute_pred_ids,
     compute_dummy_pred_ids,
+    get_top_k_worst_misses,
 )
 
 
@@ -110,6 +111,7 @@ def run_evaluation(config: VideoMAEEvalConfig):
         dist_fig = get_target_distribution_figure(
             pred_ids, actual_ids, labels, id2label
         )
+
         mlflow.log_figure(dist_fig, "predicted_vs_actual_target_counts.png")
 
         cm_fig = get_confusion_matrix_figure(pred_ids, actual_ids, labels)
@@ -117,3 +119,13 @@ def run_evaluation(config: VideoMAEEvalConfig):
 
         f1_fig = get_per_class_f1_figure(pred_ids, actual_ids, labels)
         mlflow.log_figure(f1_fig, "per_class_f1.png")
+
+        worst_misses = get_top_k_worst_misses(
+            pred_logits,
+            actual_ids,
+            eval_dataset,
+            id2label,
+            top_k=5,
+        )
+
+        mlflow.log_table(worst_misses, "worst_misses.json")

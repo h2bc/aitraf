@@ -2,6 +2,6 @@ defaults:
   - default
   - _self_
 
-run_name: base_head_s440
+run_name: base_head_s500
 training:
   freeze_backbone: True

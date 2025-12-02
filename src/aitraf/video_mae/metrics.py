@@ -1,5 +1,6 @@
 """Metrics utilities for VideoMAE training and evaluation."""
 
+from collections import Counter
 from typing import List
 
 import evaluate
@@ -7,14 +8,21 @@ import numpy as np
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
+import torch
 from matplotlib.figure import Figure
 from sklearn.metrics import ConfusionMatrixDisplay, f1_score
-from collections import Counter
 
 matplotlib.use("Agg")
 
 def compute_pred_ids(logits: List[float]) -> List[int]:
     return np.argmax(logits, axis=-1)
+
+
+def compute_pred_confidences(logits: List[float]) -> np.ndarray:
+    """Return the max softmax probability for each row of logits."""
+    tensor_logits = torch.as_tensor(logits)
+    probs = torch.softmax(tensor_logits, dim=-1)
+    return probs.max(dim=-1).values.numpy()
 
 
 def compute_dummy_pred_ids(actual_ids: List[int]) -> List[int]:
@@ -116,3 +124,24 @@ def get_per_class_f1_figure(
     plt.tight_layout()
 
     return ax.get_figure()
+
+
+def get_top_k_worst_misses(
+    pred_logits,
+    actual_ids,
+    eval_dataset,
+    id2label: dict[str, str],
+    top_k: int = 5,
+) -> pd.DataFrame:
+    """Return metadata describing the highest-confidence misclassifications."""
+
+    df = eval_dataset.to_pandas()
+    df["pred_id"] = compute_pred_ids(pred_logits)
+    df["pred_confidence"] = compute_pred_confidences(pred_logits)
+    df["pred_trick"] = df["pred_id"].map(lambda idx: id2label[str(idx)])
+    df["actual_id"] = actual_ids
+
+    misses = df[df["pred_id"] != df["actual_id"]].copy()
+    misses = misses.sort_values("pred_confidence", ascending=False).head(top_k)
+
+    return misses

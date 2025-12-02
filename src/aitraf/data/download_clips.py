@@ -30,28 +30,21 @@ class ClipDownloadConfig:
 def download_clips(config: ClipDownloadConfig) -> None:
     """Download every unique clip referenced in the labels JSONL file."""
     load_dotenv()
+    
     labels_path = config.labels_path
+    
     if not labels_path.exists():
         raise RuntimeError(f"Labels file not found: {labels_path}")
 
     clip_uris = _collect_clip_uris(labels_path)
     total_clips = len(clip_uris)
+    
     if not total_clips:
         logger.info("No clip URIs found in {}", labels_path)
         return
 
-    endpoint_url = os.getenv("AWS_ENDPOINT_URL")
-    region_name = os.getenv("AWS_DEFAULT_REGION")
-    if not endpoint_url or not region_name:
-        raise RuntimeError(
-            "AWS_ENDPOINT_URL and AWS_DEFAULT_REGION must be set in the environment/.env"
-        )
-
-    s3_client = boto3.client(
-        "s3",
-        endpoint_url=endpoint_url,
-        region_name=region_name,
-    )
+    s3_client = _build_s3_client()
+    
     output_dir = config.output_dir
     logger.info("Downloading {} clips into {}", total_clips, output_dir)
     success_count = 0
@@ -124,3 +117,36 @@ def _strip_prefix(path: Path) -> Path:
     if not parts:
         return Path(path.name)
     return Path(*parts)
+
+
+def _build_s3_client():
+    endpoint_url, region_name, access_key, secret_key = _load_required_aws_settings()
+    return boto3.client(
+        "s3",
+        endpoint_url=endpoint_url,
+        region_name=region_name,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+    )
+
+
+def _load_required_aws_settings() -> tuple[str, str, str, str]:
+    settings = {
+        "AWS_ENDPOINT_URL": os.getenv("AWS_ENDPOINT_URL"),
+        "AWS_DEFAULT_REGION": os.getenv("AWS_DEFAULT_REGION"),
+        "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
+        "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
+    }
+    missing = [name for name, value in settings.items() if not value]
+    if missing:
+        raise RuntimeError(
+            "The following AWS environment variables must be set: "
+            + ", ".join(missing)
+        )
+
+    return (
+        settings["AWS_ENDPOINT_URL"],
+        settings["AWS_DEFAULT_REGION"],
+        settings["AWS_ACCESS_KEY_ID"],
+        settings["AWS_SECRET_ACCESS_KEY"],
+    )

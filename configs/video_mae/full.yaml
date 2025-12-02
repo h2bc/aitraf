@@ -2,6 +2,6 @@ defaults:
   - default
   - _self_
 
-run_name: base_full_s440
+run_name: base_full_s500
 training:
   freeze_backbone: False
