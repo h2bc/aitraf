@@ -41,12 +41,15 @@ class VideoMAETrainingConfig:
     experiment_name: str
     run_name: str
     freeze_backbone: bool
-    max_train_samples: int | None = None
+    model_cache_dir: Path
+    max_train_samples: int | None
 
     def __post_init__(self) -> None:
         self.manifests_dir = Path(self.manifests_dir)
         self.clips_dir = Path(self.clips_dir)
         self.output_dir = Path(self.output_dir)
+        self.model_cache_dir = Path(self.model_cache_dir)
+        self.model_cache_dir.mkdir(parents=True, exist_ok=True)
 
 
 def run_training(config: VideoMAETrainingConfig) -> str:
@@ -67,9 +70,12 @@ def run_training(config: VideoMAETrainingConfig) -> str:
 
     labels, label2id, id2label = load_target_label_mappings(config.manifests_dir)
 
-    processor = VideoMAEImageProcessor.from_pretrained(config.backbone)
+    processor = VideoMAEImageProcessor.from_pretrained(
+        config.backbone, cache_dir=str(config.model_cache_dir)
+    )
     model_config = AutoConfig.from_pretrained(
         config.backbone,
+        cache_dir=str(config.model_cache_dir),
         trust_remote_code=True,
         label2id=label2id,
         id2label=id2label,
@@ -77,7 +83,10 @@ def run_training(config: VideoMAETrainingConfig) -> str:
     )
 
     model = AutoModelForVideoClassification.from_pretrained(
-        config.backbone, config=model_config, trust_remote_code=True
+        config.backbone,
+        config=model_config,
+        cache_dir=str(config.model_cache_dir),
+        trust_remote_code=True,
     ).to(config.device)
 
     if config.freeze_backbone:

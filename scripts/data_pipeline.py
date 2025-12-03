@@ -7,6 +7,10 @@ from aitraf.data.download_labels import LabelStudioExportConfig, download_labels
 from aitraf.data.create_manifests import ManifestBuildConfig, create_manifests
 from aitraf.data.download_clips import ClipDownloadConfig, download_clips
 from aitraf.logging import setup_logging, heading
+from aitraf.data.pose_and_bbox_extraction import (
+    PoseAndBBoxExtractionConfig,
+    pose_and_bbox_extraction,
+)
 
 
 @main(config_path="../configs", config_name="data", version_base=None)
@@ -36,6 +40,24 @@ def run(cfg: DictConfig) -> None:
         )
     else:
         heading("Skip clip download (disabled)")
+
+    if cfg.data.tasks.pose_and_bbox_extraction:
+        heading("Pose + BBox Extraction")
+        pose_and_bbox_extraction(
+            PoseAndBBoxExtractionConfig(
+                clips_dir=cfg.data.pose_and_bbox_extraction.clips_dir,
+                poses_dir=cfg.data.pose_and_bbox_extraction.poses_dir,
+                boxes_dir=cfg.data.pose_and_bbox_extraction.boxes_dir,
+                weights_path=cfg.data.pose_and_bbox_extraction.weights_path,
+                device=cfg.data.pose_and_bbox_extraction.device,
+                imgsz=cfg.data.pose_and_bbox_extraction.imgsz,
+                conf=cfg.data.pose_and_bbox_extraction.conf,
+                force=cfg.data.pose_and_bbox_extraction.force,
+                limit=cfg.data.pose_and_bbox_extraction.limit,
+            )
+        )
+    else:
+        heading("Skip pose/bbox extraction (disabled)")
 
     if cfg.data.tasks.create_manifests:
         heading("Build Manifests")

@@ -12,7 +12,18 @@ download_clips:
   labels_path: ${data.download_labels.output_path}
   output_dir: ${paths.data_dir}/clips
   force: false
+pose_and_bbox_extraction:
+  clips_dir: ${data.download_clips.output_dir}
+  poses_dir: ${paths.poses_dir}
+  boxes_dir: ${paths.boxes_dir}
+  weights_path: ${paths.models_dir}/yolo11n-pose.pt
+  device: 0
+  imgsz: 640
+  conf: 0.5
+  force: false
+  limit: null
 tasks:
   download_labels: true
   create_manifests: true
   download_clips: true
+  pose_and_bbox_extraction: true
