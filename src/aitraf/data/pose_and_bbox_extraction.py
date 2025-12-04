@@ -6,10 +6,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
+import imageio.v3 as iio
 import numpy as np
 from ultralytics import YOLO
 
 from aitraf.logging import logger
+from aitraf.utils import get_video_rotation_deg
 
 
 @dataclass
@@ -20,7 +22,7 @@ class PoseAndBBoxExtractionConfig:
     poses_dir: Path | str
     boxes_dir: Path | str
     weights_path: Path | str
-    device: str | int = 0
+    device: str = "cuda"
     imgsz: int = 640
     conf: float = 0.5
     force: bool = False
@@ -56,6 +58,7 @@ def pose_and_bbox_extraction(config: PoseAndBBoxExtractionConfig) -> None:
 
     processed = 0
     skipped = 0
+    errors = 0
     progress_step = max(1, total // 10)
 
     for idx, clip in enumerate(clips, start=1):
@@ -68,20 +71,17 @@ def pose_and_bbox_extraction(config: PoseAndBBoxExtractionConfig) -> None:
             logger.warning("Missing clip {}, skipping", clip)
             continue
 
-        results = model(
-            source=clip.as_posix(),
-            device=config.device,
-            imgsz=int(config.imgsz),
-            conf=float(config.conf),
-            verbose=False,
-            stream=True,
-        )
         try:
-            pose_payload, box_payload = _pack_results(results)
+            frames = _prepare_frames(clip)
+            results = _predict_frames(frames, model, config)
+            pose_payload, box_payload = _prepare_results(results)
+
             np.savez_compressed(pose_out, **pose_payload)
             np.savez_compressed(box_out, **box_payload)
+
         except Exception as exc:  # pragma: no cover - log only
             logger.warning("Failed to process {}: {}", clip, exc)
+            errors += 1
             continue
 
         processed += 1
@@ -96,9 +96,10 @@ def pose_and_bbox_extraction(config: PoseAndBBoxExtractionConfig) -> None:
             )
 
     logger.info(
-        "Pose/bbox extraction summary: {} processed, {} skipped (total {})",
+        "Pose/bbox extraction summary: {} processed, {} skipped, {} errors (total {})",
         processed,
         skipped,
+        errors,
         len(clips),
     )
 
@@ -110,54 +111,68 @@ def _list_clip_files(clips_dir: Path) -> list[Path]:
     for path in clips_dir.rglob("*"):
         if path.is_file():
             clips.append(path)
-    return clips
+    return sorted(clips, key=lambda path: path.name)
 
 
-def _pack_results(results: Iterable) -> tuple[dict, dict]:
+def _prepare_results(results: Iterable) -> tuple[dict, dict]:
     frame_indices: list[int] = []
     keypoints: list[np.ndarray] = []
     keypoint_scores: list[np.ndarray] = []
     boxes: list[np.ndarray] = []
     box_scores: list[np.ndarray] = []
-    class_ids: list[np.ndarray] = []
-    frame_shape: tuple[int, int] | None = None
 
     for frame_idx, result in enumerate(results):
         frame_indices.append(frame_idx)
-        if frame_shape is None and getattr(result, "orig_shape", None):
-            frame_shape = tuple(result.orig_shape)
+        kpts = result.keypoints
+        boxes_obj = result.boxes
 
-        if getattr(result, "keypoints", None) is not None:
-            keypoints.append(result.keypoints.xyn.cpu().numpy())
-            keypoint_scores.append(result.keypoints.conf.cpu().numpy())
-        else:
-            keypoints.append(None)
-            keypoint_scores.append(None)
+        keypoints.append(kpts.xyn.cpu().numpy())
+        keypoint_scores.append(kpts.conf.cpu().numpy())
 
-        if getattr(result, "boxes", None) is not None:
-            boxes.append(result.boxes.xyxy.cpu().numpy())
-            box_scores.append(result.boxes.conf.cpu().numpy())
-            class_ids.append(result.boxes.cls.cpu().numpy())
-        else:
-            boxes.append(None)
-            box_scores.append(None)
-            class_ids.append(None)
+        boxes.append(boxes_obj.xyxyn.cpu().numpy())
+        box_scores.append(boxes_obj.conf.cpu().numpy())
 
     pose_payload = {
         "frames": np.array(frame_indices, dtype=np.int32),
         "keypoints": np.array(keypoints, dtype=object),
-        "keypoint_scores": np.array(keypoint_scores, dtype=object),
-        "orig_shape": np.array(frame_shape or (), dtype=np.int32),
+        "scores": np.array(keypoint_scores, dtype=object),
     }
 
     box_payload = {
         "frames": np.array(frame_indices, dtype=np.int32),
-        "boxes_xyxy": np.array(boxes, dtype=object),
+        "boxes": np.array(boxes, dtype=object),
         "scores": np.array(box_scores, dtype=object),
-        "class_ids": np.array(class_ids, dtype=object),
-        "orig_shape": np.array(frame_shape or (), dtype=np.int32),
     }
+
     return pose_payload, box_payload
+
+
+def _prepare_frames(clip_path: Path) -> list[np.ndarray]:
+    frames = _load_frames(clip_path)
+    frames = _rotate_frames(frames, get_video_rotation_deg(clip_path))
+
+    return frames
+
+
+def _load_frames(clip_path: Path) -> list[np.ndarray]:
+    return [frame for frame in iio.imiter(str(clip_path))]
+
+
+def _rotate_frames(frames: list[np.ndarray], rotation_deg: int) -> list[np.ndarray]:
+    return [np.rot90(frame, k=rotation_deg // 90) for frame in frames]
+
+
+def _predict_frames(
+    frames: list[np.ndarray], model: YOLO, config: PoseAndBBoxExtractionConfig
+):
+    return model.predict(
+        source=frames,
+        device=config.device,
+        imgsz=int(config.imgsz),
+        conf=float(config.conf),
+        verbose=False,
+        stream=False,
+    )
 
 
 __all__ = ["PoseAndBBoxExtractionConfig", "pose_and_bbox_extraction"]

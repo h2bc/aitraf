@@ -15,7 +15,7 @@ from transformers import (
 )
 
 from aitraf.video_mae.processing import process_clip
-from aitraf.video_mae.common import load_target_label_mappings, build_collate
+from aitraf.video_mae.utils import load_target_label_mappings, build_collate
 from aitraf.video_mae.metrics import build_compute_metrics, compute_pred_ids
 
 from datasets import load_dataset

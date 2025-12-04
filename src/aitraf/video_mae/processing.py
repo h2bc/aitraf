@@ -1,13 +1,15 @@
 """Helpers for turning a manifest row into VideoMAE-ready tensors."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, List
 
 import torch
 from torchcodec.decoders import VideoDecoder
 from transformers import VideoMAEImageProcessor
+from aitraf.utils import get_video_rotation_deg
 
 from aitraf.data import schema
+import kornia
 
 
 def process_clip(
@@ -20,22 +22,21 @@ def process_clip(
     """Load a local clip referenced by a manifest row and prepare VideoMAE inputs."""
 
     clip_path = local_clips_dir / manifest_row["video_id"]
-    decoder = _load_decoder(clip_path)
+    decoder = VideoDecoder(str(clip_path), dimension_order="NHWC")
     frames = _sample_frames(decoder, num_frames, clip_path)
-    processed = processor(frames, return_tensors="pt")
+    frames = _rotate_frames(frames, get_video_rotation_deg(clip_path))
+    processed_ts = processor(frames, return_tensors="pt")
     label = manifest_row[schema.TARGET_COLUMN]
 
     return {
-        "pixel_values": processed["pixel_values"][0],
+        "pixel_values": processed_ts["pixel_values"][0],
         "labels": torch.tensor(label2id[label]),
     }
 
 
-def _load_decoder(clip_path: Path) -> VideoDecoder:
-    return VideoDecoder(str(clip_path), dimension_order="NHWC")
-
-
-def _sample_frames(decoder: VideoDecoder, num_frames: int, clip_path: Path) -> list:
+def _sample_frames(
+    decoder: VideoDecoder, num_frames: int, clip_path: Path
+) -> List[torch.Tensor]:
     total_frames = len(decoder)
 
     if total_frames < num_frames:
@@ -44,6 +45,23 @@ def _sample_frames(decoder: VideoDecoder, num_frames: int, clip_path: Path) -> l
         )
 
     indices = torch.linspace(0, total_frames - 1, steps=num_frames).long().tolist()
-    frames = [decoder[int(idx)].numpy() for idx in indices]
+    frames = [decoder[int(idx)] for idx in indices]
 
     return frames
+
+
+def _rotate_frames(frames: List[torch.Tensor], rotation_deg: int) -> List[torch.Tensor]:
+    if rotation_deg == 0:
+        return frames
+
+    x = torch.stack(frames)  # B, (H, W, C) -> (B, H, W, C)
+    x = x.permute(0, 3, 1, 2)  # (B, H, W, C) -> (B, C, H, W)
+    x = x.float()  # to float
+
+    angles = torch.full(
+        (len(frames),), float(rotation_deg), dtype=torch.float32, device=x.device
+    )
+    x = kornia.geometry.transform.rotate(x, angles)
+
+    x = x.clamp(0, 255).byte()  # to uint8
+    return list(x.permute(0, 2, 3, 1))  # (B, C, H, W) -> B, (H, W, C)

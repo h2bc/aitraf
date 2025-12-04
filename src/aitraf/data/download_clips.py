@@ -29,21 +29,21 @@ class ClipDownloadConfig:
 def download_clips(config: ClipDownloadConfig) -> None:
     """Download every unique clip referenced in the labels JSONL file."""
     load_dotenv()
-    
+
     labels_path = config.labels_path
-    
+
     if not labels_path.exists():
         raise RuntimeError(f"Labels file not found: {labels_path}")
 
     clip_uris = video_paths_from_labels(labels_path, filter_prefix="s3://")
     total_clips = len(clip_uris)
-    
+
     if not total_clips:
         logger.info("No clip URIs found in {}", labels_path)
         return
 
     s3_client = _build_s3_client()
-    
+
     output_dir = config.output_dir
     logger.info("Downloading {} clips into {}", total_clips, output_dir)
     success_count = 0
@@ -115,8 +115,7 @@ def _load_required_aws_settings() -> tuple[str, str, str, str]:
     missing = [name for name, value in settings.items() if not value]
     if missing:
         raise RuntimeError(
-            "The following AWS environment variables must be set: "
-            + ", ".join(missing)
+            "The following AWS environment variables must be set: " + ", ".join(missing)
         )
 
     return (

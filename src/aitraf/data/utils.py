@@ -33,7 +33,9 @@ def resolve_clip_path(value: str, clips_dir: Path) -> Path:
     return clips_dir / path
 
 
-def video_paths_from_labels(labels_path: Path, filter_prefix: str | None = None) -> list[str]:
+def video_paths_from_labels(
+    labels_path: Path, filter_prefix: str | None = None
+) -> list[str]:
     """Return unique video path references from the labels export."""
     df = pd.read_json(labels_path, lines=True)
     if schema.VIDEO_COLUMN not in df.columns:

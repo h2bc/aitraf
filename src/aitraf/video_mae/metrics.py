@@ -14,6 +14,7 @@ from sklearn.metrics import ConfusionMatrixDisplay, f1_score
 
 matplotlib.use("Agg")
 
+
 def compute_pred_ids(logits: List[float]) -> List[int]:
     return np.argmax(logits, axis=-1)
 

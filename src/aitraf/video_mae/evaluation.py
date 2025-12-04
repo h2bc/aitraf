@@ -13,7 +13,7 @@ from transformers import (
     Trainer,
 )
 
-from aitraf.video_mae.common import build_collate, load_target_label_mappings
+from aitraf.video_mae.utils import build_collate, load_target_label_mappings
 from aitraf.video_mae.metrics import (
     build_compute_metrics,
     get_confusion_matrix_figure,
