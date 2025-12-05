@@ -13,8 +13,9 @@ from transformers import (
     Trainer,
 )
 
-from aitraf.video_mae.utils import build_collate, load_target_label_mappings
-from aitraf.video_mae.metrics import (
+from aitraf.video_mae.utils import build_collate
+from aitraf.processing import load_target_label_mappings
+from aitraf.metrics import (
     build_compute_metrics,
     get_confusion_matrix_figure,
     get_target_distribution_figure,

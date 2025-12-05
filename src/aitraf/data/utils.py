@@ -46,4 +46,8 @@ def video_paths_from_labels(
     return series.drop_duplicates().tolist()
 
 
-__all__ = ["strip_clips_prefix", "resolve_clip_path", "video_paths_from_labels"]
+__all__ = [
+    "strip_clips_prefix",
+    "resolve_clip_path",
+    "video_paths_from_labels",
+]

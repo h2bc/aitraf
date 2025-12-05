@@ -1,4 +1,4 @@
-"""Metrics utilities for VideoMAE training and evaluation."""
+"""Metrics utilities shared across model pipelines."""
 
 from collections import Counter
 from typing import List
