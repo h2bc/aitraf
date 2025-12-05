@@ -1,0 +1,4 @@
+defaults:
+  - base
+  - pose_tcn: default
+  - _self_

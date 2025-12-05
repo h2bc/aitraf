@@ -1,0 +1,4 @@
+manifests_dir: ${paths.manifests_dir}
+poses_dir: ${paths.poses_dir}
+batch_size: 4
+num_workers: 0
