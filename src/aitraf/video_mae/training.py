@@ -35,7 +35,7 @@ class VideoMAETrainingConfig:
     batch_size: int
     num_workers: int
     sample_frames: int
-    sampling_dist: str = "uniform"
+    sampling_dist: str
     device: str
     output_dir: Path | str
     epochs: int

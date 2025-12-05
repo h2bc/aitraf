@@ -2,11 +2,12 @@ backbone: MCG-NJU/videomae-base
 manifests_dir: ${paths.manifests_dir}
 experiment_name: aitraf_video_mae
 sample_frames: 16
-sampling_dist: normal
+sampling_dist: gaussian_stochastic
 device: cuda
 batch_size: 4
 num_workers: 4
 run_name: base_test
+model_cache_dir: ${paths.models_dir}/video_mae_cache
 
 training:
   freeze_backbone: False

@@ -1,7 +1,0 @@
-defaults:
-  - default
-  - _self_
-
-run_name: base_full_s570
-training:
-  freeze_backbone: False

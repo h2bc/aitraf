@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any, List
 
 import torch
-from torch.distributions import Normal
 from torchcodec.decoders import VideoDecoder
 from transformers import VideoMAEImageProcessor
 from aitraf.utils import get_video_rotation_deg
@@ -46,13 +45,13 @@ def _sample_frames(
             f"Clip {clip_path} has only {total_frames} frames (<{num_frames})."
         )
 
-    if sampling_dist == "normal":
-        indices = _normal_frame_indices(total_frames, num_frames)
+    if sampling_dist == "gaussian_stochastic":
+        indices = _center_weighted_indices(total_frames, num_frames)
     elif sampling_dist == "uniform":
         indices = torch.linspace(0, total_frames - 1, steps=num_frames).long().tolist()
     else:
         raise ValueError(
-            f"Unsupported sampling_dist '{sampling_dist}'. Expected 'uniform' or 'normal'."
+            f"Unsupported sampling_dist '{sampling_dist}'. Expected 'uniform' or 'gaussian_stochastic'."
         )
 
     frames = [decoder[int(idx)] for idx in indices]
@@ -60,27 +59,19 @@ def _sample_frames(
     return frames
 
 
-def _normal_frame_indices(total_frames: int, num_frames: int) -> List[int]:
-    """Create center-biased indices approximating a normal distribution over frames."""
+def _center_weighted_indices(total_frames: int, num_frames: int) -> List[int]:
+    """Sample indices with higher probability near the clip center."""
 
     if num_frames == 1:
         return [int((total_frames - 1) / 2)]
 
-    start = 0.5 / num_frames
-    end = 1 - 0.5 / num_frames
-    quantiles = torch.linspace(start, end, steps=num_frames)
-    eps = torch.finfo(torch.float32).eps
-    quantiles = quantiles.clamp(eps, 1 - eps)
+    positions = torch.linspace(-1, 1, steps=total_frames, dtype=torch.float32)
+    weights = torch.exp(-4 * positions.square())
+    probs = weights / weights.sum()
+    indices = torch.multinomial(probs, num_frames, replacement=False)
+    indices, _ = torch.sort(indices)
 
-    normal = Normal(0.0, 1.0)
-    normalized = normal.icdf(quantiles)
-
-    sigma = max(total_frames / 6, 1.0)
-    center = (total_frames - 1) / 2
-    indices = normalized * sigma + center
-    indices = torch.clamp(indices, 0, total_frames - 1)
-
-    return indices.round().long().tolist()
+    return indices.long().tolist()
 
 
 def _rotate_frames(frames: List[torch.Tensor], rotation_deg: int) -> List[torch.Tensor]:
