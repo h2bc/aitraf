@@ -35,6 +35,7 @@ class VideoMAETrainingConfig:
     batch_size: int
     num_workers: int
     sample_frames: int
+    sampling_dist: str = "uniform"
     device: str
     output_dir: Path | str
     epochs: int
@@ -120,7 +121,11 @@ def run_training(config: VideoMAETrainingConfig) -> str:
     )
 
     data_collator = build_collate(
-        processor, config.clips_dir, label2id, config.sample_frames
+        processor,
+        config.clips_dir,
+        label2id,
+        config.sample_frames,
+        config.sampling_dist,
     )
 
     trainer = Trainer(
@@ -152,6 +157,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
             config.clips_dir,
             label2id,
             config.sample_frames,
+            config.sampling_dist,
         )
 
         model_info = mlflow.transformers.log_model(

@@ -30,12 +30,20 @@ def build_collate(
     clips_dir: Path | str,
     label2id: dict[str, int],
     sample_frames: int,
+    sampling_dist: str,
 ) -> Callable:
     """Create a collate_fn consistent across training and eval."""
 
     def _collate(batch):
         processed_batch = [
-            process_clip(row, processor, clips_dir, label2id, sample_frames)
+            process_clip(
+                row,
+                processor,
+                clips_dir,
+                label2id,
+                sample_frames,
+                sampling_dist,
+            )
             for row in batch
         ]
 

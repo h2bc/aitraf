@@ -36,6 +36,7 @@ class VideoMAEEvalConfig:
     batch_size: int
     num_workers: int
     sample_frames: int
+    sampling_dist: str = "uniform"
     device: str
     output_dir: Path | str
     run_name: str
@@ -79,7 +80,11 @@ def run_evaluation(config: VideoMAEEvalConfig):
     )
 
     data_collator = build_collate(
-        processor, config.clips_dir, label2id, config.sample_frames
+        processor,
+        config.clips_dir,
+        label2id,
+        config.sample_frames,
+        config.sampling_dist,
     )
 
     trainer = Trainer(

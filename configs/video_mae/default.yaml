@@ -2,6 +2,7 @@ backbone: MCG-NJU/videomae-base
 manifests_dir: ${paths.manifests_dir}
 experiment_name: aitraf_video_mae
 sample_frames: 16
+sampling_dist: normal
 device: cuda
 batch_size: 4
 num_workers: 4

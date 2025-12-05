@@ -25,6 +25,7 @@ class PoseAndBBoxExtractionConfig:
     device: str = "cuda"
     imgsz: int = 640
     conf: float = 0.5
+    batch_size: int = 128
     force: bool = False
     limit: int | None = None
 
@@ -72,8 +73,8 @@ def pose_and_bbox_extraction(config: PoseAndBBoxExtractionConfig) -> None:
             continue
 
         try:
-            frames = _prepare_frames(clip)
-            results = _predict_frames(frames, model, config)
+            rotation_deg = get_video_rotation_deg(clip)
+            results = _predict_clip_batches(clip, rotation_deg, model, config)
             pose_payload, box_payload = _prepare_results(results)
 
             np.savez_compressed(pose_out, **pose_payload)
@@ -147,19 +148,41 @@ def _prepare_results(results: Iterable) -> tuple[dict, dict]:
     return pose_payload, box_payload
 
 
-def _prepare_frames(clip_path: Path) -> list[np.ndarray]:
-    frames = _load_frames(clip_path)
-    frames = _rotate_frames(frames, get_video_rotation_deg(clip_path))
+def _predict_clip_batches(
+    clip_path: Path,
+    rotation_deg: int,
+    model: YOLO,
+    config: PoseAndBBoxExtractionConfig,
+):
+    frames = _iter_frames(clip_path, rotation_deg)
 
-    return frames
+    for batch in _batched(frames, int(config.batch_size)):
+        yield from _predict_frames(batch, model, config)
 
 
-def _load_frames(clip_path: Path) -> list[np.ndarray]:
-    return [frame for frame in iio.imiter(str(clip_path))]
+def _iter_frames(clip_path: Path, rotation_deg: int) -> Iterable[np.ndarray]:
+    rotate_quarter_turns = rotation_deg // 90
+
+    for frame in iio.imiter(str(clip_path)):
+        if rotate_quarter_turns:
+            yield np.rot90(frame, k=rotate_quarter_turns)
+        else:
+            yield frame
 
 
-def _rotate_frames(frames: list[np.ndarray], rotation_deg: int) -> list[np.ndarray]:
-    return [np.rot90(frame, k=rotation_deg // 90) for frame in frames]
+def _batched(frames: Iterable[np.ndarray], batch_size: int) -> Iterable[list[np.ndarray]]:
+    if batch_size <= 0:
+        raise ValueError("batch_size must be positive")
+    batch: list[np.ndarray] = []
+
+    for frame in frames:
+        batch.append(frame)
+        if len(batch) == batch_size:
+            yield batch
+            batch = []
+    
+    if batch:
+        yield batch
 
 
 def _predict_frames(
@@ -171,7 +194,6 @@ def _predict_frames(
         imgsz=int(config.imgsz),
         conf=float(config.conf),
         verbose=False,
-        stream=False,
     )
 
 
