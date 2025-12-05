@@ -18,7 +18,7 @@ def process_clip(
     local_clips_dir: str | Path,
     label2id: dict[str, int],
     num_frames: int,
-    sampling_dist: str = "uniform",
+    sampling_dist: str,
 ) -> dict[str, torch.tensor]:
     """Load a local clip referenced by a manifest row and prepare VideoMAE inputs."""
 

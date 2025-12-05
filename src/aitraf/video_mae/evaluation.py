@@ -36,11 +36,11 @@ class VideoMAEEvalConfig:
     batch_size: int
     num_workers: int
     sample_frames: int
-    sampling_dist: str = "uniform"
     device: str
     output_dir: Path | str
     run_name: str
     experiment_name: str
+    sampling_dist: str
 
     def __post_init__(self) -> None:
         self.manifests_dir = Path(self.manifests_dir)
