@@ -87,7 +87,11 @@ def _sample_pose_tensor(
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     
     valid = [
-        (detections[0], score_block[0], int(frame_idx))
+        (
+            np.asarray(detections[0], dtype=np.float32),
+            np.asarray(score_block[0], dtype=np.float32),
+            int(frame_idx),
+        )
         for detections, score_block, frame_idx in zip(keypoints, scores, frames)
         if detections.size
     ]

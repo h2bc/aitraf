@@ -114,16 +114,16 @@ class TCNClassifier(pl.LightningModule):
         logits = self(batch["inputs"])
         loss = F.cross_entropy(logits, batch["labels"])
         acc = (logits.argmax(dim=-1) == batch["labels"]).float().mean()
-        self.log("train_loss", loss, prog_bar=True)
-        self.log("train_acc", acc, prog_bar=True)
+        self.log("train_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("train_acc", acc, prog_bar=True, on_step=False, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         logits = self(batch["inputs"])
         loss = F.cross_entropy(logits, batch["labels"])
         acc = (logits.argmax(dim=-1) == batch["labels"]).float().mean()
-        self.log("val_loss", loss, prog_bar=True)
-        self.log("val_acc", acc, prog_bar=True)
+        self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("val_acc", acc, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)

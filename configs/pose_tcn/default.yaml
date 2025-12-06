@@ -1,6 +1,22 @@
 manifests_dir: ${paths.manifests_dir}
 poses_dir: ${paths.poses_dir}
-batch_size: 4
-num_workers: 0
-sample_frames: 32
+sample_frames: 64
 sampling_dist: gaussian_stochastic
+accelerator: gpu
+experiment_name: aitraf_pose_tcn
+run_name: default
+
+training:
+  run_name: train_${..run_name}
+  batch_size: 64
+  num_workers: 8
+  learning_rate: 1e-3
+  hidden_dim: 512
+  num_layers: 5
+  kernel_size: 3
+  dropout: 0.3
+  max_epochs: 30
+  early_stopping_patience: 2
+  output_dir: ${paths.models_dir}/pose_tcn
+  max_train_samples: null
+  

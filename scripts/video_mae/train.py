@@ -29,6 +29,7 @@ def run(cfg: DictConfig) -> None:
         freeze_backbone=cfg.video_mae.training.freeze_backbone,
         model_cache_dir=cfg.video_mae.model_cache_dir,
         max_train_samples=cfg.video_mae.training.max_train_samples,
+        early_stopping_patience=cfg.video_mae.training.early_stopping_patience,
     )
 
     run_training(training_cfg)

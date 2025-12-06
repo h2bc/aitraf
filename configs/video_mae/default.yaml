@@ -6,13 +6,14 @@ sampling_dist: gaussian_stochastic
 device: cuda
 batch_size: 4
 num_workers: 4
-run_name: base_test
+run_name: default
 model_cache_dir: ${paths.models_dir}/video_mae_cache
 
 training:
   freeze_backbone: False
   run_name: train_${..run_name}
   epochs: 10
+  early_stopping_patience: 2
   max_train_samples: null
   output_dir: ${paths.project_root}/runs/video_mae_train
 

@@ -1,0 +1,8 @@
+defaults:
+  - default
+
+run_name: debug
+
+training:
+  max_epochs: 1
+  max_train_samples: 16
