@@ -8,6 +8,8 @@
 - Always read the specific file before editing it.
 - First step on any task: scan code → form a short plan → then implement.
 - Keep responses concise. No filler, no storytelling.
-- Code must be modular, clean, functional.
-- Minimal comments. Only when necessary to understand non-obvious logic.
+- Prefer simplicity. Implement the most basic working version first. Add complexity only if asked.
+- Prefer list comprehensions & higher-order functions over long/complex loops.
+- Code must be modular, simple, clean, and easy to extend.
+- Minimal comments. Only when something isn’t obvious from code.
 - If unsure → ask instead of hallucinating.

@@ -28,12 +28,15 @@ class PoseTCNDataset(Dataset):
         row = self.records[index]
         pose_path = self._resolve_pose_path(row["video_id"])
         
-        payload = dict(np.load(pose_path, allow_pickle=True))
-        payload.update({
+        payload = np.load(pose_path, allow_pickle=True)
+
+        return {
             "video_id": row["video_id"],
+            "keypoints": payload["keypoints"],
+            "scores": payload["scores"],
+            "frames": payload["frames"],
             "label": row[schema.TARGET_COLUMN],
-        })
-        return payload
+        }
 
     def _resolve_pose_path(self, video_id: str) -> Path:
         pose_stem = Path(video_id).stem

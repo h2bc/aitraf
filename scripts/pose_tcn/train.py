@@ -18,6 +18,8 @@ def run(cfg: DictConfig) -> None:
         poses_dir=cfg.pose_tcn.poses_dir,
         batch_size=cfg.pose_tcn.batch_size,
         num_workers=cfg.pose_tcn.num_workers,
+        sample_frames=cfg.pose_tcn.sample_frames,
+        sampling_dist=cfg.pose_tcn.sampling_dist,
     )
 
     run_training(training_cfg)
