@@ -137,7 +137,11 @@ def run_training(config: VideoMAETrainingConfig) -> str:
         eval_dataset=dataset["validation"],
         data_collator=data_collator,
         compute_metrics=trainer_compute_metrics,
-        callbacks=[EarlyStoppingCallback(early_stopping_patience=config.early_stopping_patience)],
+        callbacks=[
+            EarlyStoppingCallback(
+                early_stopping_patience=config.early_stopping_patience
+            )
+        ],
     )
 
     mlflow.set_experiment(config.experiment_name)

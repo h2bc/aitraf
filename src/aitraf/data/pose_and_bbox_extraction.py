@@ -171,7 +171,9 @@ def _iter_frames(clip_path: Path, rotation_deg: int) -> Iterable[np.ndarray]:
             yield frame
 
 
-def _batched(frames: Iterable[np.ndarray], batch_size: int) -> Iterable[list[np.ndarray]]:
+def _batched(
+    frames: Iterable[np.ndarray], batch_size: int
+) -> Iterable[list[np.ndarray]]:
     if batch_size <= 0:
         raise ValueError("batch_size must be positive")
     batch: list[np.ndarray] = []
@@ -181,7 +183,7 @@ def _batched(frames: Iterable[np.ndarray], batch_size: int) -> Iterable[list[np.
         if len(batch) == batch_size:
             yield batch
             batch = []
-    
+
     if batch:
         yield batch
 

@@ -81,7 +81,7 @@ class TCNClassifier(pl.LightningModule):
 
         layers = []
         in_channels = hidden_dim
-        
+
         for layer_idx in range(num_layers):
             dilation = 2**layer_idx
             block = TemporalBlock(

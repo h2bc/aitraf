@@ -77,7 +77,12 @@ def draw_pose_keypoints(
             x, y = kp[:2]
             cx, cy = x * width, y * height
             draw.ellipse(
-                [cx - point_radius, cy - point_radius, cx + point_radius, cy + point_radius],
+                [
+                    cx - point_radius,
+                    cy - point_radius,
+                    cx + point_radius,
+                    cy + point_radius,
+                ],
                 outline=color,
                 width=line_width,
             )

@@ -7,10 +7,12 @@ from pathlib import Path
 
 import mlflow
 import mlflow.pytorch
+from mlflow.data import from_pandas
 from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import MLFlowLogger
 from torch.utils.data import DataLoader, Subset
+import pandas as pd
 
 from aitraf.pose_tcn.data import PoseTCNDataset
 from aitraf.pose_tcn.model import TCNClassifier
@@ -141,15 +143,26 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
     mlflow.set_experiment(config.experiment_name)
 
     with mlflow.start_run(run_id=mlflow_logger.run_id):
+        mlflow.log_input(
+            from_pandas(
+                pd.DataFrame(train_loader.dataset.manifest_rows()), name="train"
+            ),
+            context="train",
+        )
+        mlflow.log_input(
+            from_pandas(
+                pd.DataFrame(val_loader.dataset.manifest_rows()), name="validation"
+            ),
+            context="validation",
+        )
 
         trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
         best_checkpoint = checkpoint_callback.best_model_path
-        
+
         if best_checkpoint:
-            
             mlflow.log_artifact(best_checkpoint, artifact_path="checkpoints")
-            
+
             exported_model = TCNClassifier.load_from_checkpoint(best_checkpoint)
             exported_model = exported_model.cpu().eval()
             sample_input = first_batch["inputs"][:1].cpu().numpy().astype("float32")
@@ -161,6 +174,6 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
             )
 
         return mlflow_logger.run_id
-    
+
 
 __all__ = ["PoseTCNTrainingConfig", "run_training"]

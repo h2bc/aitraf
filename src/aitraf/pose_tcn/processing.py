@@ -85,7 +85,6 @@ def _sample_pose_tensor(
     num_frames: int,
     sampling_dist: str,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    
     valid = [
         (
             np.asarray(detections[0], dtype=np.float32),
@@ -95,7 +94,7 @@ def _sample_pose_tensor(
         for detections, score_block, frame_idx in zip(keypoints, scores, frames)
         if detections.size
     ]
-    
+
     persons, person_scores, frame_numbers = zip(*valid)
 
     frame_indices = sample_frame_indices(
@@ -105,8 +104,13 @@ def _sample_pose_tensor(
         source=video_id,
     )
 
-    sampled_poses = [torch.as_tensor(persons[idx], dtype=torch.float32) for idx in frame_indices]
-    sampled_scores = [torch.as_tensor(person_scores[idx], dtype=torch.float32) for idx in frame_indices]
+    sampled_poses = [
+        torch.as_tensor(persons[idx], dtype=torch.float32) for idx in frame_indices
+    ]
+    sampled_scores = [
+        torch.as_tensor(person_scores[idx], dtype=torch.float32)
+        for idx in frame_indices
+    ]
     sampled_frames = [frame_numbers[idx] for idx in frame_indices]
 
     return (

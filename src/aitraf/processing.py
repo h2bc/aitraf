@@ -46,9 +46,7 @@ def sample_frame_indices(
     if sampling_dist == "gaussian_stochastic":
         indices = _gaussian_center_indices(total_frames, num_frames)
     elif sampling_dist == "uniform":
-        indices = (
-            torch.linspace(0, total_frames - 1, steps=num_frames).long().tolist()
-        )
+        indices = torch.linspace(0, total_frames - 1, steps=num_frames).long().tolist()
     else:
         raise ValueError(
             f"Unsupported sampling_dist '{sampling_dist}'. "
