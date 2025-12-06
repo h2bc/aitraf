@@ -22,12 +22,13 @@ class PoseAndBBoxExtractionConfig:
     poses_dir: Path | str
     boxes_dir: Path | str
     weights_path: Path | str
-    device: str = "cuda"
-    imgsz: int = 640
-    conf: float = 0.5
-    batch_size: int = 128
-    force: bool = False
-    limit: int | None = None
+    device: str
+    imgsz: int
+    conf: float
+    batch_size: int
+    max_det: int
+    force: bool
+    limit: int | None
 
     def __post_init__(self) -> None:
         self.clips_dir = Path(self.clips_dir)
@@ -193,6 +194,7 @@ def _predict_frames(
         device=config.device,
         imgsz=int(config.imgsz),
         conf=float(config.conf),
+        max_det=int(config.max_det),
         verbose=False,
     )
 

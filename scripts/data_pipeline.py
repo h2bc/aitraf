@@ -52,6 +52,8 @@ def run(cfg: DictConfig) -> None:
                 device=cfg.data.pose_and_bbox_extraction.device,
                 imgsz=cfg.data.pose_and_bbox_extraction.imgsz,
                 conf=cfg.data.pose_and_bbox_extraction.conf,
+                batch_size=cfg.data.pose_and_bbox_extraction.batch_size,
+                max_det=cfg.data.pose_and_bbox_extraction.max_det,
                 force=cfg.data.pose_and_bbox_extraction.force,
                 limit=cfg.data.pose_and_bbox_extraction.limit,
             )

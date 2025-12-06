@@ -21,6 +21,7 @@ pose_and_bbox_extraction:
   imgsz: 640
   conf: 0.5
   batch_size: 128
+  max_det: 1
   force: false
   limit: null
 tasks:
