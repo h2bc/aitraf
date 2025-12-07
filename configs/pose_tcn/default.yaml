@@ -18,7 +18,7 @@ training:
   kernel_size: 3
   dropout: 0.3
   max_epochs: 30
-  early_stopping_patience: 2
+  early_stopping_patience: 5
   output_dir: ${paths.runs_dir}/pose_tcn
   max_train_samples: null
 

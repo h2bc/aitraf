@@ -160,20 +160,24 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
 
         best_checkpoint = checkpoint_callback.best_model_path
 
-        if best_checkpoint:
-            mlflow.log_artifact(best_checkpoint, artifact_path="checkpoints")
-
-            exported_model = TCNClassifier.load_from_checkpoint(best_checkpoint)
-            exported_model = exported_model.cpu().eval()
-            sample_input = first_batch["inputs"][:1].cpu().numpy().astype("float32")
-
-            mlflow.pytorch.log_model(
-                exported_model,
-                name="pose_tcn_model",
-                input_example=sample_input,
+        if not best_checkpoint:
+            raise RuntimeError(
+                "Checkpoint was not saved; unable to log model to MLflow."
             )
 
-        return mlflow_logger.run_id
+        mlflow.log_artifact(best_checkpoint, artifact_path="checkpoints")
+
+        exported_model = TCNClassifier.load_from_checkpoint(best_checkpoint)
+        exported_model = exported_model.cpu().eval()
+        sample_input = first_batch["inputs"][:1].cpu().numpy().astype("float32")
+
+        model_info = mlflow.pytorch.log_model(
+            exported_model,
+            name="pose_tcn_model",
+            input_example=sample_input,
+        )
+
+        return model_info.model_uri
 
 
 __all__ = ["PoseTCNTrainingConfig", "run_training"]
