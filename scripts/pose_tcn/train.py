@@ -16,8 +16,8 @@ def run(cfg: DictConfig) -> None:
     training_cfg = PoseTCNTrainingConfig(
         manifests_dir=cfg.pose_tcn.manifests_dir,
         poses_dir=cfg.pose_tcn.poses_dir,
-        batch_size=cfg.pose_tcn.training.batch_size,
-        num_workers=cfg.pose_tcn.training.num_workers,
+        batch_size=cfg.pose_tcn.batch_size,
+        num_workers=cfg.pose_tcn.num_workers,
         sample_frames=cfg.pose_tcn.sample_frames,
         sampling_dist=cfg.pose_tcn.sampling_dist,
         learning_rate=cfg.pose_tcn.training.learning_rate,

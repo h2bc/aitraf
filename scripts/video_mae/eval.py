@@ -12,14 +12,16 @@ from aitraf.video_mae.evaluation import VideoMAEEvalConfig, run_evaluation
 def run(cfg: DictConfig) -> None:
     load_dotenv()
 
-    if not cfg.video_mae.evaluation.model_uri:
+    model_id = cfg.video_mae.evaluation.model_id
+
+    if not model_id:
         raise ValueError(
-            "evaluation.model_uri must be set to a valid MLflow model URI."
+            "video_mae.evaluation.model_uri must be set to a valid MLflow model URI."
         )
 
     eval_cfg = VideoMAEEvalConfig(
         backbone=cfg.video_mae.backbone,
-        model_uri=cfg.video_mae.evaluation.model_uri,
+        model_uri=f"models:/{model_id}",
         manifests_dir=cfg.video_mae.manifests_dir,
         clips_dir=Path(cfg.paths.data_dir) / "clips",
         batch_size=cfg.video_mae.batch_size,
@@ -27,9 +29,10 @@ def run(cfg: DictConfig) -> None:
         sample_frames=cfg.video_mae.sample_frames,
         sampling_dist=cfg.video_mae.sampling_dist,
         device=cfg.video_mae.device,
-        output_dir=cfg.video_mae.evaluation.output_dir,
+        output_dir=cfg.video_mae.training.output_dir,
         run_name=cfg.video_mae.evaluation.run_name,
         experiment_name=cfg.video_mae.experiment_name,
+        top_k_worst=cfg.video_mae.evaluation.top_k_worst,
     )
 
     run_evaluation(eval_cfg)

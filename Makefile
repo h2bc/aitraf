@@ -2,7 +2,7 @@ PYTHON ?= uv run python
 RUFF ?= uv run ruff
 JUPYTER ?= uv run jupyter notebook
 
-.PHONY: lint format data jupyter train-video-mae eval-video-mae train-eval-video-mae train-pose-tcn
+.PHONY: lint format data jupyter train-video-mae eval-video-mae train-eval-video-mae train-pose-tcn eval-pose-tcn
 
 lint:
 	$(RUFF) check .
@@ -27,3 +27,6 @@ train-eval-video-mae:
 
 train-pose-tcn:
 	$(PYTHON) scripts/pose_tcn/train.py
+
+eval-pose-tcn:
+	$(PYTHON) scripts/pose_tcn/eval.py

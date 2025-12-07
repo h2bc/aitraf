@@ -42,6 +42,7 @@ class VideoMAEEvalConfig:
     run_name: str
     experiment_name: str
     sampling_dist: str
+    top_k_worst: int
 
     def __post_init__(self) -> None:
         self.manifests_dir = Path(self.manifests_dir)
@@ -129,9 +130,9 @@ def run_evaluation(config: VideoMAEEvalConfig):
         worst_misses = get_top_k_worst_misses(
             pred_logits,
             actual_ids,
-            eval_dataset,
+            eval_dataset.to_pandas(),
             id2label,
-            top_k=5,
+            top_k=config.top_k_worst,
         )
 
         mlflow.log_table(worst_misses, "worst_misses.json")

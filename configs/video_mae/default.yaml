@@ -1,13 +1,15 @@
+experiment_name: aitraf_video_mae
+run_name: default
+
 backbone: MCG-NJU/videomae-base
 manifests_dir: ${paths.manifests_dir}
-experiment_name: aitraf_video_mae
+model_cache_dir: ${paths.models_dir}/video_mae_cache
+
 sample_frames: 16
 sampling_dist: gaussian_stochastic
 device: cuda
 batch_size: 4
 num_workers: 4
-run_name: default
-model_cache_dir: ${paths.models_dir}/video_mae_cache
 
 training:
   freeze_backbone: False
@@ -15,9 +17,9 @@ training:
   epochs: 10
   early_stopping_patience: 2
   max_train_samples: null
-  output_dir: ${paths.project_root}/runs/video_mae_train
+  output_dir: ${paths.runs_dir}/video_mae
 
 evaluation:
   run_name: eval_${..run_name}
-  model_uri: null # models:/model_id
-  output_dir: ${paths.project_root}/runs/video_mae_eval
+  model_id: null
+  top_k_worst: 5

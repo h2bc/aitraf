@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import pandas as pd
 import mlflow
 import mlflow.pytorch
 from mlflow.data import from_pandas
@@ -12,7 +13,6 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import MLFlowLogger
 from torch.utils.data import DataLoader, Subset
-import pandas as pd
 
 from aitraf.pose_tcn.data import PoseTCNDataset
 from aitraf.pose_tcn.model import TCNClassifier

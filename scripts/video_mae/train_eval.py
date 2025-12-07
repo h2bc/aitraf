@@ -43,7 +43,7 @@ def run(cfg: DictConfig) -> None:
         sample_frames=cfg.video_mae.sample_frames,
         sampling_dist=cfg.video_mae.sampling_dist,
         device=cfg.video_mae.device,
-        output_dir=cfg.video_mae.evaluation.output_dir,
+        output_dir=cfg.video_mae.training.output_dir,
         run_name=cfg.video_mae.evaluation.run_name,
         experiment_name=cfg.video_mae.experiment_name,
     )

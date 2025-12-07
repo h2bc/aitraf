@@ -130,13 +130,13 @@ def get_per_class_f1_figure(
 def get_top_k_worst_misses(
     pred_logits,
     actual_ids,
-    eval_dataset,
+    examples_df: pd.DataFrame,
     id2label: dict[str, str],
     top_k: int = 5,
 ) -> pd.DataFrame:
     """Return metadata describing the highest-confidence misclassifications."""
 
-    df = eval_dataset.to_pandas()
+    df = examples_df.copy()
     df["pred_id"] = compute_pred_ids(pred_logits)
     df["pred_confidence"] = compute_pred_confidences(pred_logits)
     df["pred_trick"] = df["pred_id"].map(lambda idx: id2label[str(idx)])

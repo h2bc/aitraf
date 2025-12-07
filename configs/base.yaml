@@ -5,6 +5,7 @@ paths:
   poses_dir: ${paths.data_dir}/poses
   boxes_dir: ${paths.data_dir}/boxes
   models_dir: ${paths.project_root}/models
+  runs_dir: ${paths.project_root}/runs
 
 hydra:
   run:
