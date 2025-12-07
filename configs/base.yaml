@@ -9,4 +9,4 @@ paths:
 
 hydra:
   run:
-    dir: ${paths.data_dir}/hydra/${now:%Y%m%d-%H%M%S}
+    dir: ${paths.runs_dir}/hydra/${now:%Y%m%d-%H%M%S}
