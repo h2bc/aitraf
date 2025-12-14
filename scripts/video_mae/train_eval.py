@@ -29,6 +29,7 @@ def run(cfg: DictConfig) -> None:
         freeze_backbone=cfg.video_mae.training.freeze_backbone,
         model_cache_dir=cfg.video_mae.model_cache_dir,
         max_train_samples=cfg.video_mae.training.max_train_samples,
+        early_stopping_patience=cfg.video_mae.training.early_stopping_patience,
     )
 
     model_uri = run_training(training_cfg)
@@ -46,6 +47,7 @@ def run(cfg: DictConfig) -> None:
         output_dir=cfg.video_mae.training.output_dir,
         run_name=cfg.video_mae.evaluation.run_name,
         experiment_name=cfg.video_mae.experiment_name,
+        top_k_worst=cfg.video_mae.evaluation.top_k_worst,
     )
 
     run_evaluation(eval_cfg)
