@@ -9,7 +9,7 @@ from typing import Any, Sequence
 import numpy as np
 from torch.utils.data import Dataset
 
-from aitraf.data import schema
+from aitraf.data_ops import schema
 from torch.utils.data import Subset
 
 

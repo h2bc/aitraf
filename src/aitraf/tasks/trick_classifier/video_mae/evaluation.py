@@ -13,7 +13,7 @@ from transformers import (
     Trainer,
 )
 
-from aitraf.video_mae.utils import build_collate
+from aitraf.processing.video_mae import build_collate
 from aitraf.processing import load_target_label_mappings
 from aitraf.metrics import (
     build_compute_metrics,

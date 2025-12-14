@@ -8,7 +8,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from label_studio_sdk import LabelStudio
 
-from aitraf.data import schema
+from aitraf.data_ops import schema
 from aitraf.logging import logger
 
 

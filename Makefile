@@ -17,19 +17,19 @@ jupyter:
 	$(JUPYTER)
 
 train-video-mae:
-	$(PYTHON) scripts/video_mae/train.py
+	$(PYTHON) scripts/trick_classifier/video_mae/train.py
 
 eval-video-mae:
-	$(PYTHON) scripts/video_mae/eval.py
+	$(PYTHON) scripts/trick_classifier/video_mae/eval.py
 
 train-eval-video-mae:
-	$(PYTHON) scripts/video_mae/train_eval.py
+	$(PYTHON) scripts/trick_classifier/video_mae/train_eval.py
 
 train-pose-tcn:
-	$(PYTHON) scripts/pose_tcn/train.py
+	$(PYTHON) scripts/trick_classifier/pose_tcn/train.py
 
 eval-pose-tcn:
-	$(PYTHON) scripts/pose_tcn/eval.py
+	$(PYTHON) scripts/trick_classifier/pose_tcn/eval.py
 
 train-eval-pose-tcn:
-	$(PYTHON) scripts/pose_tcn/train_eval.py
+	$(PYTHON) scripts/trick_classifier/pose_tcn/train_eval.py

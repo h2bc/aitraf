@@ -23,9 +23,9 @@ from aitraf.metrics import (
     get_target_distribution_figure,
     get_top_k_worst_misses,
 )
-from aitraf.pose_tcn.data import PoseTCNDataset
-from aitraf.pose_tcn.model import TCNClassifier
-from aitraf.pose_tcn.processing import build_collate
+from aitraf.datasets.pose_tcn import PoseTCNDataset
+from aitraf.models.pose_tcn import TCNClassifier
+from aitraf.processing.pose_tcn import build_collate
 from aitraf.processing import load_target_label_mappings
 
 

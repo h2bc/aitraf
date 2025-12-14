@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from aitraf.data import schema
+from aitraf.data_ops import schema
 from aitraf.logging import logger
 
 

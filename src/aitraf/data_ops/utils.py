@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
-from aitraf.data import schema
+from aitraf.data_ops import schema
 
 
 def strip_clips_prefix(path: Path) -> Path:

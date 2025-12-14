@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
 from aitraf.logging import logger
-from aitraf.data.utils import strip_clips_prefix, video_paths_from_labels
+from aitraf.data_ops.utils import strip_clips_prefix, video_paths_from_labels
 
 
 @dataclass

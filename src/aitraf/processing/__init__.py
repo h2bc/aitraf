@@ -8,7 +8,7 @@ from typing import List
 
 import torch
 
-from aitraf.data import schema
+from aitraf.data_ops import schema
 
 
 def load_target_label_mappings(

@@ -3,11 +3,11 @@
 from hydra import main
 from omegaconf import DictConfig
 from dotenv import load_dotenv
-from aitraf.data.download_labels import LabelStudioExportConfig, download_labels
-from aitraf.data.create_manifests import ManifestBuildConfig, create_manifests
-from aitraf.data.download_clips import ClipDownloadConfig, download_clips
+from aitraf.data_ops.download_labels import LabelStudioExportConfig, download_labels
+from aitraf.data_ops.create_manifests import ManifestBuildConfig, create_manifests
+from aitraf.data_ops.download_clips import ClipDownloadConfig, download_clips
 from aitraf.logging import setup_logging, heading
-from aitraf.data.pose_and_bbox_extraction import (
+from aitraf.data_ops.pose_and_bbox_extraction import (
     PoseAndBBoxExtractionConfig,
     pose_and_bbox_extraction,
 )

@@ -1,14 +1,15 @@
 """Helpers for turning a manifest row into VideoMAE-ready tensors."""
 
+from functools import reduce
 from pathlib import Path
-from typing import Any, List
+from typing import Any, Callable, List
 
 import torch
 from torchcodec.decoders import VideoDecoder
 from transformers import VideoMAEImageProcessor
 from aitraf.utils import get_video_rotation_deg
 
-from aitraf.data import schema
+from aitraf.data_ops import schema
 from aitraf.processing import sample_frame_indices
 import kornia
 
@@ -40,6 +41,39 @@ def process_clip(
         "pixel_values": processed_ts["pixel_values"][0],
         "labels": torch.tensor(label2id[label]),
     }
+
+
+def build_collate(
+    processor: VideoMAEImageProcessor,
+    clips_dir: Path | str,
+    label2id: dict[str, int],
+    sample_frames: int,
+    sampling_dist: str,
+) -> Callable[[list[dict[str, Any]]], dict[str, torch.Tensor]]:
+    """Create a collate_fn consistent across training and eval."""
+
+    def _collate(batch: list[dict[str, Any]]) -> dict[str, torch.Tensor]:
+        processed_batch = [
+            process_clip(
+                row,
+                processor,
+                clips_dir,
+                label2id,
+                sample_frames,
+                sampling_dist,
+            )
+            for row in batch
+        ]
+
+        pivot = reduce(
+            lambda acc, x: {k: acc.get(k, []) + [x[k]] for k in x},
+            processed_batch,
+            {},
+        )
+
+        return {k: torch.stack(v) for k, v in pivot.items()}
+
+    return _collate
 
 
 def _rotate_frames(frames: List[torch.Tensor], rotation_deg: int) -> List[torch.Tensor]:

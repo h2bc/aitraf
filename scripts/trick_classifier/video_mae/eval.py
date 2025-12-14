@@ -1,20 +1,27 @@
-"""CLI entrypoint for VideoMAE training experiments."""
+"""CLI entrypoint for VideoMAE evaluation."""
 
 from hydra import main
 from omegaconf import DictConfig
-
 from pathlib import Path
 from dotenv import load_dotenv
 
-from aitraf.video_mae.training import VideoMAETrainingConfig, run_training
+from aitraf.tasks.trick_classifier.video_mae import VideoMAEEvalConfig, run_evaluation
 
 
-@main(config_path="../../configs", config_name="video_mae", version_base=None)
+@main(config_path="../../../configs/trick_classifier", config_name="video_mae", version_base=None)
 def run(cfg: DictConfig) -> None:
     load_dotenv()
 
-    training_cfg = VideoMAETrainingConfig(
+    model_id = cfg.video_mae.evaluation.model_id
+
+    if not model_id:
+        raise ValueError(
+            "video_mae.evaluation.model_uri must be set to a valid MLflow model URI."
+        )
+
+    eval_cfg = VideoMAEEvalConfig(
         backbone=cfg.video_mae.backbone,
+        model_uri=f"models:/{model_id}",
         manifests_dir=cfg.video_mae.manifests_dir,
         clips_dir=Path(cfg.paths.data_dir) / "clips",
         batch_size=cfg.video_mae.batch_size,
@@ -23,16 +30,12 @@ def run(cfg: DictConfig) -> None:
         sampling_dist=cfg.video_mae.sampling_dist,
         device=cfg.video_mae.device,
         output_dir=cfg.video_mae.training.output_dir,
-        epochs=cfg.video_mae.training.epochs,
+        run_name=cfg.video_mae.evaluation.run_name,
         experiment_name=cfg.video_mae.experiment_name,
-        run_name=cfg.video_mae.training.run_name,
-        freeze_backbone=cfg.video_mae.training.freeze_backbone,
-        model_cache_dir=cfg.video_mae.model_cache_dir,
-        max_train_samples=cfg.video_mae.training.max_train_samples,
-        early_stopping_patience=cfg.video_mae.training.early_stopping_patience,
+        top_k_worst=cfg.video_mae.evaluation.top_k_worst,
     )
 
-    run_training(training_cfg)
+    run_evaluation(eval_cfg)
 
 
 if __name__ == "__main__":
