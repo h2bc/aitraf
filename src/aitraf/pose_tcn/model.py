@@ -61,22 +61,18 @@ class TemporalBlock(nn.Module):
         return out + residual
 
 
-class TCNClassifier(pl.LightningModule):
-    """Temporal convolutional classifier over pose sequences."""
+class TCNBackbone(nn.Module):
+    """Shared temporal feature extractor."""
 
     def __init__(
         self,
         feature_dim: int,
-        num_classes: int,
-        learning_rate: float,
-        hidden_dim: int = 128,
-        num_layers: int = 3,
-        kernel_size: int = 3,
-        dropout: float = 0.1,
+        hidden_dim: int,
+        num_layers: int,
+        kernel_size: int,
+        dropout: float,
     ) -> None:
         super().__init__()
-        self.save_hyperparameters()
-
         self.input_proj = nn.Conv1d(feature_dim, hidden_dim, kernel_size=1)
 
         layers = []
@@ -95,20 +91,62 @@ class TCNClassifier(pl.LightningModule):
             in_channels = hidden_dim
 
         self.tcn = nn.Sequential(*layers)
-        self.head = nn.Sequential(
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # x: (batch, seq_len, feature_dim)
+        x = x.transpose(1, 2)  # -> (batch, feature_dim, seq_len)
+        x = self.input_proj(x)  # (batch, hidden_dim, seq_len)
+        return self.tcn(x)
+
+
+class TCNClassificationHead(nn.Module):
+    """Pooling + classification head."""
+
+    def __init__(self, hidden_dim: int, num_classes: int, dropout: float) -> None:
+        super().__init__()
+        self.net = nn.Sequential(
             nn.AdaptiveAvgPool1d(1),
             nn.Flatten(),
             nn.Dropout(dropout),
             nn.Linear(hidden_dim, num_classes),
         )
 
+    def forward(self, features: torch.Tensor) -> torch.Tensor:
+        return self.net(features)
+
+
+class TCNClassifier(pl.LightningModule):
+    """Temporal convolutional classifier over pose sequences."""
+
+    def __init__(
+        self,
+        feature_dim: int,
+        num_classes: int,
+        learning_rate: float,
+        hidden_dim: int = 128,
+        num_layers: int = 3,
+        kernel_size: int = 3,
+        dropout: float = 0.1,
+    ) -> None:
+        super().__init__()
+        self.save_hyperparameters()
+
+        self.backbone = TCNBackbone(
+            feature_dim=feature_dim,
+            hidden_dim=hidden_dim,
+            num_layers=num_layers,
+            kernel_size=kernel_size,
+            dropout=dropout,
+        )
+        self.head = TCNClassificationHead(
+            hidden_dim=hidden_dim,
+            num_classes=num_classes,
+            dropout=dropout,
+        )
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x: (batch, seq_len, feature_dim)
-        x = x.transpose(1, 2)  # -> (batch, feature_dim, seq_len)
-        x = self.input_proj(x)  # (batch, hidden_dim, seq_len)
-        x = self.tcn(x)
-        logits = self.head(x)
-        return logits
+        features = self.backbone(x)
+        return self.head(features)
 
     def training_step(self, batch, batch_idx):
         logits = self(batch["inputs"])
@@ -129,4 +167,4 @@ class TCNClassifier(pl.LightningModule):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
 
 
-__all__ = ["TCNClassifier"]
+__all__ = ["TCNBackbone", "TCNClassificationHead", "TCNClassifier"]
