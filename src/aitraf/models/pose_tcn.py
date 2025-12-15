@@ -115,6 +115,22 @@ class TCNClassificationHead(nn.Module):
         return self.net(features)
 
 
+class TCNRegressionHead(nn.Module):
+    """Pooling + regression head (single target)."""
+
+    def __init__(self, hidden_dim: int, dropout: float) -> None:
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.AdaptiveAvgPool1d(1),
+            nn.Flatten(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, 1),
+        )
+
+    def forward(self, features: torch.Tensor) -> torch.Tensor:
+        return self.net(features)
+
+
 class TCNClassifier(pl.LightningModule):
     """Temporal convolutional classifier over pose sequences."""
 
@@ -166,5 +182,61 @@ class TCNClassifier(pl.LightningModule):
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
 
+class TCNRegressor(pl.LightningModule):
+    """Temporal convolutional regressor for pose sequences."""
 
-__all__ = ["TCNBackbone", "TCNClassificationHead", "TCNClassifier"]
+    def __init__(
+        self,
+        feature_dim: int,
+        learning_rate: float,
+        hidden_dim: int = 128,
+        num_layers: int = 3,
+        kernel_size: int = 3,
+        dropout: float = 0.1,
+    ) -> None:
+        super().__init__()
+        self.save_hyperparameters()
+
+        self.backbone = TCNBackbone(
+            feature_dim=feature_dim,
+            hidden_dim=hidden_dim,
+            num_layers=num_layers,
+            kernel_size=kernel_size,
+            dropout=dropout,
+        )
+        self.head = TCNRegressionHead(
+            hidden_dim=hidden_dim,
+            dropout=dropout,
+        )
+        self.loss_fn = nn.MSELoss()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        features = self.backbone(x)
+        return self.head(features)
+
+    def training_step(self, batch, batch_idx):
+        preds = self(batch["inputs"])
+        targets = batch["targets"].float()
+        loss = self.loss_fn(preds, targets)
+        self.log("train_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        preds = self(batch["inputs"])
+        targets = batch["targets"].float()
+        loss = self.loss_fn(preds, targets)
+        mae = torch.nn.functional.l1_loss(preds, targets)
+        self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
+        self.log("val_mae", mae, prog_bar=True, on_step=False, on_epoch=True)
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
+
+
+__all__ = [
+    "TCNBackbone",
+    "TCNClassificationHead",
+    "TCNClassifier",
+    "TCNRegressionHead",
+    "TCNRegressor",
+]
