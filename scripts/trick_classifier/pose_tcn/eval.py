@@ -7,7 +7,7 @@ from omegaconf import DictConfig
 from aitraf.tasks.trick_classifier.pose_tcn import PoseTCNEvalConfig, run_evaluation
 
 
-@main(config_path="../../../configs/trick_classifier", config_name="pose_tcn", version_base=None)
+@main(config_path="../../../configs", config_name="pose_tcn", version_base=None)
 def run(cfg: DictConfig) -> None:
     load_dotenv()
 

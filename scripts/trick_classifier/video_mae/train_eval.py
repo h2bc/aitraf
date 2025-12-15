@@ -13,7 +13,7 @@ from aitraf.tasks.trick_classifier.video_mae import (
 )
 
 
-@main(config_path="../../../configs/trick_classifier", config_name="video_mae", version_base=None)
+@main(config_path="../../../configs", config_name="video_mae", version_base=None)
 def run(cfg: DictConfig) -> None:
     load_dotenv()
 
