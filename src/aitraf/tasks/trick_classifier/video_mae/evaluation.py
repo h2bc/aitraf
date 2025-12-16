@@ -13,10 +13,8 @@ from transformers import (
     Trainer,
 )
 
-from aitraf.processing.video_mae import build_collate
-from aitraf.processing import load_target_label_mappings
 from aitraf.metrics import (
-    build_compute_metrics,
+    build_classification_metrics,
     get_confusion_matrix_figure,
     get_target_distribution_figure,
     get_per_class_f1_figure,
@@ -24,6 +22,8 @@ from aitraf.metrics import (
     compute_dummy_pred_ids,
     get_top_k_worst_misses,
 )
+from aitraf.processing.video_mae import build_collate
+from aitraf.processing import load_target_label_mappings
 
 
 @dataclass
@@ -70,7 +70,7 @@ def run_evaluation(config: VideoMAEEvalConfig):
     model = components["model"].to(config.device)
     processor = components["image_processor"]
 
-    compute_metrics = build_compute_metrics()
+    compute_metrics = build_classification_metrics()
 
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),

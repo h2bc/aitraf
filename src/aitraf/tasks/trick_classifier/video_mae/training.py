@@ -16,7 +16,7 @@ from transformers import (
 
 from aitraf.processing.video_mae import build_collate, process_clip
 from aitraf.processing import load_target_label_mappings
-from aitraf.metrics import build_compute_metrics, compute_pred_ids
+from aitraf.metrics import build_classification_metrics, compute_pred_ids
 
 from datasets import load_dataset
 
@@ -95,7 +95,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
         for param in model.base_model.parameters():
             param.requires_grad = False
 
-    compute_metrics = build_compute_metrics()
+    compute_metrics = build_classification_metrics()
 
     def trainer_compute_metrics(prediction: EvalPrediction) -> dict[str, float]:
         pred_logits, actual_ids = prediction

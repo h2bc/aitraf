@@ -14,8 +14,9 @@ import torch
 from mlflow.data import from_pandas
 from torch.utils.data import DataLoader
 
+from aitraf.datasets.pose_tcn import PoseTCNDataset
 from aitraf.metrics import (
-    build_compute_metrics,
+    build_classification_metrics,
     compute_pred_ids,
     compute_dummy_pred_ids,
     get_confusion_matrix_figure,
@@ -23,7 +24,6 @@ from aitraf.metrics import (
     get_target_distribution_figure,
     get_top_k_worst_misses,
 )
-from aitraf.datasets.pose_tcn import PoseTCNDataset
 from aitraf.models.pose_tcn import TCNClassifier
 from aitraf.processing.pose_tcn import build_collate
 from aitraf.processing import load_target_label_mappings
@@ -78,7 +78,7 @@ def run_evaluation(config: PoseTCNEvalConfig) -> None:
     model = model.to(config.device)
     model.eval()
 
-    compute_metrics = build_compute_metrics()
+    compute_metrics = build_classification_metrics()
 
     logits_list: list[np.ndarray] = []
     labels_list: list[np.ndarray] = []
