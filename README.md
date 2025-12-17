@@ -1,45 +1,42 @@
 # AITRAF: Aggressive Inline Trick Recognition and Feedback
 
-TODO
+Model training and evaluation stack for inline skating trick recognition.
 
-## Prerequisities
+## Prerequisites
 
-- Nvidia GPU with drivers supporting CUDA 12.6 or higher
-- Docker
+- Nvidia GPU with drivers for CUDA 12.6+
+- Docker (used by the dev container)
+- Access to project infra: S3 bucket `aitraf`, Label Studio, and MLflow (see links below)
 
+## Environment Setup
 
+1. Start the dev container (VS Code `Reopen in Container` or `devcontainer up`).
+2. Copy `.env.example` to `.env` and fill in the Label Studio + AWS credentials.
+3. Install task runner dependencies once with `uv sync`
 
-## Installation / Setup
+## Developer Tasks
 
-1. Start the `dev-container`
-2. Copy `.env.example` as  `.env` and set environment variables
-3. Now you can run notebooks & finetuning pipelines
+Run commands via [Task](https://taskfile.dev); everything executes inside the uv-managed virtualenv.
 
-## Code Quality
+| Command        | Description |
+|----------------|-------------|
+| `task data`    | Executes the Hydra-managed data pipeline (see below). |
+| `task lint`    | Runs Ruff checks across the repo. |
+| `task format`  | Applies Ruff formatting fixes. |
 
-- `make lint` – run Ruff checks
-- `make format` – apply Ruff formatting
+### Data pipeline script
 
-## Pipelines
+`task data` runs `scripts/data_pipeline.py`, which orchestrates the entire data prep flow via Hydra:
 
-- `make data` – execute the Hydra data pipeline entrypoint
-- `make train-video-mae` – execute Hydra finetuning pipeline
-- `make eval-video-mae` – run evaluation for an existing model URI
-- `make train-eval-video-mae` – run training then evaluation in one go
+1. Download the latest Label Studio annotations as `data/labels.jsonl`.
+2. Optionally sync referenced clips into `data/clips/`.
+3. Optionally perform pose + bounding-box extraction with the configured Ultralytics weights.
+4. Build train/val/test manifests plus a shared categorical vocabulary under `data/manifests/`.
 
-## Jupyter Notebook
+Toggle each stage in `configs_v2/data_ops.yaml` (e.g., disable clip downloads when cache is warm).
 
-- `make jupyter` – launch a notebook server inside the uv-managed env
+## Project Integrations
 
-## Project integrations
-
-- **S3 storage**
-  - https://storage.h2bcweb.com
-  - bucket: aitraf
-- **Label Studio**
-  - https://label.h2bcweb.com/
-- **ML flow**
-  - https://mlops.h2bcweb.com/
-
-  
-  
+- **S3 storage**: https://storage.h2bcweb.com (bucket `aitraf`)
+- **Label Studio**: https://label.h2bcweb.com/
+- **MLflow**: https://mlops.h2bcweb.com/
