@@ -16,4 +16,9 @@ tasks:
     desc: Run the data ops pipeline
     cmds:
       - "uv run python scripts/data_pipeline.py {{.CLI_ARGS}}"
+
+  train:
+    desc: Run the Hydra-managed training pipeline
+    cmds:
+      - "uv run python scripts/train.py {{.CLI_ARGS}}"
   
