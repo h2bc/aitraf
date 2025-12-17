@@ -2,10 +2,9 @@ defaults:
 - base
 - model: video_mae
 - task: trick_classification
-- experiment
 - _self_
 
-
-run_name: train_${run_name}
+experiment_name: aitraf_${task.name}
+run_name: train_${model.name}
 output_dir: ${paths.runs_dir}/${run_name}
 max_samples: null
