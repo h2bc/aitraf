@@ -70,6 +70,7 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
     train_dataset = PoseTCNDataset(
         manifests_dir=config.manifests_dir,
         poses_dir=config.poses_dir,
+        target_column=config.target_col,
         split="train",
     )
 
@@ -80,6 +81,7 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
     val_dataset = PoseTCNDataset(
         manifests_dir=config.manifests_dir,
         poses_dir=config.poses_dir,
+        target_column=config.target_col,
         split="val",
     )
 
