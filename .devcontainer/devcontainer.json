@@ -1,9 +1,6 @@
 {
   "name": "aitraf-dev",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
-  },
+  "image": "nvcr.io/nvidia/cuda:12.6.0-runtime-ubuntu24.04",
   "runArgs": [
     "--gpus=all",
     "--shm-size=2g"
@@ -11,9 +8,16 @@
   "workspaceFolder": "/workspace",
   "mounts": [
     "type=bind,source=${localWorkspaceFolder},target=/workspace",
-    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,readonly,type=bind"
+    "type=bind,source=${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,readonly"
   ],
-  "postCreateCommand": "uv sync --frozen",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "username": "ubuntu"
+    },
+    "ghcr.io/devcontainers-extra/features/ffmpeg-apt-get:1": {},
+    "ghcr.io/devcontainer-community/devcontainer-features/astral.sh-uv:1": {},
+    "ghcr.io/eitsupi/devcontainer-features/go-task:1": {}
+  },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -21,8 +25,7 @@
         "ms-toolsai.jupyter",
         "charliermarsh.ruff",
         "openai.chatgpt",
-        "tamasfe.even-better-toml",
-        "ms-vscode.makefile-tools"
+        "tamasfe.even-better-toml"
       ]
     }
   },

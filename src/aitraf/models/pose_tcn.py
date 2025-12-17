@@ -182,6 +182,7 @@ class TCNClassifier(pl.LightningModule):
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
 
+
 class TCNRegressor(pl.LightningModule):
     """Temporal convolutional regressor for pose sequences."""
 

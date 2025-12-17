@@ -56,8 +56,25 @@ def create_manifests(config: ManifestBuildConfig) -> None:
 
     labels_df = pd.read_json(config.input_path, orient="records", lines=True)
 
+    built_any = False
     for task in config.tasks:
+        target_column = task.target_column
+        if target_column not in labels_df.columns:
+            logger.warning(
+                "Skipping task '{}': missing target column '{}' in labels",
+                task.name,
+                target_column,
+            )
+            continue
         _build_task_manifests(labels_df, config, task)
+        built_any = True
+
+    if not built_any:
+        raise RuntimeError(
+            "No manifests were created because none of the requested target columns exist in the labels."
+        )
+
+    _write_vocab(labels_df, config.output_dir, force=config.force)
 
 
 def _build_task_manifests(
@@ -70,7 +87,7 @@ def _build_task_manifests(
     task_output_dir.mkdir(parents=True, exist_ok=True)
 
     if not config.force:
-        for name in ("train.jsonl", "val.jsonl", "test.jsonl", "vocab.json"):
+        for name in ("train.jsonl", "val.jsonl", "test.jsonl"):
             out_path = task_output_dir / name
             if out_path.exists():
                 raise RuntimeError(
@@ -118,14 +135,6 @@ def _build_task_manifests(
         out_path = task_output_dir / f"{name}.jsonl"
         _write_manifest(split_df, out_path, target_column)
         logger.info("Task '{}' wrote {} ({} rows)", task.name, out_path, len(split_df))
-
-    vocab_path = task_output_dir / "vocab.json"
-    vocab_path.write_text(
-        json.dumps(_build_vocab_metadata(filtered_df), ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
-    logger.info("Task '{}' wrote vocab to {}", task.name, vocab_path)
-
 
 def _validate_required_columns(df: pd.DataFrame, *columns: str) -> None:
     missing = [c for c in columns if c not in df.columns]
@@ -203,3 +212,24 @@ def _build_vocab_metadata(
             "id2label": {str(idx): label for idx, label in enumerate(labels)},
         }
     return payload
+
+
+def _write_vocab(
+    labels_df: pd.DataFrame,
+    output_dir: Path | str,
+    *,
+    force: bool,
+) -> None:
+    vocab_payload = _build_vocab_metadata(labels_df)
+    vocab_path = (Path(output_dir) / "vocab.json").resolve()
+    if vocab_path.exists() and not force:
+        raise RuntimeError(
+            f"Vocabulary file already exists at {vocab_path}. Set force=true to overwrite."
+        )
+
+    vocab_path.parent.mkdir(parents=True, exist_ok=True)
+    vocab_path.write_text(
+        json.dumps(vocab_payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    logger.info("Wrote categorical vocab to {}", vocab_path)

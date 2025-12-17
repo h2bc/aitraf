@@ -21,59 +21,60 @@ from aitraf.data_ops.pose_and_bbox_extraction import (
 def run(cfg: DictConfig) -> None:
     load_dotenv()
     setup_logging()
+    data_cfg = cfg.get("data_ops", cfg)
 
-    if cfg.data_ops.download_labels.enabled:
+    if data_cfg.download_labels.enabled:
         heading("Download Labels")
         download_labels(
             LabelStudioExportConfig(
-                output_path=cfg.data_ops.download_labels.output_path,
-                force=cfg.data_ops.download_labels.force,
+                output_path=data_cfg.download_labels.output_path,
+                force=data_cfg.download_labels.force,
             )
         )
     else:
         heading("Skip label download (disabled)")
 
-    if cfg.data_ops.download_clips.enabled:
+    if data_cfg.download_clips.enabled:
         heading("Download Clips")
         download_clips(
             ClipDownloadConfig(
-                labels_path=cfg.data_ops.download_clips.labels_path,
-                output_dir=cfg.data_ops.download_clips.output_dir,
-                force=cfg.data_ops.download_clips.force,
+                labels_path=data_cfg.download_clips.labels_path,
+                output_dir=data_cfg.download_clips.output_dir,
+                force=data_cfg.download_clips.force,
             )
         )
     else:
         heading("Skip clip download (disabled)")
 
-    if cfg.data_ops.pose_and_bbox_extraction.enabled:
+    if data_cfg.pose_and_bbox_extraction.enabled:
         heading("Pose + BBox Extraction")
         pose_and_bbox_extraction(
             PoseAndBBoxExtractionConfig(
-                clips_dir=cfg.data_ops.pose_and_bbox_extraction.clips_dir,
-                poses_dir=cfg.data_ops.pose_and_bbox_extraction.poses_dir,
-                boxes_dir=cfg.data_ops.pose_and_bbox_extraction.boxes_dir,
-                weights_path=cfg.data_ops.pose_and_bbox_extraction.weights_path,
-                device=cfg.data_ops.pose_and_bbox_extraction.device,
-                imgsz=cfg.data_ops.pose_and_bbox_extraction.imgsz,
-                conf=cfg.data_ops.pose_and_bbox_extraction.conf,
-                batch_size=cfg.data_ops.pose_and_bbox_extraction.batch_size,
-                max_det=cfg.data_ops.pose_and_bbox_extraction.max_det,
-                force=cfg.data_ops.pose_and_bbox_extraction.force,
-                limit=cfg.data_ops.pose_and_bbox_extraction.limit,
+                clips_dir=data_cfg.pose_and_bbox_extraction.clips_dir,
+                poses_dir=data_cfg.pose_and_bbox_extraction.poses_dir,
+                boxes_dir=data_cfg.pose_and_bbox_extraction.boxes_dir,
+                weights_path=data_cfg.pose_and_bbox_extraction.weights_path,
+                device=data_cfg.pose_and_bbox_extraction.device,
+                imgsz=data_cfg.pose_and_bbox_extraction.imgsz,
+                conf=data_cfg.pose_and_bbox_extraction.conf,
+                batch_size=data_cfg.pose_and_bbox_extraction.batch_size,
+                max_det=data_cfg.pose_and_bbox_extraction.max_det,
+                force=data_cfg.pose_and_bbox_extraction.force,
+                limit=data_cfg.pose_and_bbox_extraction.limit,
             )
         )
     else:
         heading("Skip pose/bbox extraction (disabled)")
 
-    if cfg.data_ops.create_manifests.enabled:
+    if data_cfg.create_manifests.enabled:
         heading("Build Manifests")
         create_manifests(
             ManifestBuildConfig(
-                input_path=cfg.data_ops.create_manifests.input_path,
-                output_dir=cfg.data_ops.create_manifests.output_dir,
-                val_ratio=cfg.data_ops.create_manifests.val_ratio,
-                test_ratio=cfg.data_ops.create_manifests.test_ratio,
-                force=cfg.data_ops.create_manifests.force,
+                input_path=data_cfg.create_manifests.input_path,
+                output_dir=data_cfg.create_manifests.output_dir,
+                val_ratio=data_cfg.create_manifests.val_ratio,
+                test_ratio=data_cfg.create_manifests.test_ratio,
+                force=data_cfg.create_manifests.force,
                 tasks=[
                     TaskConfig(
                         name=task_cfg.name,
@@ -82,7 +83,7 @@ def run(cfg: DictConfig) -> None:
                         task_type=task_cfg.type,
                         manifests_dir=task_cfg.manifests_dir,
                     )
-                    for task_cfg in cfg.data_ops.create_manifests.tasks.values()
+                    for task_cfg in data_cfg.create_manifests.tasks.values()
                 ],
             )
         )

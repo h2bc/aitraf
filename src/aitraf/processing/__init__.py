@@ -18,6 +18,8 @@ def load_target_label_mappings(
 
     manifests_dir = Path(manifests_dir)
     labels_path = manifests_dir / "vocab.json"
+    if not labels_path.exists():
+        raise FileNotFoundError(f"Vocabulary file not found: {labels_path}")
 
     with labels_path.open(encoding="utf-8") as fh:
         labels_config = json.load(fh)

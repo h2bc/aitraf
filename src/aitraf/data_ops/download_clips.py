@@ -37,7 +37,9 @@ def download_clips(config: ClipDownloadConfig) -> None:
     if not labels_path.exists():
         raise RuntimeError(f"Labels file not found: {labels_path}")
 
-    clip_uris = pd.read_json(labels_path, lines=True)[schema.LabelsSchema.input_col].astype(str)
+    clip_uris = pd.read_json(labels_path, lines=True)[
+        schema.LabelsSchema.input_col
+    ].astype(str)
     total_clips = len(clip_uris)
 
     output_dir = config.output_dir

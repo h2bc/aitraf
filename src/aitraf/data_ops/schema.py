@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Tuple, Dict, Type, FrozenSet
 from datetime import datetime
 
@@ -18,18 +18,20 @@ class LabelsSchema:
         "video",
     )
 
-    types: Dict[str, Type] = {
-        "annotation_id": int,
-        "annotator": int,
-        "created_at": datetime,
-        "id": int,
-        "key_foot": str,
-        "lead_time": float,
-        "person": str,
-        "trick": str,
-        "updated_at": datetime,
-        "video": str,
-    }
+    types: Dict[str, Type] = field(
+        default_factory=lambda: {
+            "annotation_id": int,
+            "annotator": int,
+            "created_at": datetime,
+            "id": int,
+            "key_foot": str,
+            "lead_time": float,
+            "person": str,
+            "trick": str,
+            "updated_at": datetime,
+            "video": str,
+        }
+    )
 
     input_col: str = "video"
 
@@ -45,14 +47,16 @@ class ManifestSchema:
         "score",
     )
 
-    types: Dict[str, Type] = {
-        "video_id": str,
-        "s3_path": str,
-        "trick": str,
-        "key_foot": str,
-        "person": str,
-        "score": float,
-    }
+    types: Dict[str, Type] = field(
+        default_factory=lambda: {
+            "video_id": str,
+            "s3_path": str,
+            "trick": str,
+            "key_foot": str,
+            "person": str,
+            "score": float,
+        }
+    )
 
     categorical: FrozenSet[str] = frozenset(
         {

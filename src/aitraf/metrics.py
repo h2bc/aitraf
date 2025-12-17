@@ -32,11 +32,15 @@ def compute_dummy_pred_ids(actual_ids: List[int]) -> List[int]:
     return np.full(len(actual_ids), most_common)
 
 
-def build_classification_metrics() -> Callable[[Sequence[int], Sequence[int]], dict[str, float]]:
+def build_classification_metrics() -> Callable[
+    [Sequence[int], Sequence[int]], dict[str, float]
+]:
     accuracy_metric = evaluate.load("accuracy")
     f1_metric = evaluate.load("f1")
 
-    def _compute_metrics(predictions: Sequence[int], targets: Sequence[int]) -> dict[str, float]:
+    def _compute_metrics(
+        predictions: Sequence[int], targets: Sequence[int]
+    ) -> dict[str, float]:
         acc = accuracy_metric.compute(
             predictions=predictions,
             references=targets,
@@ -56,12 +60,16 @@ def build_classification_metrics() -> Callable[[Sequence[int], Sequence[int]], d
     return _compute_metrics
 
 
-def build_regression_metrics() -> Callable[[Sequence[float], Sequence[float]], dict[str, float]]:
+def build_regression_metrics() -> Callable[
+    [Sequence[float], Sequence[float]], dict[str, float]
+]:
     mae_metric = evaluate.load("mae")
     rmse_metric = evaluate.load("rmse")
     r2_metric = evaluate.load("r_squared")
 
-    def _compute_metrics(predictions: Sequence[float], targets: Sequence[float]) -> dict[str, float]:
+    def _compute_metrics(
+        predictions: Sequence[float], targets: Sequence[float]
+    ) -> dict[str, float]:
         mae = mae_metric.compute(predictions=predictions, references=targets)["mae"]
         rmse = rmse_metric.compute(predictions=predictions, references=targets)["rmse"]
         r2 = r2_metric.compute(predictions=predictions, references=targets)["r_squared"]

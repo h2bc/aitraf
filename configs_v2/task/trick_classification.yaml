@@ -2,4 +2,4 @@ name: trick_classification
 type: classification
 target_column: trick
 stratify_by_target: true
-manifests_dir: ${paths.manifests_dir}/${name}
+manifests_dir: ${paths.manifests_dir}/${.name}
