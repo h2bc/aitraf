@@ -31,6 +31,8 @@ class LabelsSchema:
         "video": str,
     }
 
+    input_col: str = "video"
+
 
 @dataclass(frozen=True)
 class ManifestSchema:

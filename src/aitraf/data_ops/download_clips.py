@@ -10,7 +10,9 @@ from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
 from aitraf.logging import logger
-from aitraf.data_ops.utils import strip_clips_prefix, video_paths_from_labels
+from aitraf.data_ops.utils import strip_clips_prefix
+from aitraf.data_ops import schema
+import pandas as pd
 
 
 @dataclass
@@ -35,16 +37,11 @@ def download_clips(config: ClipDownloadConfig) -> None:
     if not labels_path.exists():
         raise RuntimeError(f"Labels file not found: {labels_path}")
 
-    clip_uris = video_paths_from_labels(labels_path, filter_prefix="s3://")
+    clip_uris = pd.read_json(labels_path, lines=True)[schema.LabelsSchema.input_col].astype(str)
     total_clips = len(clip_uris)
 
-    if not total_clips:
-        logger.info("No clip URIs found in {}", labels_path)
-        return
-
-    s3_client = _build_s3_client()
-
     output_dir = config.output_dir
+    s3_client = _build_s3_client()
     logger.info("Downloading {} clips into {}", total_clips, output_dir)
     success_count = 0
     failure_count = 0

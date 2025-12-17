@@ -4,7 +4,11 @@ from hydra import main
 from omegaconf import DictConfig
 from dotenv import load_dotenv
 from aitraf.data_ops.download_labels import LabelStudioExportConfig, download_labels
-from aitraf.data_ops.create_manifests import ManifestBuildConfig, create_manifests
+from aitraf.data_ops.create_manifests import (
+    ManifestBuildConfig,
+    TaskConfig,
+    create_manifests,
+)
 from aitraf.data_ops.download_clips import ClipDownloadConfig, download_clips
 from aitraf.logging import setup_logging, heading
 from aitraf.data_ops.pose_and_bbox_extraction import (
@@ -13,12 +17,12 @@ from aitraf.data_ops.pose_and_bbox_extraction import (
 )
 
 
-@main(config_path="../configs", config_name="data_ops", version_base=None)
+@main(config_path="../configs_v2", config_name="data_ops", version_base=None)
 def run(cfg: DictConfig) -> None:
     load_dotenv()
     setup_logging()
 
-    if cfg.data_ops.tasks.download_labels:
+    if cfg.data_ops.download_labels.enabled:
         heading("Download Labels")
         download_labels(
             LabelStudioExportConfig(
@@ -29,7 +33,7 @@ def run(cfg: DictConfig) -> None:
     else:
         heading("Skip label download (disabled)")
 
-    if cfg.data_ops.tasks.download_clips:
+    if cfg.data_ops.download_clips.enabled:
         heading("Download Clips")
         download_clips(
             ClipDownloadConfig(
@@ -41,7 +45,7 @@ def run(cfg: DictConfig) -> None:
     else:
         heading("Skip clip download (disabled)")
 
-    if cfg.data_ops.tasks.pose_and_bbox_extraction:
+    if cfg.data_ops.pose_and_bbox_extraction.enabled:
         heading("Pose + BBox Extraction")
         pose_and_bbox_extraction(
             PoseAndBBoxExtractionConfig(
@@ -61,7 +65,7 @@ def run(cfg: DictConfig) -> None:
     else:
         heading("Skip pose/bbox extraction (disabled)")
 
-    if cfg.data_ops.tasks.create_manifests:
+    if cfg.data_ops.create_manifests.enabled:
         heading("Build Manifests")
         create_manifests(
             ManifestBuildConfig(
@@ -69,8 +73,17 @@ def run(cfg: DictConfig) -> None:
                 output_dir=cfg.data_ops.create_manifests.output_dir,
                 val_ratio=cfg.data_ops.create_manifests.val_ratio,
                 test_ratio=cfg.data_ops.create_manifests.test_ratio,
-                seed=cfg.data_ops.create_manifests.seed,
                 force=cfg.data_ops.create_manifests.force,
+                tasks=[
+                    TaskConfig(
+                        name=task_cfg.name,
+                        target_column=task_cfg.target_column,
+                        stratify_by_target=task_cfg.stratify_by_target,
+                        task_type=task_cfg.type,
+                        manifests_dir=task_cfg.manifests_dir,
+                    )
+                    for task_cfg in cfg.data_ops.create_manifests.tasks.values()
+                ],
             )
         )
     else:

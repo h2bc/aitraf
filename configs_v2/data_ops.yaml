@@ -5,19 +5,28 @@ defaults:
   - _self_
 
 download_labels:
-  output_path: ${paths.data_dir}/labels.jsonl
+  enabled: true
   force: true
+  output_path: ${paths.data_dir}/labels.jsonl
+
 create_manifests:
+  enabled: true
+  force: true
   input_path: ${download_labels.output_path}
   output_dir: ${paths.manifests_dir}
   val_ratio: 0.1
   test_ratio: 0.1
-  force: true
+
 download_clips:
+  enabled: true
+  force: false
   labels_path: ${download_labels.output_path}
   output_dir: ${paths.data_dir}/clips
-  force: false
+
 pose_and_bbox_extraction:
+  enabled: true
+  force: false
+  limit: null
   clips_dir: ${download_clips.output_dir}
   poses_dir: ${paths.poses_dir}
   boxes_dir: ${paths.boxes_dir}
@@ -27,11 +36,4 @@ pose_and_bbox_extraction:
   conf: 0.5
   batch_size: 128
   max_det: 1
-  force: false
-  limit: null
-tasks:
-  download_labels: true
-  create_manifests: true
-  download_clips: true
-  pose_and_bbox_extraction: true
 

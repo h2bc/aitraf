@@ -1,14 +1,30 @@
-"""Split Label Studio export into train/val/test manifests."""
+"""Split Label Studio export into train/val/test manifests per task."""
 
-import json
 from dataclasses import dataclass
+import json
 from pathlib import Path
+from typing import Sequence
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from aitraf.data_ops import schema
 from aitraf.logging import logger
+
+
+@dataclass
+class TaskConfig:
+    """Task-specific manifest settings."""
+
+    name: str
+    target_column: str
+    manifests_dir: Path | str | None = None
+    stratify_by_target: bool = True
+    task_type: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.manifests_dir is not None:
+            self.manifests_dir = Path(self.manifests_dir)
 
 
 @dataclass
@@ -19,129 +35,157 @@ class ManifestBuildConfig:
     output_dir: Path | str
     val_ratio: float = 0.1
     test_ratio: float = 0.1
-    seed: int = 42
     force: bool = False
+    tasks: Sequence[TaskConfig] | None = None
 
     def __post_init__(self) -> None:
         self.input_path = Path(self.input_path)
         self.output_dir = Path(self.output_dir)
+        if self.tasks is None:
+            self.tasks = ()
+        else:
+            self.tasks = tuple(self.tasks)
 
 
 def create_manifests(config: ManifestBuildConfig) -> None:
-    input_path = config.input_path
-    output_dir = config.output_dir
-    if not input_path.exists():
-        raise RuntimeError(f"Input file not found: {input_path}")
+    if not config.input_path.exists():
+        raise RuntimeError(f"Input file not found: {config.input_path}")
 
-    output_dir.mkdir(parents=True, exist_ok=True)
+    if not config.tasks:
+        raise RuntimeError("No tasks provided for manifest creation.")
+
+    labels_df = pd.read_json(config.input_path, orient="records", lines=True)
+
+    for task in config.tasks:
+        _build_task_manifests(labels_df, config, task)
+
+
+def _build_task_manifests(
+    labels_df: pd.DataFrame, config: ManifestBuildConfig, task: TaskConfig
+) -> None:
+    target_column = task.target_column
+    _validate_required_columns(labels_df, schema.LabelsSchema.input_col, target_column)
+
+    task_output_dir = task.manifests_dir or config.output_dir / task.name
+    task_output_dir.mkdir(parents=True, exist_ok=True)
+
     if not config.force:
-        for name in ("train.jsonl", "val.jsonl", "test.jsonl", "labels.json"):
-            out_path = output_dir / name
+        for name in ("train.jsonl", "val.jsonl", "test.jsonl", "vocab.json"):
+            out_path = task_output_dir / name
             if out_path.exists():
                 raise RuntimeError(
-                    f"Output file {out_path} already exists. Set force=true to overwrite."
+                    f"{out_path} exists. Set force=true to overwrite manifests."
                 )
 
-    logger.info("Loading labels from {}", input_path)
-    df = pd.read_json(input_path, orient="records", lines=True)
+    filtered_df = labels_df.dropna(
+        subset=[schema.LabelsSchema.input_col, target_column]
+    ).reset_index(drop=True)
 
-    _ensure_columns(df)
-
-    df = df.dropna(subset=schema.EXPECTED_COLUMNS).reset_index(drop=True)
-    logger.info("Preparing manifests from {} labeled rows", len(df))
-
-    if len(df) < 3:
-        raise RuntimeError("Need at least 3 fully labeled rows to perform splits.")
+    if len(filtered_df) < 3:
+        raise RuntimeError(
+            f"Need at least 3 rows with '{schema.LabelsSchema.input_col}' and '{target_column}' "
+            f"for task '{task.name}'."
+        )
 
     val_ratio = float(config.val_ratio)
     test_ratio = float(config.test_ratio)
+    train_ratio = 1.0 - (val_ratio + test_ratio)
 
-    if val_ratio < 0 or test_ratio < 0:
-        raise RuntimeError("Split ratios must be non-negative.")
+    stratify_labels = _get_stratify_labels(
+        filtered_df, target_column, task.stratify_by_target, task.task_type
+    )
 
-    holdout = val_ratio + test_ratio
-    train_ratio = 1.0 - holdout
-
-    if train_ratio <= 0:
-        raise RuntimeError("Validation + test ratios must be < 1.")
-
-    stratify_labels = df[schema.TARGET_COLUMN].astype(str)
-    train_val_df, test_df, train_val_labels, _ = _split(
-        df,
-        stratify_labels,
+    train_val_df, test_df = _split(
+        filtered_df,
         test_ratio,
-        int(config.seed),
+        stratify_labels,
     )
 
     val_fraction = val_ratio / (val_ratio + train_ratio)
-    train_df, val_df, _, _ = _split(
+
+    train_stratify_labels = (
+        stratify_labels.loc[train_val_df.index] if stratify_labels is not None else None
+    )
+    train_df, val_df = _split(
         train_val_df,
-        train_val_labels,
         val_fraction,
-        int(config.seed) + 1,
+        train_stratify_labels,
     )
 
-    outputs = {
-        "train": train_df,
-        "val": val_df,
-        "test": test_df,
-    }
+    splits = {"train": train_df, "val": val_df, "test": test_df}
 
-    for name, split_df in outputs.items():
-        out_path = output_dir / f"{name}.jsonl"
-        _write_manifest(split_df, out_path)
-        logger.info("Wrote {} ({} rows)", out_path, len(split_df))
+    for name, split_df in splits.items():
+        out_path = task_output_dir / f"{name}.jsonl"
+        _write_manifest(split_df, out_path, target_column)
+        logger.info("Task '{}' wrote {} ({} rows)", task.name, out_path, len(split_df))
 
-    labels_path = output_dir / "labels.json"
-    labels_path.write_text(
-        json.dumps(_build_vocab_metadata(df), ensure_ascii=False, indent=2),
+    vocab_path = task_output_dir / "vocab.json"
+    vocab_path.write_text(
+        json.dumps(_build_vocab_metadata(filtered_df), ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    logger.info("Wrote vocab metadata to {}", labels_path)
+    logger.info("Task '{}' wrote vocab to {}", task.name, vocab_path)
 
 
-def _ensure_columns(df: pd.DataFrame) -> None:
-    missing = [c for c in schema.EXPECTED_COLUMNS if c not in df.columns]
+def _validate_required_columns(df: pd.DataFrame, *columns: str) -> None:
+    missing = [c for c in columns if c not in df.columns]
     if missing:
         raise RuntimeError(
-            f"Input is missing expected columns: {', '.join(missing)}. Re-run the download step."
+            "Input is missing required columns: " + ", ".join(sorted(missing))
         )
 
 
-def _split(df, labels, fraction, seed):
-    if fraction <= 0:
-        return df, df.iloc[0:0], labels, labels.iloc[0:0]
+def _split(
+    df: pd.DataFrame, fraction: float, stratify: pd.Series | None
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    if not 0 < fraction < 1:
+        raise RuntimeError("Split fraction must be between 0 and 1.")
 
-    try:
-        return train_test_split(
-            df,
-            labels,
-            test_size=fraction,
-            random_state=seed,
-            stratify=labels,
-        )
-    except ValueError:
-        return train_test_split(
-            df,
-            labels,
-            test_size=fraction,
-            random_state=seed,
-            stratify=None,
-        )
+    train_df, test_df = train_test_split(
+        df,
+        test_size=fraction,
+        stratify=stratify,
+    )
+    return train_df, test_df
 
 
-def _write_manifest(df: pd.DataFrame, path: Path) -> None:
+def _get_stratify_labels(
+    df: pd.DataFrame, target_column: str, enabled: bool, task_type: str | None
+) -> pd.Series | None:
+    if not enabled:
+        return None
+
+    is_numerical = str(task_type).lower() == "regression" if task_type else False
+
+    labels = df[target_column]
+    if is_numerical:
+        binned = pd.qcut(labels, q=min(5, len(labels)), duplicates="drop")
+        if binned.nunique() < 2:
+            raise RuntimeError(
+                f"Cannot stratify '{target_column}': not enough variation to form bins."
+            )
+        return binned.astype(str)
+
+    return labels.astype(str)
+
+
+def _write_manifest(df: pd.DataFrame, path: Path, target_column: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    extra_columns = [
+        col
+        for col in schema.ManifestSchema.columns
+        if col not in ("video_id", "s3_path", target_column) and col in df.columns
+    ]
+
     with path.open("w", encoding="utf-8") as fh:
         for _, row in df.iterrows():
-            video_path = str(row[schema.VIDEO_COLUMN])
+            source = str(row[schema.LabelsSchema.input_col])
             record = {
-                "video_id": Path(video_path).name,
-                "s3_path": video_path,
-                schema.TARGET_COLUMN: row[schema.TARGET_COLUMN],
+                "video_id": Path(source).name,
+                "s3_path": source,
+                target_column: row[target_column],
             }
-            for col in schema.CONTEXT_COLUMNS:
-                record[col] = row[col]
+            record.update({col: row[col] for col in extra_columns})
             fh.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
@@ -149,7 +193,9 @@ def _build_vocab_metadata(
     df: pd.DataFrame,
 ) -> dict[str, dict[str, dict[str, str] | list[str]]]:
     payload = {}
-    for col in schema.CATEGORICAL_COLUMNS:
+    for col in schema.ManifestSchema.categorical:
+        if col not in df.columns:
+            continue
         labels = sorted(df[col].dropna().astype(str).unique().tolist())
         payload[col] = {
             "labels": labels,

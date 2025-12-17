@@ -44,7 +44,7 @@ def download_labels(config: LabelStudioExportConfig) -> Path:
     client = LabelStudio(base_url=base_url, api_key=token.strip())
     df: pd.DataFrame = client.projects.exports.as_pandas(int(project_id))
 
-    missing_cols = [col for col in schema.EXPECTED_COLUMNS if col not in df.columns]
+    missing_cols = [col for col in schema.LabelsSchema.columns if col not in df.columns]
     if missing_cols:
         raise RuntimeError(
             f"Export missing expected columns: {', '.join(missing_cols)}"
