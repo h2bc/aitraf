@@ -26,9 +26,11 @@ TrainingRunner = Callable[[Any], str]
 
 def _build_video_mae_training_config(cfg: DictConfig) -> VideoMAETrainingConfig:
     data_dir = Path(cfg.paths.data_dir)
+
     return VideoMAETrainingConfig(
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.paths.vocab_path,
         clips_dir=data_dir / "clips",
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -49,6 +51,7 @@ def _build_video_mae_training_config(cfg: DictConfig) -> VideoMAETrainingConfig:
 def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTCNTrainingConfig:
     return PoseTCNTrainingConfig(
         manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.paths.vocab_path,
         poses_dir=cfg.model.poses_dir,
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,

@@ -25,6 +25,7 @@ class PoseTCNTrainingConfig:
     """Configuration for Pose TCN training."""
 
     manifests_dir: Path | str
+    vocab_path: Path | str
     poses_dir: Path | str
     batch_size: int
     num_workers: int
@@ -53,7 +54,7 @@ class PoseTCNTrainingConfig:
 def run_training(config: PoseTCNTrainingConfig) -> str:
     """Train the Pose TCN classifier and log artifacts to MLflow."""
 
-    labels, label2id, _ = load_target_label_mappings(config.manifests_dir)
+    labels, label2id, _ = load_target_label_mappings(config.vocab_path)
 
     collate_fn = build_collate(
         num_frames=config.sample_frames,

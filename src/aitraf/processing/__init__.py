@@ -12,16 +12,16 @@ from aitraf.data_ops import schema
 
 
 def load_target_label_mappings(
-    manifests_dir: Path | str,
+    vocab_path: Path | str,
 ) -> tuple[list[str], dict[str, int], dict[str, str]]:
     """Load label/id mappings emitted by the manifest step."""
 
-    manifests_dir = Path(manifests_dir)
-    labels_path = manifests_dir / "vocab.json"
-    if not labels_path.exists():
-        raise FileNotFoundError(f"Vocabulary file not found: {labels_path}")
+    vocab_path = Path(vocab_path)
 
-    with labels_path.open(encoding="utf-8") as fh:
+    if not vocab_path.exists():
+        raise FileNotFoundError(f"Vocabulary file not found: {vocab_path}")
+
+    with vocab_path.open(encoding="utf-8") as fh:
         labels_config = json.load(fh)
 
     labels = labels_config[schema.TARGET_COLUMN]["labels"]
