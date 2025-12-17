@@ -32,6 +32,7 @@ class VideoMAETrainingConfig:
     backbone: str
     manifests_dir: Path | str
     vocab_path: Path | str
+    target_col: str
     clips_dir: Path | str
     batch_size: int
     num_workers: int
@@ -71,7 +72,9 @@ def run_training(config: VideoMAETrainingConfig) -> str:
             range(min(config.max_train_samples, len(dataset["train"])))
         )
 
-    labels, label2id, id2label = load_target_label_mappings(config.vocab_path)
+    labels, label2id, id2label = load_target_label_mappings(
+        config.vocab_path, config.target_col
+    )
 
     processor = VideoMAEImageProcessor.from_pretrained(
         config.backbone, cache_dir=str(config.model_cache_dir)

@@ -8,11 +8,9 @@ from typing import List
 
 import torch
 
-from aitraf.data_ops import schema
-
 
 def load_target_label_mappings(
-    vocab_path: Path | str,
+    vocab_path: Path | str, target_col: str
 ) -> tuple[list[str], dict[str, int], dict[str, str]]:
     """Load label/id mappings emitted by the manifest step."""
 
@@ -24,9 +22,9 @@ def load_target_label_mappings(
     with vocab_path.open(encoding="utf-8") as fh:
         labels_config = json.load(fh)
 
-    labels = labels_config[schema.TARGET_COLUMN]["labels"]
-    label2id = labels_config[schema.TARGET_COLUMN]["label2id"]
-    id2label = labels_config[schema.TARGET_COLUMN]["id2label"]
+    labels = labels_config[target_col]["labels"]
+    label2id = labels_config[target_col]["label2id"]
+    id2label = labels_config[target_col]["id2label"]
 
     return labels, label2id, id2label
 
