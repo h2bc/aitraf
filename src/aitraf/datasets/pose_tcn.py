@@ -7,10 +7,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 import numpy as np
-from torch.utils.data import Dataset
-
-from aitraf.data_ops import schema
-from torch.utils.data import Subset
+from torch.utils.data import Dataset, Subset
 
 
 class PoseTCNSubset(Subset):
@@ -28,10 +25,16 @@ class PoseTCNDataset(Dataset):
     """Lightweight dataset that returns pose payloads per clip."""
 
     def __init__(
-        self, manifests_dir: Path | str, poses_dir: Path | str, split: str
+        self,
+        *,
+        manifests_dir: Path | str,
+        poses_dir: Path | str,
+        target_column: str,
+        split: str,
     ) -> None:
         self.manifests_dir = Path(manifests_dir)
         self.poses_dir = Path(poses_dir)
+        self.target_column = target_column
         self.split = split
         self.records = self._load_manifest(self.manifests_dir / f"{split}.jsonl")
 
@@ -49,7 +52,7 @@ class PoseTCNDataset(Dataset):
             "keypoints": payload["keypoints"],
             "scores": payload["scores"],
             "frames": payload["frames"],
-            "label": row[schema.TARGET_COLUMN],
+            "label": row[self.target_column],
         }
 
     def _resolve_pose_path(self, video_id: str) -> Path:
