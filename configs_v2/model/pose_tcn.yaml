@@ -1,0 +1,15 @@
+name: pose_tcn
+poses_dir: ${paths.poses_dir}
+sample_frames: 64
+sampling_dist: gaussian_stochastic
+accelerator: gpu
+batch_size: 64
+num_workers: 8
+learning_rate: 1e-3
+hidden_dim: 512
+num_layers: 5
+kernel_size: 3
+dropout: 0.3
+max_epochs: 30
+early_stopping_patience: 5
+  

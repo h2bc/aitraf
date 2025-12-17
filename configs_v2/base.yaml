@@ -1,0 +1,12 @@
+paths:
+  project_root: ${hydra:runtime.cwd}
+  data_dir: ${paths.project_root}/data
+  manifests_dir: ${paths.data_dir}/manifests
+  poses_dir: ${paths.data_dir}/poses
+  boxes_dir: ${paths.data_dir}/boxes
+  models_dir: ${paths.project_root}/models
+  runs_dir: ${paths.project_root}/runs
+
+hydra:
+  run:
+    dir: ${paths.runs_dir}/hydra/${now:%Y%m%d-%H%M%S}

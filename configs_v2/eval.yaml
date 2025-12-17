@@ -1,0 +1,11 @@
+defaults:
+- base
+- model: video_mae
+- task: trick_classification
+- experiment
+- _self_
+
+
+run_name: eval_${run_name}
+model_id: null
+top_k_worst: 5

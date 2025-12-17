@@ -1,0 +1,11 @@
+name: video_mae 
+backbone: MCG-NJU/videomae-base
+model_cache_dir: ${paths.models_dir}/${name}_cache
+freeze_backbone: False
+device: cuda
+epochs: 10
+sample_frames: 16
+sampling_dist: gaussian_stochastic
+batch_size: 4
+num_workers: 4
+early_stopping_patience: 2
