@@ -16,7 +16,7 @@ Model training and evaluation stack for inline skating trick recognition.
 
 ## Tasks
 
-Run commands via [Task](https://taskfile.dev); everything executes inside the uv-managed virtualenv.
+Run commands via [Task](https://taskfile.dev)
 
 | Command | Description |
 |---------|-------------|
