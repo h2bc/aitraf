@@ -4,8 +4,9 @@ defaults:
 - task: trick_classification
 - _self_
 
+
 experiment_name: aitraf_${task.name}
-run_name: train_${model.name}
+run_name: eval_${model.name}
 output_dir: ${paths.runs_dir}/${run_name}
 model_id: null
 top_k_worst: 5

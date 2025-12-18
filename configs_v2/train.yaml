@@ -2,7 +2,9 @@ defaults:
 - base
 - model: video_mae
 - task: trick_classification
+- experiment
 - _self_
+
 
 experiment_name: aitraf_${task.name}
 run_name: train_${model.name}

@@ -27,3 +27,8 @@ tasks:
     cmds:
       - "uv run python scripts/eval.py {{.CLI_ARGS}}"
   
+  train_eval:
+    desc: Run the Hydra-managed train+eval pipeline
+    cmds:
+      - "uv run python scripts/train_eval.py {{.CLI_ARGS}}"
+  
