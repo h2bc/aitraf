@@ -14,15 +14,20 @@ Model training and evaluation stack for inline skating trick recognition.
 2. Copy `.env.example` to `.env` and fill in the Label Studio + AWS credentials.
 3. Install task runner dependencies once with `uv sync`
 
-## Developer Tasks
+## Tasks
 
 Run commands via [Task](https://taskfile.dev); everything executes inside the uv-managed virtualenv.
 
 | Command        | Description |
 |----------------|-------------|
-| `task data`    | Executes the Hydra-managed data pipeline (see below). |
-| `task lint`    | Runs Ruff checks across the repo. |
-| `task format`  | Applies Ruff formatting fixes. |
+| Command | Description |
+|---------|-------------|
+| `task lint` | Runs Ruff checks across the repo. |
+| `task format` | Applies Ruff formatting fixes. |
+| `task data [overrides]` | Executes the Hydra-managed data pipeline (see below). |
+| `task train -- model=… task=… [args]` | Runs the Hydra-managed training entrypoint (`scripts/train.py`). |
+| `task eval -- model=… task=… model_id=… [args]` | Runs the unified evaluation entrypoint (`scripts/eval.py`). |
+| `task train_eval -- model=… task=… [args]` | Runs the combined train+eval workflow (`scripts/train_eval.py`). |
 
 ### Data pipeline script
 
