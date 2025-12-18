@@ -8,8 +8,11 @@
   "workspaceFolder": "/workspace",
   "mounts": [
     "type=bind,source=${localWorkspaceFolder},target=/workspace",
-    "type=bind,source=${localEnv:USERPROFILE}/.ssh,target=/home/ubuntu/.ssh,readonly"
+    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent.sock,type=bind"
   ],
+  "remoteEnv": {
+    "SSH_AUTH_SOCK": "/ssh-agent.sock"
+  },
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "username": "ubuntu"
