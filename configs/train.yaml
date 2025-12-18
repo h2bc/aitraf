@@ -1,8 +1,7 @@
 defaults:
 - base
-- model: video_mae
-- task: trick_classification
-- experiment
+- model: ???
+- task: ???
 - _self_
 
 
