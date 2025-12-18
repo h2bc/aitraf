@@ -35,6 +35,8 @@ class PoseTCNEvalConfig:
 
     model_uri: str
     manifests_dir: Path | str
+    vocab_path: Path | str
+    target_col: str
     poses_dir: Path | str
     batch_size: int
     num_workers: int
@@ -47,15 +49,19 @@ class PoseTCNEvalConfig:
 
     def __post_init__(self) -> None:
         self.manifests_dir = Path(self.manifests_dir)
+        self.vocab_path = Path(self.vocab_path)
         self.poses_dir = Path(self.poses_dir)
 
 
 def run_evaluation(config: PoseTCNEvalConfig) -> None:
-    labels, label2id, id2label = load_target_label_mappings(config.manifests_dir)
+    labels, label2id, id2label = load_target_label_mappings(
+        config.vocab_path, config.target_col
+    )
 
     dataset = PoseTCNDataset(
         manifests_dir=config.manifests_dir,
         poses_dir=config.poses_dir,
+        target_column=config.target_col,
         split="test",
     )
 
