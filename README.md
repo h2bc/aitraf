@@ -22,12 +22,12 @@ Run commands via [Task](https://taskfile.dev)
 |---------|-------------|
 | `task lint` | Runs Ruff checks across the repo. |
 | `task format` | Applies Ruff formatting fixes. |
-| `task data -- …` | Executes the Hydra-managed data pipeline (`scripts/data_pipeline.py`). Pass Hydra overrides after `--`. |
-| `task train -- task=… model=… …` | Runs the Hydra-managed training entrypoint (`scripts/train.py`). |
-| `task eval -- task=… model=… model_id=… …` | Runs the unified evaluation entrypoint (`scripts/eval.py`). |
-| `task train_eval -- task=… model=… …` | Runs the combined train+eval workflow (`scripts/train_eval.py`). |
+| `task data -- [overrides]` | Executes the Hydra-managed data pipeline (`scripts/data_pipeline.py`). Pass Hydra overrides after `--`. |
+| `task train -- task=<task> model=<model> [overrides]` | Runs the Hydra-managed training entrypoint (`scripts/train.py`). |
+| `task eval -- task=<task> model=<model> model_id=<model_id> [overrides]` | Runs the unified evaluation entrypoint (`scripts/eval.py`). |
+| `task train_eval -- task=<task> model=<model> [overrides]` | Runs the combined train+eval workflow (`scripts/train_eval.py`). |
 
-### Data pipeline script
+### Data ops pipeline script
 
 `task data` runs `scripts/data_pipeline.py`, a Hydra-driven workflow composed of four stages (toggle them in `configs/data_ops.yaml`):
 
