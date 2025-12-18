@@ -1,0 +1,34 @@
+version: "3"
+
+tasks:
+
+  lint:
+    desc: Run ruff linting
+    cmds: 
+      - uv run ruff check .
+
+  format:
+    desc: Run ruff formatting 
+    cmds: 
+      - uv run ruff format .  
+
+  data:
+    desc: Run the data ops pipeline
+    cmds:
+      - "uv run python scripts/data_pipeline.py {{.CLI_ARGS}}"
+
+  train:
+    desc: Run the Hydra-managed training pipeline
+    cmds:
+      - "uv run python scripts/train.py {{.CLI_ARGS}}"
+  
+  eval:
+    desc: Run the Hydra-managed evaluation pipeline
+    cmds:
+      - "uv run python scripts/eval.py {{.CLI_ARGS}}"
+  
+  train_eval:
+    desc: Run the Hydra-managed train+eval pipeline
+    cmds:
+      - "uv run python scripts/train_eval.py {{.CLI_ARGS}}"
+  

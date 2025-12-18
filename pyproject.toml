@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "aitraf"
 version = "0.1.0"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "torch",
     "torchvision",
@@ -30,6 +30,7 @@ dependencies = [
     "imageio>=2.37.2",
     "kornia>=0.8.2",
     "lightning>=2.6.0",
+    "pip>=25.3",
 ]
 
 [dependency-groups]

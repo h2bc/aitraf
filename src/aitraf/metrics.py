@@ -1,7 +1,7 @@
 """Metrics utilities shared across model pipelines."""
 
 from collections import Counter
-from typing import List
+from typing import Callable, List, Sequence
 
 import evaluate
 import numpy as np
@@ -32,25 +32,52 @@ def compute_dummy_pred_ids(actual_ids: List[int]) -> List[int]:
     return np.full(len(actual_ids), most_common)
 
 
-def build_compute_metrics() -> dict[str, float]:
-    accuracy = evaluate.load("accuracy")
-    f1 = evaluate.load("f1")
+def build_classification_metrics() -> Callable[
+    [Sequence[int], Sequence[int]], dict[str, float]
+]:
+    accuracy_metric = evaluate.load("accuracy")
+    f1_metric = evaluate.load("f1")
 
-    def _compute_metrics(pred_ids: List[int], actual_ids: List[int]):
-        acc = accuracy.compute(
-            predictions=pred_ids,
-            references=actual_ids,
+    def _compute_metrics(
+        predictions: Sequence[int], targets: Sequence[int]
+    ) -> dict[str, float]:
+        acc = accuracy_metric.compute(
+            predictions=predictions,
+            references=targets,
         )["accuracy"]
 
-        macro_f1 = f1.compute(
-            predictions=pred_ids,
-            references=actual_ids,
+        macro_f1 = f1_metric.compute(
+            predictions=predictions,
+            references=targets,
             average="macro",
         )["f1"]
 
         return {
             "accuracy": acc,
             "f1_macro": macro_f1,
+        }
+
+    return _compute_metrics
+
+
+def build_regression_metrics() -> Callable[
+    [Sequence[float], Sequence[float]], dict[str, float]
+]:
+    mae_metric = evaluate.load("mae")
+    rmse_metric = evaluate.load("rmse")
+    r2_metric = evaluate.load("r_squared")
+
+    def _compute_metrics(
+        predictions: Sequence[float], targets: Sequence[float]
+    ) -> dict[str, float]:
+        mae = mae_metric.compute(predictions=predictions, references=targets)["mae"]
+        rmse = rmse_metric.compute(predictions=predictions, references=targets)["rmse"]
+        r2 = r2_metric.compute(predictions=predictions, references=targets)["r_squared"]
+
+        return {
+            "mae": mae,
+            "rmse": rmse,
+            "r2": r2,
         }
 
     return _compute_metrics

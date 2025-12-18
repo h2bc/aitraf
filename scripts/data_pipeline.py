@@ -3,74 +3,88 @@
 from hydra import main
 from omegaconf import DictConfig
 from dotenv import load_dotenv
-from aitraf.data.download_labels import LabelStudioExportConfig, download_labels
-from aitraf.data.create_manifests import ManifestBuildConfig, create_manifests
-from aitraf.data.download_clips import ClipDownloadConfig, download_clips
+from aitraf.data_ops.download_labels import LabelStudioExportConfig, download_labels
+from aitraf.data_ops.create_manifests import (
+    ManifestBuildConfig,
+    TaskConfig,
+    create_manifests,
+)
+from aitraf.data_ops.download_clips import ClipDownloadConfig, download_clips
 from aitraf.logging import setup_logging, heading
-from aitraf.data.pose_and_bbox_extraction import (
+from aitraf.data_ops.pose_and_bbox_extraction import (
     PoseAndBBoxExtractionConfig,
     pose_and_bbox_extraction,
 )
 
 
-@main(config_path="../configs", config_name="data", version_base=None)
+@main(config_path="../configs", config_name="data_ops", version_base=None)
 def run(cfg: DictConfig) -> None:
     load_dotenv()
     setup_logging()
+    data_cfg = cfg.get("data_ops", cfg)
 
-    if cfg.data.tasks.download_labels:
+    if data_cfg.download_labels.enabled:
         heading("Download Labels")
         download_labels(
             LabelStudioExportConfig(
-                output_path=cfg.data.download_labels.output_path,
-                force=cfg.data.download_labels.force,
+                output_path=data_cfg.download_labels.output_path,
+                force=data_cfg.download_labels.force,
             )
         )
     else:
         heading("Skip label download (disabled)")
 
-    if cfg.data.tasks.download_clips:
+    if data_cfg.download_clips.enabled:
         heading("Download Clips")
         download_clips(
             ClipDownloadConfig(
-                labels_path=cfg.data.download_clips.labels_path,
-                output_dir=cfg.data.download_clips.output_dir,
-                force=cfg.data.download_clips.force,
+                labels_path=data_cfg.download_clips.labels_path,
+                output_dir=data_cfg.download_clips.output_dir,
+                force=data_cfg.download_clips.force,
             )
         )
     else:
         heading("Skip clip download (disabled)")
 
-    if cfg.data.tasks.pose_and_bbox_extraction:
+    if data_cfg.pose_and_bbox_extraction.enabled:
         heading("Pose + BBox Extraction")
         pose_and_bbox_extraction(
             PoseAndBBoxExtractionConfig(
-                clips_dir=cfg.data.pose_and_bbox_extraction.clips_dir,
-                poses_dir=cfg.data.pose_and_bbox_extraction.poses_dir,
-                boxes_dir=cfg.data.pose_and_bbox_extraction.boxes_dir,
-                weights_path=cfg.data.pose_and_bbox_extraction.weights_path,
-                device=cfg.data.pose_and_bbox_extraction.device,
-                imgsz=cfg.data.pose_and_bbox_extraction.imgsz,
-                conf=cfg.data.pose_and_bbox_extraction.conf,
-                batch_size=cfg.data.pose_and_bbox_extraction.batch_size,
-                max_det=cfg.data.pose_and_bbox_extraction.max_det,
-                force=cfg.data.pose_and_bbox_extraction.force,
-                limit=cfg.data.pose_and_bbox_extraction.limit,
+                clips_dir=data_cfg.pose_and_bbox_extraction.clips_dir,
+                poses_dir=data_cfg.pose_and_bbox_extraction.poses_dir,
+                boxes_dir=data_cfg.pose_and_bbox_extraction.boxes_dir,
+                weights_path=data_cfg.pose_and_bbox_extraction.weights_path,
+                device=data_cfg.pose_and_bbox_extraction.device,
+                imgsz=data_cfg.pose_and_bbox_extraction.imgsz,
+                conf=data_cfg.pose_and_bbox_extraction.conf,
+                batch_size=data_cfg.pose_and_bbox_extraction.batch_size,
+                max_det=data_cfg.pose_and_bbox_extraction.max_det,
+                force=data_cfg.pose_and_bbox_extraction.force,
+                limit=data_cfg.pose_and_bbox_extraction.limit,
             )
         )
     else:
         heading("Skip pose/bbox extraction (disabled)")
 
-    if cfg.data.tasks.create_manifests:
+    if data_cfg.create_manifests.enabled:
         heading("Build Manifests")
         create_manifests(
             ManifestBuildConfig(
-                input_path=cfg.data.create_manifests.input_path,
-                output_dir=cfg.data.create_manifests.output_dir,
-                val_ratio=cfg.data.create_manifests.val_ratio,
-                test_ratio=cfg.data.create_manifests.test_ratio,
-                seed=cfg.data.create_manifests.seed,
-                force=cfg.data.create_manifests.force,
+                input_path=data_cfg.create_manifests.input_path,
+                output_dir=data_cfg.create_manifests.output_dir,
+                val_ratio=data_cfg.create_manifests.val_ratio,
+                test_ratio=data_cfg.create_manifests.test_ratio,
+                force=data_cfg.create_manifests.force,
+                tasks=[
+                    TaskConfig(
+                        name=task_cfg.name,
+                        target_column=task_cfg.target_column,
+                        stratify_by_target=task_cfg.stratify_by_target,
+                        task_type=task_cfg.type,
+                        manifests_dir=task_cfg.manifests_dir,
+                    )
+                    for task_cfg in data_cfg.create_manifests.tasks.values()
+                ],
             )
         )
     else:

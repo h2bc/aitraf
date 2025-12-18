@@ -1,0 +1,14 @@
+defaults:
+- base
+- model: ???
+- task: ???
+- _self_
+
+
+experiment_name: aitraf_${task.name}
+train_run_name: train_${model.name}
+eval_run_name: eval_${model.name}
+train_output_dir: ${paths.runs_dir}/${train_run_name}
+eval_output_dir: ${paths.runs_dir}/${eval_run_name}
+max_samples: null
+top_k_worst: 5

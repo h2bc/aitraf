@@ -1,0 +1,5 @@
+name: score_prediction
+type: regression
+target_column: score
+stratify_by_target: true
+manifests_dir: ${paths.manifests_dir}/${.name}
