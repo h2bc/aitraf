@@ -29,27 +29,25 @@ Run commands via [Task](https://taskfile.dev)
 
 ### Data ops pipeline script
 
-`task data` runs `scripts/data_pipeline.py`, a Hydra-driven workflow composed of four stages (toggle them in `configs/data_ops.yaml`):
+`task data` runs `scripts/data_pipeline.py`, a Hydra-driven workflow composed of four stages (enable/disable each and set `force` flags in `configs/data_ops.yaml` or via cmd args):
 
 #### Download Labels
 
-- Pulls the latest Label Studio export (`data/labels.jsonl`), ensuring we have a fresh canonical annotation snapshot.
-- Respects the `force` flag to skip work when cached annotations are acceptable.
+- Pulls the latest Label Studio export (`data/labels.jsonl`) to refresh annotations used downstream.
 
 #### Download Clips
 
-- Reads the manifest of referenced video IDs and syncs the corresponding MP4 clips into `data/clips/`.
-- Supports incremental downloads and a `force` switch to re-pull corrupted/missing files.
+- Resolves referenced video IDs and syncs the corresponding MP4 clips into `data/clips/`.
 
 #### Pose + Bounding-Box Extraction
 
-- Runs the Ultralytics pose + detection model on the cached clips, writing keypoints to `data/poses/` and detection boxes to `data/boxes/`.
-- Accepts parameters for device selection, image size, confidence thresholds, batch size, and an optional `limit` for quick smoke tests.
+- Applies the Ultralytics pose + detection model to cached clips, writing keypoints to `data/poses/` and detection boxes to `data/boxes/`.
+- Parameters cover device selection, image size, confidence thresholds, batch size, and optional clip limits.
 
 #### Manifest Creation
 
-- Assembles train/val/test JSONL manifests under `data/manifests/<task>/`, stratifying by the target column when configured.
-- Emits a shared `vocab.json` capturing label/id mappings per task, used later by all training/eval pipelines.
+- Builds train/val/test JSONL manifests under `data/manifests/<task>/`, stratifying by the target column when configured.
+- Emits a shared `vocab.json` capturing label/id mappings per task for downstream consumers.
 
 ## Tasks
 
