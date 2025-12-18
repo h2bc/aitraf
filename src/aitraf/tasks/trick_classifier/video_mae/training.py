@@ -17,6 +17,7 @@ from transformers import (
 from aitraf.processing.video_mae import build_collate, process_clip
 from aitraf.processing import load_target_label_mappings
 from aitraf.metrics import build_classification_metrics, compute_pred_ids
+from aitraf.logging import logger
 
 from datasets import load_dataset
 
@@ -94,6 +95,9 @@ def run_training(config: VideoMAETrainingConfig) -> str:
         cache_dir=str(config.model_cache_dir),
         trust_remote_code=True,
     ).to(config.device)
+    logger.info(
+        f"VideoMAE trainer using device: {next(model.parameters()).device}"
+    )
 
     if config.freeze_backbone:
         for param in model.base_model.parameters():

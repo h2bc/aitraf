@@ -108,7 +108,7 @@ def run(cfg: DictConfig) -> None:
     )
 
     model_uri = runner(training_cfg)
-    
+
     logger.info(
         f"Finished training for task='{cfg.task.name}' model='{cfg.model.name}'. Model URI: {model_uri}"
     )

@@ -24,6 +24,7 @@ from aitraf.metrics import (
 )
 from aitraf.processing.video_mae import build_collate
 from aitraf.processing import load_target_label_mappings
+from aitraf.logging import logger
 
 
 @dataclass
@@ -33,6 +34,8 @@ class VideoMAEEvalConfig:
     backbone: str
     model_uri: str
     manifests_dir: Path | str
+    vocab_path: Path | str
+    target_col: str
     clips_dir: Path | str
     batch_size: int
     num_workers: int
@@ -46,6 +49,7 @@ class VideoMAEEvalConfig:
 
     def __post_init__(self) -> None:
         self.manifests_dir = Path(self.manifests_dir)
+        self.vocab_path = Path(self.vocab_path)
         self.clips_dir = Path(self.clips_dir)
         self.output_dir = Path(self.output_dir)
 
@@ -62,12 +66,17 @@ def run_evaluation(config: VideoMAEEvalConfig):
 
     eval_dataset = dataset["test"]
 
-    labels, label2id, id2label = load_target_label_mappings(config.manifests_dir)
+    labels, label2id, id2label = load_target_label_mappings(
+        config.vocab_path, config.target_col
+    )
 
     components = mlflow_transformers.load_model(
         config.model_uri, return_type="components"
     )
     model = components["model"].to(config.device)
+    logger.info(
+        f"VideoMAE evaluation running on device: {next(model.parameters()).device}"
+    )
     processor = components["image_processor"]
 
     compute_metrics = build_classification_metrics()
@@ -87,6 +96,7 @@ def run_evaluation(config: VideoMAEEvalConfig):
         label2id,
         config.sample_frames,
         config.sampling_dist,
+        config.target_col,
     )
 
     trainer = Trainer(

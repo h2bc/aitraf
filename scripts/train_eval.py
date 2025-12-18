@@ -55,9 +55,7 @@ def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTCNTrainingConfig:
     )
 
 
-def _build_pose_tcn_eval_config(
-    cfg: DictConfig, model_uri: str
-) -> PoseTCNEvalConfig:
+def _build_pose_tcn_eval_config(cfg: DictConfig, model_uri: str) -> PoseTCNEvalConfig:
     device = "cuda" if cfg.model.accelerator == "gpu" else cfg.model.accelerator
 
     return PoseTCNEvalConfig(
@@ -102,15 +100,15 @@ def _build_video_mae_training_config(cfg: DictConfig) -> VideoMAETrainingConfig:
     )
 
 
-def _build_video_mae_eval_config(
-    cfg: DictConfig, model_uri: str
-) -> VideoMAEEvalConfig:
+def _build_video_mae_eval_config(cfg: DictConfig, model_uri: str) -> VideoMAEEvalConfig:
     data_dir = Path(cfg.paths.data_dir)
 
     return VideoMAEEvalConfig(
         backbone=cfg.model.backbone,
         model_uri=model_uri,
         manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.paths.vocab_path,
+        target_col=cfg.task.target_column,
         clips_dir=data_dir / "clips",
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -188,7 +186,7 @@ def run(cfg: DictConfig) -> None:
     )
 
     run_eval(eval_cfg)
-    
+
     logger.info(
         f"Finished evaluation for task='{cfg.task.name}' model='{cfg.model.name}'."
     )

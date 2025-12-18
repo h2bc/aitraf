@@ -59,6 +59,8 @@ def _build_video_mae_eval_config(cfg: DictConfig, model_id: str) -> VideoMAEEval
         backbone=cfg.model.backbone,
         model_uri=f"models:/{model_id}",
         manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.paths.vocab_path,
+        target_col=cfg.task.target_column,
         clips_dir=data_dir / "clips",
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -72,7 +74,9 @@ def _build_video_mae_eval_config(cfg: DictConfig, model_id: str) -> VideoMAEEval
     )
 
 
-EVALUATION_TARGETS: dict[tuple[str, str], tuple[EvaluationBuilder, EvaluationRunner]] = {
+EVALUATION_TARGETS: dict[
+    tuple[str, str], tuple[EvaluationBuilder, EvaluationRunner]
+] = {
     ("trick_classification", "pose_tcn"): (
         _build_pose_tcn_eval_config,
         run_pose_tcn_evaluation,
@@ -94,7 +98,7 @@ def run(cfg: DictConfig) -> None:
     key = (cfg.task.name, cfg.model.name)
 
     target = EVALUATION_TARGETS.get(key)
-    
+
     if target is None:
         available = ", ".join(f"{task}/{model}" for task, model in EVALUATION_TARGETS)
         raise RuntimeError(

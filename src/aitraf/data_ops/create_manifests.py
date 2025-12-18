@@ -136,6 +136,7 @@ def _build_task_manifests(
         _write_manifest(split_df, out_path, target_column)
         logger.info("Task '{}' wrote {} ({} rows)", task.name, out_path, len(split_df))
 
+
 def _validate_required_columns(df: pd.DataFrame, *columns: str) -> None:
     missing = [c for c in columns if c not in df.columns]
     if missing:
