@@ -131,6 +131,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
         label2id,
         config.sample_frames,
         config.sampling_dist,
+        config.target_col,
     )
 
     trainer = Trainer(
@@ -167,6 +168,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
             label2id,
             config.sample_frames,
             config.sampling_dist,
+            config.target_col,
         )
 
         model_info = mlflow.transformers.log_model(

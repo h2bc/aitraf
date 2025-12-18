@@ -9,7 +9,6 @@ from torchcodec.decoders import VideoDecoder
 from transformers import VideoMAEImageProcessor
 from aitraf.utils import get_video_rotation_deg
 
-from aitraf.data_ops import schema
 from aitraf.processing import sample_frame_indices
 import kornia
 
@@ -21,6 +20,7 @@ def process_clip(
     label2id: dict[str, int],
     num_frames: int,
     sampling_dist: str,
+    target_column: str,
 ) -> dict[str, torch.tensor]:
     """Load a local clip referenced by a manifest row and prepare VideoMAE inputs."""
 
@@ -35,7 +35,7 @@ def process_clip(
     frames = [decoder[int(idx)] for idx in frame_indices]
     frames = _rotate_frames(frames, get_video_rotation_deg(clip_path))
     processed_ts = processor(frames, return_tensors="pt")
-    label = manifest_row[schema.TARGET_COLUMN]
+    label = manifest_row[target_column]
 
     return {
         "pixel_values": processed_ts["pixel_values"][0],
@@ -49,6 +49,7 @@ def build_collate(
     label2id: dict[str, int],
     sample_frames: int,
     sampling_dist: str,
+    target_column: str,
 ) -> Callable[[list[dict[str, Any]]], dict[str, torch.Tensor]]:
     """Create a collate_fn consistent across training and eval."""
 
@@ -61,6 +62,7 @@ def build_collate(
                 label2id,
                 sample_frames,
                 sampling_dist,
+                target_column,
             )
             for row in batch
         ]
