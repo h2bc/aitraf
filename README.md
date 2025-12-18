@@ -20,8 +20,6 @@ Run commands via [Task](https://taskfile.dev)
 
 | Command | Description |
 |---------|-------------|
-| `task lint` | Runs Ruff checks across the repo. |
-| `task format` | Applies Ruff formatting fixes. |
 | `task data -- [overrides]` | Executes the Hydra-managed data pipeline (`scripts/data_pipeline.py`). Pass Hydra overrides after `--`. |
 | `task train -- task=<task> model=<model> [overrides]` | Runs the Hydra-managed training entrypoint (`scripts/train.py`). |
 | `task eval -- task=<task> model=<model> model_id=<model_id> [overrides]` | Runs the unified evaluation entrypoint (`scripts/eval.py`). |
@@ -48,6 +46,11 @@ Run commands via [Task](https://taskfile.dev)
 
 - Builds train/val/test JSONL manifests under `data/manifests/<task>/`, stratifying by the target column when configured.
 - Emits a shared `vocab.json` capturing label/id mappings per task for downstream consumers.
+
+## Dev Commands
+
+- `task lint` — run Ruff lint checks.
+- `task format` — apply Ruff formatting fixes.
 
 ## Tasks
 
