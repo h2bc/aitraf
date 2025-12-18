@@ -18,16 +18,14 @@ Model training and evaluation stack for inline skating trick recognition.
 
 Run commands via [Task](https://taskfile.dev); everything executes inside the uv-managed virtualenv.
 
-| Command        | Description |
-|----------------|-------------|
 | Command | Description |
 |---------|-------------|
 | `task lint` | Runs Ruff checks across the repo. |
 | `task format` | Applies Ruff formatting fixes. |
-| `task data [overrides]` | Executes the Hydra-managed data pipeline (see below). |
-| `task train -- model=… task=… [args]` | Runs the Hydra-managed training entrypoint (`scripts/train.py`). |
-| `task eval -- model=… task=… model_id=… [args]` | Runs the unified evaluation entrypoint (`scripts/eval.py`). |
-| `task train_eval -- model=… task=… [args]` | Runs the combined train+eval workflow (`scripts/train_eval.py`). |
+| `task data -- …` | Executes the Hydra-managed data pipeline (`scripts/data_pipeline.py`). Pass Hydra overrides after `--`. |
+| `task train -- task=… model=… …` | Runs the Hydra-managed training entrypoint (`scripts/train.py`). |
+| `task eval -- task=… model=… model_id=… …` | Runs the unified evaluation entrypoint (`scripts/eval.py`). |
+| `task train_eval -- task=… model=… …` | Runs the combined train+eval workflow (`scripts/train_eval.py`). |
 
 ### Data pipeline script
 
