@@ -14,6 +14,12 @@ Model training and evaluation stack for inline skating trick recognition.
 2. Copy `.env.example` to `.env` and fill in the Label Studio + AWS credentials.
 3. Install task runner dependencies once with `uv sync`
 
+
+## Dev Commands
+
+- `task lint` — run Ruff lint checks.
+- `task format` — apply Ruff formatting fixes.
+
 ## Pipelines
 
 Run commands via [Task](https://taskfile.dev)
@@ -25,7 +31,7 @@ Run commands via [Task](https://taskfile.dev)
 | `task eval -- task=<task> model=<model> model_id=<model_id> [overrides]` | Runs the unified evaluation entrypoint (`scripts/eval.py`). |
 | `task train_eval -- task=<task> model=<model> [overrides]` | Runs the combined train+eval workflow (`scripts/train_eval.py`). |
 
-### Data ops pipeline script
+### Data ops script
 
 `task data` runs `scripts/data_pipeline.py`, a Hydra-driven workflow composed of four stages (enable/disable each and set `force` flags in `configs/data_ops.yaml` or via cmd args):
 
@@ -46,11 +52,6 @@ Run commands via [Task](https://taskfile.dev)
 
 - Builds train/val/test JSONL manifests under `data/manifests/<task>/`, stratifying by the target column when configured.
 - Emits a shared `vocab.json` capturing label/id mappings per task for downstream consumers.
-
-## Dev Commands
-
-- `task lint` — run Ruff lint checks.
-- `task format` — apply Ruff formatting fixes.
 
 ## Tasks
 
