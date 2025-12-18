@@ -104,17 +104,13 @@ def run(cfg: DictConfig) -> None:
     training_cfg = builder(cfg)
 
     logger.info(
-        "Starting training for task='%s' model='%s' (run: %s)",
-        cfg.task.name,
-        cfg.model.name,
-        cfg.run_name,
+        f"Starting training for task='{cfg.task.name}' model='{cfg.model.name}' (run: {cfg.run_name})"
     )
+
     model_uri = runner(training_cfg)
+    
     logger.info(
-        "Finished training for task='%s' model='%s'. Model URI: %s",
-        cfg.task.name,
-        cfg.model.name,
-        model_uri,
+        f"Finished training for task='{cfg.task.name}' model='{cfg.model.name}'. Model URI: {model_uri}"
     )
 
 

@@ -54,10 +54,7 @@ class PoseTCNTrainingConfig:
 
 def run_training(config: PoseTCNTrainingConfig) -> str:
     """Train the Pose TCN classifier and log artifacts to MLflow."""
-
-    labels, label2id, _ = load_target_label_mappings(
-        config.vocab_path, config.target_col
-    )
+    labels, label2id, _ = load_target_label_mappings(config.vocab_path, config.target_col)
 
     collate_fn = build_collate(
         num_frames=config.sample_frames,
@@ -117,11 +114,6 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
         dropout=config.dropout,
     )
 
-    mlflow_logger = MLFlowLogger(
-        experiment_name=config.experiment_name,
-        run_name=config.run_name,
-    )
-
     checkpoint_callback = ModelCheckpoint(
         dirpath=str(config.output_dir),
         filename="pose-tcn-{epoch:02d}-{val_acc:.3f}",
@@ -137,44 +129,41 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
         verbose=True,
     )
 
-    trainer = Trainer(
-        accelerator=config.accelerator,
-        max_epochs=config.max_epochs,
-        logger=mlflow_logger,
-        default_root_dir=str(config.output_dir),
-        callbacks=[checkpoint_callback, early_stop],
-        enable_progress_bar=True,
-    )
-
     mlflow.set_experiment(config.experiment_name)
 
-    with mlflow.start_run(run_id=mlflow_logger.run_id):
+    with mlflow.start_run(run_name=config.run_name) as run:
+        mlflow_logger = MLFlowLogger(
+            experiment_name=config.experiment_name,
+            run_id=run.info.run_id,
+        )
+
+        trainer = Trainer(
+            accelerator=config.accelerator,
+            max_epochs=config.max_epochs,
+            logger=mlflow_logger,
+            default_root_dir=str(config.output_dir),
+            callbacks=[checkpoint_callback, early_stop],
+            enable_progress_bar=True,
+        )
+
         mlflow.log_input(
-            from_pandas(
-                pd.DataFrame(train_loader.dataset.manifest_rows()), name="train"
-            ),
+            from_pandas(pd.DataFrame(train_loader.dataset.manifest_rows()), name="train"),
             context="train",
         )
         mlflow.log_input(
-            from_pandas(
-                pd.DataFrame(val_loader.dataset.manifest_rows()), name="validation"
-            ),
+            from_pandas(pd.DataFrame(val_loader.dataset.manifest_rows()), name="validation"),
             context="validation",
         )
 
         trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
         best_checkpoint = checkpoint_callback.best_model_path
-
         if not best_checkpoint:
-            raise RuntimeError(
-                "Checkpoint was not saved; unable to log model to MLflow."
-            )
+            raise RuntimeError("Checkpoint was not saved; unable to log model to MLflow.")
 
         mlflow.log_artifact(best_checkpoint, artifact_path="checkpoints")
 
-        exported_model = TCNClassifier.load_from_checkpoint(best_checkpoint)
-        exported_model = exported_model.cpu().eval()
+        exported_model = TCNClassifier.load_from_checkpoint(best_checkpoint).cpu().eval()
         sample_input = first_batch["inputs"][:1].cpu().numpy().astype("float32")
 
         model_info = mlflow.pytorch.log_model(
@@ -184,6 +173,3 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
         )
 
         return model_info.model_uri
-
-
-__all__ = ["PoseTCNTrainingConfig", "run_training"]
