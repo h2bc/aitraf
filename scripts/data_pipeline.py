@@ -17,7 +17,7 @@ from aitraf.data_ops.pose_and_bbox_extraction import (
 )
 
 
-@main(config_path="../configs_v2", config_name="data_ops", version_base=None)
+@main(config_path="../configs", config_name="data_ops", version_base=None)
 def run(cfg: DictConfig) -> None:
     load_dotenv()
     setup_logging()

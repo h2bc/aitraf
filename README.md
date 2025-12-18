@@ -33,7 +33,7 @@ Run commands via [Task](https://taskfile.dev); everything executes inside the uv
 3. Optionally perform pose + bounding-box extraction with the configured Ultralytics weights.
 4. Build train/val/test manifests plus a shared categorical vocabulary under `data/manifests/`.
 
-Toggle each stage in `configs_v2/data_ops.yaml` (e.g., disable clip downloads when cache is warm).
+Toggle each stage in `configs/data_ops.yaml` (e.g., disable clip downloads when cache is warm).
 
 ## Project Integrations
 

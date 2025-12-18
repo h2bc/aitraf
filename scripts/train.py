@@ -86,7 +86,7 @@ TRAINING_TARGETS: dict[tuple[str, str], tuple[TrainingBuilder, TrainingRunner]] 
 }
 
 
-@main(config_path="../configs_v2", config_name="train", version_base=None)
+@main(config_path="../configs", config_name="train", version_base=None)
 def run(cfg: DictConfig) -> None:
     load_dotenv()
     setup_logging()

@@ -149,7 +149,7 @@ TRAIN_EVAL_TARGETS: dict[
 }
 
 
-@main(config_path="../configs_v2", config_name="train_eval", version_base=None)
+@main(config_path="../configs", config_name="train_eval", version_base=None)
 def run(cfg: DictConfig) -> None:
     load_dotenv()
     setup_logging()

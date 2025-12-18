@@ -1,4 +1,0 @@
-defaults:
-  - base
-  - video_mae: default
-  - _self_

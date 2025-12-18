@@ -84,7 +84,7 @@ EVALUATION_TARGETS: dict[tuple[str, str], tuple[EvaluationBuilder, EvaluationRun
 }
 
 
-@main(config_path="../configs_v2", config_name="eval", version_base=None)
+@main(config_path="../configs", config_name="eval", version_base=None)
 def run(cfg: DictConfig) -> None:
     load_dotenv()
     setup_logging()
