@@ -1,6 +1,7 @@
 """VideoMAE evaluation pipeline."""
 
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 
 from datasets import load_dataset
@@ -22,8 +23,9 @@ from aitraf.metrics import (
     compute_dummy_pred_ids,
     get_top_k_worst_misses,
 )
-from aitraf.processing.video_mae import build_collate
 from aitraf.processing import load_target_label_mappings
+from aitraf.processing.models.video_mae import process_sample
+from aitraf.processing.utils import build_collate
 from aitraf.logging import logger
 
 
@@ -90,14 +92,17 @@ def run_evaluation(config: VideoMAEEvalConfig):
         run_name=config.run_name,
     )
 
-    data_collator = build_collate(
-        processor,
-        config.clips_dir,
-        label2id,
-        config.sample_frames,
-        config.sampling_dist,
-        config.target_col,
+    process_fn = partial(
+        process_sample,
+        processor=processor,
+        clips_dir=config.clips_dir,
+        sample_frames=config.sample_frames,
+        sampling_dist=config.sampling_dist,
+        target_col=config.target_col,
+        label_transform=lambda label: label2id[str(label)],
     )
+
+    data_collator = build_collate(process_fn)
 
     trainer = Trainer(
         model=model,

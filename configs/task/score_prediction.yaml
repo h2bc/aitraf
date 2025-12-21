@@ -1,5 +1,5 @@
 name: score_prediction
 type: regression
-target_column: score
+target_column: execution_score
 stratify_by_target: true
 manifests_dir: ${paths.manifests_dir}/${.name}

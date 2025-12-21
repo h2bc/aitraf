@@ -28,6 +28,20 @@
       "6": "top-soul"
     }
   },
+  "key_foot": {
+    "labels": [
+      "left",
+      "right"
+    ],
+    "label2id": {
+      "left": 0,
+      "right": 1
+    },
+    "id2label": {
+      "0": "left",
+      "1": "right"
+    }
+  },
   "person": {
     "labels": [
       "Andrej",
@@ -55,20 +69,6 @@
       "4": "Romka",
       "5": "Rytis",
       "6": "Vilius"
-    }
-  },
-  "key_foot": {
-    "labels": [
-      "left",
-      "right"
-    ],
-    "label2id": {
-      "left": 0,
-      "right": 1
-    },
-    "id2label": {
-      "0": "left",
-      "1": "right"
     }
   }
 }

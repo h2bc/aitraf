@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 
 import pandas as pd
@@ -16,8 +17,9 @@ from torch.utils.data import DataLoader, Subset
 
 from aitraf.datasets.pose_tcn import PoseTCNDataset
 from aitraf.models.pose_tcn import TCNClassifier
-from aitraf.processing.pose_tcn import build_collate
 from aitraf.processing import load_target_label_mappings
+from aitraf.processing.models.pose_tcn import process_sample
+from aitraf.processing.utils import build_collate
 
 
 @dataclass
@@ -58,11 +60,14 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
         config.vocab_path, config.target_col
     )
 
-    collate_fn = build_collate(
+    process_fn = partial(
+        process_sample,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
-        label2id=label2id,
+        label_transform=lambda label: label2id[str(label)],
     )
+
+    collate_fn = build_collate(process_fn)
 
     pin_memory = config.accelerator != "cpu"
 
@@ -147,7 +152,6 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
             callbacks=[checkpoint_callback, early_stop],
             enable_progress_bar=True,
         )
-
 
         mlflow.log_input(
             from_pandas(

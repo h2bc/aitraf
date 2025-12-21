@@ -1,8 +1,8 @@
 """VideoMAE finte-tuning pipeline"""
 
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
-
 
 from transformers import (
     AutoConfig,
@@ -14,8 +14,9 @@ from transformers import (
     VideoMAEImageProcessor,
 )
 
-from aitraf.processing.video_mae import build_collate, process_clip
 from aitraf.processing import load_target_label_mappings
+from aitraf.processing.models.video_mae import process_sample
+from aitraf.processing.utils import build_collate
 from aitraf.metrics import build_classification_metrics, compute_pred_ids
 from aitraf.logging import logger
 
@@ -80,6 +81,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
     processor = VideoMAEImageProcessor.from_pretrained(
         config.backbone, cache_dir=str(config.model_cache_dir)
     )
+
     model_config = AutoConfig.from_pretrained(
         config.backbone,
         cache_dir=str(config.model_cache_dir),
@@ -95,9 +97,8 @@ def run_training(config: VideoMAETrainingConfig) -> str:
         cache_dir=str(config.model_cache_dir),
         trust_remote_code=True,
     ).to(config.device)
-    logger.info(
-        f"VideoMAE trainer using device: {next(model.parameters()).device}"
-    )
+
+    logger.info(f"VideoMAE trainer using device: {next(model.parameters()).device}")
 
     if config.freeze_backbone:
         for param in model.base_model.parameters():
@@ -129,14 +130,17 @@ def run_training(config: VideoMAETrainingConfig) -> str:
         run_name=config.run_name,
     )
 
-    data_collator = build_collate(
-        processor,
-        config.clips_dir,
-        label2id,
-        config.sample_frames,
-        config.sampling_dist,
-        config.target_col,
+    process_fn = partial(
+        process_sample,
+        processor=processor,
+        clips_dir=config.clips_dir,
+        sample_frames=config.sample_frames,
+        sampling_dist=config.sampling_dist,
+        target_col=config.target_col,
+        label_transform=lambda label: label2id[str(label)],
     )
+
+    data_collator = build_collate(process_fn)
 
     trainer = Trainer(
         model=model,
@@ -165,15 +169,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
 
         trainer.train()
 
-        sample_clip = process_clip(
-            dataset["train"][0],
-            processor,
-            config.clips_dir,
-            label2id,
-            config.sample_frames,
-            config.sampling_dist,
-            config.target_col,
-        )
+        sample_clip = process_fn(dataset["train"][0])
 
         model_info = mlflow.transformers.log_model(
             transformers_model={

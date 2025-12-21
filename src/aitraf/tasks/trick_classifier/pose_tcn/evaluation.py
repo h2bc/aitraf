@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 from typing import cast
 
@@ -25,8 +26,9 @@ from aitraf.metrics import (
     get_top_k_worst_misses,
 )
 from aitraf.models.pose_tcn import TCNClassifier
-from aitraf.processing.pose_tcn import build_collate
 from aitraf.processing import load_target_label_mappings
+from aitraf.processing.models.pose_tcn import process_sample
+from aitraf.processing.utils import build_collate
 
 
 @dataclass
@@ -65,11 +67,14 @@ def run_evaluation(config: PoseTCNEvalConfig) -> None:
         split="test",
     )
 
-    collate_fn = build_collate(
+    process_fn = partial(
+        process_sample,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
-        label2id=label2id,
+        label_transform=lambda label: label2id[str(label)],
     )
+
+    collate_fn = build_collate(process_fn)
 
     dataloader = DataLoader(
         dataset,

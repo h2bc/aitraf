@@ -59,14 +59,12 @@ def create_manifests(config: ManifestBuildConfig) -> None:
     built_any = False
     for task in config.tasks:
         target_column = task.target_column
-        if target_column not in labels_df.columns:
-            logger.warning(
-                "Skipping task '{}': missing target column '{}' in labels",
-                task.name,
-                target_column,
-            )
+
+        if not _check_required_columns(labels_df, task.name, target_column):
             continue
+
         _build_task_manifests(labels_df, config, task)
+
         built_any = True
 
     if not built_any:
@@ -143,6 +141,23 @@ def _validate_required_columns(df: pd.DataFrame, *columns: str) -> None:
         raise RuntimeError(
             "Input is missing required columns: " + ", ".join(sorted(missing))
         )
+
+
+def _check_required_columns(df: pd.DataFrame, task_name: str, *columns: str) -> bool:
+    missing = [c for c in columns if c not in df.columns]
+
+    if not missing:
+        return True
+
+    quoted = ", ".join(f"'{col}'" for col in missing)
+
+    logger.warning(
+        "Skipping task '{}': missing required columns {} in labels",
+        task_name,
+        quoted,
+    )
+
+    return False
 
 
 def _split(

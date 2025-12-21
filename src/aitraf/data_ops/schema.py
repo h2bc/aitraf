@@ -1,11 +1,9 @@
-from dataclasses import dataclass, field
-from typing import Tuple, Dict, Type, FrozenSet
-from datetime import datetime
+from typing import ClassVar, Dict, Callable, Any
+import json
 
 
-@dataclass(frozen=True)
 class LabelsSchema:
-    columns: Tuple[str, ...] = (
+    columns: ClassVar[tuple[str, ...]] = (
         "annotation_id",
         "annotator",
         "created_at",
@@ -16,58 +14,54 @@ class LabelsSchema:
         "trick",
         "updated_at",
         "video",
+        "execution_score",
+        "execution_explanation",
     )
 
-    types: Dict[str, Type] = field(
-        default_factory=lambda: {
-            "annotation_id": int,
-            "annotator": int,
-            "created_at": datetime,
-            "id": int,
-            "key_foot": str,
-            "lead_time": float,
-            "person": str,
-            "trick": str,
-            "updated_at": datetime,
-            "video": str,
-        }
-    )
+    types: ClassVar[Dict[str, str]] = {
+        "annotation_id": "string",
+        "annotator": "string",
+        "id": "string",
+        "execution_score": "Float64",
+        "lead_time": "Float64",
+        "created_at": "string",
+        "updated_at": "string",
+        "key_foot": "string",
+        "person": "string",
+        "trick": "string",
+        "video": "string",
+        "execution_explanation": "string",
+    }
 
-    input_col: str = "video"
+    processors: ClassVar[Dict[str, Callable[[Any], Any]]] = {
+        "execution_score": lambda x: (
+            (json.loads(x)[0]["rating"] / 4) if isinstance(x, str) else x
+        )
+    }
+
+    input_col: ClassVar[str] = "video"
 
 
-@dataclass(frozen=True)
 class ManifestSchema:
-    columns: Tuple[str, ...] = (
+    columns: ClassVar[tuple[str, ...]] = (
         "video_id",
         "s3_path",
         "trick",
         "key_foot",
         "person",
-        "score",
+        "execution_score",
+        "execution_explanation",
     )
 
-    types: Dict[str, Type] = field(
-        default_factory=lambda: {
-            "video_id": str,
-            "s3_path": str,
-            "trick": str,
-            "key_foot": str,
-            "person": str,
-            "score": float,
-        }
-    )
+    types: ClassVar[dict[str, str]] = {
+        "video_id": "string",
+        "s3_path": "string",
+        "trick": "string",
+        "key_foot": "string",
+        "person": "string",
+        "execution_score": "Float64",
+        "execution_explanation": "string",
+    }
 
-    categorical: FrozenSet[str] = frozenset(
-        {
-            "trick",
-            "key_foot",
-            "person",
-        }
-    )
-
-    numerical: FrozenSet[str] = frozenset(
-        {
-            "score",
-        }
-    )
+    categorical: ClassVar[tuple[str, ...]] = ("trick", "key_foot", "person")
+    numerical: ClassVar[tuple[str, ...]] = ("execution_score",)

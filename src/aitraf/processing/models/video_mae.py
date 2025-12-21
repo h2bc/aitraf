@@ -1,27 +1,28 @@
 """Helpers for turning a manifest row into VideoMAE-ready tensors."""
 
-from functools import reduce
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Any, Callable, List
 
+import kornia
 import torch
 from torchcodec.decoders import VideoDecoder
 from transformers import VideoMAEImageProcessor
+
+from aitraf.processing.utils import sample_frame_indices
 from aitraf.utils import get_video_rotation_deg
 
-from aitraf.processing import sample_frame_indices
-import kornia
 
-
-def process_clip(
+def process_sample(
     manifest_row: dict[str, Any],
     processor: VideoMAEImageProcessor,
     local_clips_dir: str | Path,
-    label2id: dict[str, int],
     num_frames: int,
     sampling_dist: str,
     target_column: str,
-) -> dict[str, torch.tensor]:
+    label_transform: Callable[[Any], Any] = lambda x: x,
+) -> dict[str, torch.Tensor]:
     """Load a local clip referenced by a manifest row and prepare VideoMAE inputs."""
 
     clip_path = local_clips_dir / manifest_row["video_id"]
@@ -39,43 +40,8 @@ def process_clip(
 
     return {
         "pixel_values": processed_ts["pixel_values"][0],
-        "labels": torch.tensor(label2id[label]),
+        "labels": torch.as_tensor(label_transform(label), dtype=torch.long),
     }
-
-
-def build_collate(
-    processor: VideoMAEImageProcessor,
-    clips_dir: Path | str,
-    label2id: dict[str, int],
-    sample_frames: int,
-    sampling_dist: str,
-    target_column: str,
-) -> Callable[[list[dict[str, Any]]], dict[str, torch.Tensor]]:
-    """Create a collate_fn consistent across training and eval."""
-
-    def _collate(batch: list[dict[str, Any]]) -> dict[str, torch.Tensor]:
-        processed_batch = [
-            process_clip(
-                row,
-                processor,
-                clips_dir,
-                label2id,
-                sample_frames,
-                sampling_dist,
-                target_column,
-            )
-            for row in batch
-        ]
-
-        pivot = reduce(
-            lambda acc, x: {k: acc.get(k, []) + [x[k]] for k in x},
-            processed_batch,
-            {},
-        )
-
-        return {k: torch.stack(v) for k, v in pivot.items()}
-
-    return _collate
 
 
 def _rotate_frames(frames: List[torch.Tensor], rotation_deg: int) -> List[torch.Tensor]:
@@ -93,3 +59,6 @@ def _rotate_frames(frames: List[torch.Tensor], rotation_deg: int) -> List[torch.
 
     x = x.clamp(0, 255).byte()  # to uint8
     return list(x.permute(0, 2, 3, 1))  # (B, C, H, W) -> B, (H, W, C)
+
+
+__all__ = ["process_sample"]
