@@ -121,6 +121,7 @@ def _build_task_manifests(
     train_stratify_labels = (
         stratify_labels.loc[train_val_df.index] if stratify_labels is not None else None
     )
+
     train_df, val_df = _split(
         train_val_df,
         val_fraction,

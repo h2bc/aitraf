@@ -31,6 +31,8 @@ from mlflow.data import from_huggingface
 class VideoMAETrainingConfig:
     """Minimal configuration for the current skeleton run."""
 
+    task_name: str
+    model_name: str
     backbone: str
     manifests_dir: Path | str
     vocab_path: Path | str
@@ -176,7 +178,7 @@ def run_training(config: VideoMAETrainingConfig) -> str:
                 "model": model,
                 "image_processor": processor,
             },
-            name=f"{config.experiment_name}_{config.run_name}",
+            name=f"{config.task_name}_{config.model_name}",
             input_example={
                 "pixel_values": sample_clip["pixel_values"]
                 .unsqueeze(0)

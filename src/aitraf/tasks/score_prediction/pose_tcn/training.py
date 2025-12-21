@@ -1,4 +1,4 @@
-"""Pose TCN training loop with Lightning + MLflow logging."""
+"""Pose TCN training loop for score prediction (regression)."""
 
 from __future__ import annotations
 
@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
 
-import pandas as pd
 import mlflow
 import mlflow.pytorch
+import pandas as pd
 from mlflow.data import from_pandas
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
@@ -16,20 +16,18 @@ from pytorch_lightning.loggers import MLFlowLogger
 from torch.utils.data import DataLoader, Subset
 
 from aitraf.datasets.pose_tcn import PoseTCNDataset
-from aitraf.models.pose_tcn import TCNClassifier
-from aitraf.processing import load_target_label_mappings
+from aitraf.models.pose_tcn import TCNRegressor
 from aitraf.processing.models.pose_tcn import process_sample
 from aitraf.processing.utils import build_collate
 
 
 @dataclass
-class PoseTCNTrainingConfig:
-    """Configuration for Pose TCN training."""
+class PoseTCNRegressionTrainingConfig:
+    """Configuration for Pose TCN score prediction training."""
 
     task_name: str
     model_name: str
     manifests_dir: Path | str
-    vocab_path: Path | str
     target_col: str
     poses_dir: Path | str
     batch_size: int
@@ -56,17 +54,13 @@ class PoseTCNTrainingConfig:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
 
-def run_training(config: PoseTCNTrainingConfig) -> str:
-    """Train the Pose TCN classifier and log artifacts to MLflow."""
-    labels, label2id, _ = load_target_label_mappings(
-        config.vocab_path, config.target_col
-    )
+def run_training(config: PoseTCNRegressionTrainingConfig) -> str:
+    """Train the Pose TCN regressor and log artifacts to MLflow."""
 
     process_fn = partial(
         process_sample,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
-        label_transform=lambda label: label2id[str(label)],
     )
 
     collate_fn = build_collate(process_fn)
@@ -111,11 +105,9 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
 
     first_batch = next(iter(train_loader))
     feature_dim = first_batch["inputs"].shape[-1]
-    num_classes = len(labels)
 
-    model = TCNClassifier(
+    model = TCNRegressor(
         feature_dim=feature_dim,
-        num_classes=num_classes,
         learning_rate=config.learning_rate,
         hidden_dim=config.hidden_dim,
         num_layers=config.num_layers,
@@ -125,15 +117,15 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=str(config.output_dir),
-        filename="pose-tcn-{epoch:02d}-{val_acc:.3f}",
-        monitor="val_acc",
-        mode="max",
+        filename="pose-tcn-score-{epoch:02d}-{val_mae:.3f}",
+        monitor="val_mae",
+        mode="min",
         save_top_k=1,
     )
 
     early_stop = EarlyStopping(
-        monitor="val_acc",
-        mode="max",
+        monitor="val_mae",
+        mode="min",
         patience=config.early_stopping_patience,
         verbose=True,
     )
@@ -178,10 +170,7 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
 
         mlflow.log_artifact(best_checkpoint, artifact_path="checkpoints")
 
-        exported_model = (
-            TCNClassifier.load_from_checkpoint(best_checkpoint).cpu().eval()
-        )
-
+        exported_model = TCNRegressor.load_from_checkpoint(best_checkpoint).cpu().eval()
         sample_input = first_batch["inputs"][:1].cpu().numpy().astype("float32")
 
         model_info = mlflow.pytorch.log_model(
@@ -191,3 +180,6 @@ def run_training(config: PoseTCNTrainingConfig) -> str:
         )
 
         return model_info.model_uri
+
+
+__all__ = ["PoseTCNRegressionTrainingConfig", "run_training"]

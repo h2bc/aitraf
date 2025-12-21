@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable
-
+from typing import Callable
 from dotenv import load_dotenv
 from hydra import main
 from omegaconf import DictConfig
@@ -12,22 +11,27 @@ from omegaconf import DictConfig
 from aitraf.logging import logger, setup_logging
 from aitraf.tasks.trick_classifier.pose_tcn import (
     PoseTCNTrainingConfig,
-    run_training as run_pose_tcn_training,
+    run_training as _run_pose_tcn_training,
 )
 from aitraf.tasks.trick_classifier.video_mae import (
     VideoMAETrainingConfig,
-    run_training as run_video_mae_training,
+    run_training as _run_video_mae_training,
+)
+from aitraf.tasks.score_prediction.pose_tcn import (
+    PoseTCNRegressionTrainingConfig,
+    run_training as _run_pose_tcn_regression_training,
 )
 
 
-TrainingBuilder = Callable[[DictConfig], Any]
-TrainingRunner = Callable[[Any], str]
+TrainingRunner = Callable[[DictConfig], str]
 
 
 def _build_video_mae_training_config(cfg: DictConfig) -> VideoMAETrainingConfig:
     data_dir = Path(cfg.paths.data_dir)
 
     return VideoMAETrainingConfig(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,
@@ -51,6 +55,8 @@ def _build_video_mae_training_config(cfg: DictConfig) -> VideoMAETrainingConfig:
 
 def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTCNTrainingConfig:
     return PoseTCNTrainingConfig(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,
         target_col=cfg.task.target_column,
@@ -74,14 +80,43 @@ def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTCNTrainingConfig:
     )
 
 
-TRAINING_TARGETS: dict[tuple[str, str], tuple[TrainingBuilder, TrainingRunner]] = {
-    ("trick_classification", "video_mae"): (
-        _build_video_mae_training_config,
-        run_video_mae_training,
+def _build_pose_tcn_regression_training_config(
+    cfg: DictConfig,
+) -> PoseTCNRegressionTrainingConfig:
+    return PoseTCNRegressionTrainingConfig(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
+        manifests_dir=cfg.task.manifests_dir,
+        target_col=cfg.task.target_column,
+        poses_dir=cfg.model.poses_dir,
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
+        learning_rate=cfg.model.learning_rate,
+        hidden_dim=cfg.model.hidden_dim,
+        num_layers=cfg.model.num_layers,
+        kernel_size=cfg.model.kernel_size,
+        dropout=cfg.model.dropout,
+        max_epochs=cfg.model.max_epochs,
+        accelerator=cfg.model.accelerator,
+        early_stopping_patience=cfg.model.early_stopping_patience,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.run_name,
+        output_dir=cfg.output_dir,
+        max_train_samples=cfg.max_samples,
+    )
+
+
+TRAINING_TARGETS: dict[tuple[str, str], TrainingRunner] = {
+    ("trick_classification", "video_mae"): lambda cfg: _run_video_mae_training(
+        _build_video_mae_training_config(cfg)
     ),
-    ("trick_classification", "pose_tcn"): (
-        _build_pose_tcn_training_config,
-        run_pose_tcn_training,
+    ("trick_classification", "pose_tcn"): lambda cfg: _run_pose_tcn_training(
+        _build_pose_tcn_training_config(cfg)
+    ),
+    ("score_prediction", "pose_tcn"): lambda cfg: _run_pose_tcn_regression_training(
+        _build_pose_tcn_regression_training_config(cfg)
     ),
 }
 
@@ -100,14 +135,11 @@ def run(cfg: DictConfig) -> None:
             f"model='{cfg.model.name}'. Available combinations: {available or 'none'}."
         )
 
-    builder, runner = target
-    training_cfg = builder(cfg)
-
     logger.info(
         f"Starting training for task='{cfg.task.name}' model='{cfg.model.name}' (run: {cfg.run_name})"
     )
 
-    model_uri = runner(training_cfg)
+    model_uri = target(cfg)
 
     logger.info(
         f"Finished training for task='{cfg.task.name}' model='{cfg.model.name}'. Model URI: {model_uri}"
