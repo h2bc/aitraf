@@ -16,6 +16,7 @@ from pytorch_lightning.loggers import MLFlowLogger
 from torch.utils.data import DataLoader, Subset
 
 from aitraf.datasets.pose_tcn import PoseTCNDataset
+from aitraf.metrics import build_classification_metrics
 from aitraf.models.pose_tcn import TCNClassifier
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.pose_tcn import process_sample
@@ -117,6 +118,7 @@ def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
         feature_dim=feature_dim,
         num_classes=num_classes,
         learning_rate=config.learning_rate,
+        metrics_fn=build_classification_metrics(),
         hidden_dim=config.hidden_dim,
         num_layers=config.num_layers,
         kernel_size=config.kernel_size,
@@ -125,14 +127,14 @@ def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=str(config.output_dir),
-        filename="pose-tcn-{epoch:02d}-{val_acc:.3f}",
-        monitor="val_acc",
+        filename="pose-tcn-{epoch:02d}-{val_accuracy:.3f}",
+        monitor="val_accuracy",
         mode="max",
         save_top_k=1,
     )
 
     early_stop = EarlyStopping(
-        monitor="val_acc",
+        monitor="val_accuracy",
         mode="max",
         patience=config.early_stopping_patience,
         verbose=True,

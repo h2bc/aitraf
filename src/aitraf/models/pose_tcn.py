@@ -139,6 +139,7 @@ class TCNClassifier(pl.LightningModule):
         feature_dim: int,
         num_classes: int,
         learning_rate: float,
+        metrics_fn,
         hidden_dim: int = 128,
         num_layers: int = 3,
         kernel_size: int = 3,
@@ -159,6 +160,7 @@ class TCNClassifier(pl.LightningModule):
             num_classes=num_classes,
             dropout=dropout,
         )
+        self.metrics_fn = metrics_fn
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         features = self.backbone(x)
@@ -167,17 +169,24 @@ class TCNClassifier(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         logits = self(batch["inputs"])
         loss = F.cross_entropy(logits, batch["labels"])
-        acc = (logits.argmax(dim=-1) == batch["labels"]).float().mean()
         self.log("train_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-        self.log("train_acc", acc, prog_bar=True, on_step=False, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         logits = self(batch["inputs"])
         loss = F.cross_entropy(logits, batch["labels"])
-        acc = (logits.argmax(dim=-1) == batch["labels"]).float().mean()
         self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-        self.log("val_acc", acc, prog_bar=True, on_step=False, on_epoch=True)
+        preds = logits.argmax(dim=-1).detach().cpu().numpy()
+        labels = batch["labels"].detach().cpu().numpy()
+        metrics = self.metrics_fn(preds, labels)
+        for name, value in metrics.items():
+            self.log(
+                f"val_{name}",
+                value,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
+            )
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
@@ -190,6 +199,7 @@ class TCNRegressor(pl.LightningModule):
         self,
         feature_dim: int,
         learning_rate: float,
+        metrics_fn,
         hidden_dim: int = 128,
         num_layers: int = 3,
         kernel_size: int = 3,
@@ -210,6 +220,7 @@ class TCNRegressor(pl.LightningModule):
             dropout=dropout,
         )
         self.loss_fn = nn.MSELoss()
+        self.metrics_fn = metrics_fn
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         features = self.backbone(x)
@@ -226,9 +237,16 @@ class TCNRegressor(pl.LightningModule):
         preds = self(batch["inputs"])
         targets = batch["labels"].float()
         loss = self.loss_fn(preds, targets)
-        mae = torch.nn.functional.l1_loss(preds, targets)
         self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-        self.log("val_mae", mae, prog_bar=True, on_step=False, on_epoch=True)
+        metrics = self.metrics_fn(preds.detach().cpu().numpy(), targets.detach().cpu().numpy())
+        for name, value in metrics.items():
+            self.log(
+                f"val_{name}",
+                value,
+                prog_bar=False,
+                on_step=False,
+                on_epoch=True,
+            )
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate)
