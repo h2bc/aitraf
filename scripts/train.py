@@ -10,15 +10,15 @@ from omegaconf import DictConfig
 
 from aitraf.logging import logger, setup_logging
 from aitraf.tasks.trick_classifier.pose_tcn import (
-    PoseTCNTrainingConfig,
+    PoseTcnTrickClassificationCfg,
     run_training as _run_pose_tcn_training,
 )
 from aitraf.tasks.trick_classifier.video_mae import (
-    VideoMAETrainingConfig,
+    VideoMaeTrickClassificationCfg,
     run_training as _run_video_mae_training,
 )
 from aitraf.tasks.score_prediction.pose_tcn import (
-    PoseTCNRegressionTrainingConfig,
+    PoseTcnScorePredictionCfg,
     run_training as _run_pose_tcn_regression_training,
 )
 
@@ -26,10 +26,12 @@ from aitraf.tasks.score_prediction.pose_tcn import (
 TrainingRunner = Callable[[DictConfig], str]
 
 
-def _build_video_mae_training_config(cfg: DictConfig) -> VideoMAETrainingConfig:
+def _build_video_mae_training_config(
+    cfg: DictConfig,
+) -> VideoMaeTrickClassificationCfg:
     data_dir = Path(cfg.paths.data_dir)
 
-    return VideoMAETrainingConfig(
+    return VideoMaeTrickClassificationCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
@@ -53,8 +55,8 @@ def _build_video_mae_training_config(cfg: DictConfig) -> VideoMAETrainingConfig:
     )
 
 
-def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTCNTrainingConfig:
-    return PoseTCNTrainingConfig(
+def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTcnTrickClassificationCfg:
+    return PoseTcnTrickClassificationCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         manifests_dir=cfg.task.manifests_dir,
@@ -82,8 +84,8 @@ def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTCNTrainingConfig:
 
 def _build_pose_tcn_regression_training_config(
     cfg: DictConfig,
-) -> PoseTCNRegressionTrainingConfig:
-    return PoseTCNRegressionTrainingConfig(
+) -> PoseTcnScorePredictionCfg:
+    return PoseTcnScorePredictionCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         manifests_dir=cfg.task.manifests_dir,

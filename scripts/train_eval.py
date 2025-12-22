@@ -12,13 +12,13 @@ from omegaconf import DictConfig
 from aitraf.logging import logger, setup_logging
 from aitraf.tasks.trick_classifier.pose_tcn import (
     PoseTCNEvalConfig,
-    PoseTCNTrainingConfig,
+    PoseTcnTrickClassificationCfg,
     run_evaluation as run_pose_tcn_evaluation,
     run_training as run_pose_tcn_training,
 )
 from aitraf.tasks.trick_classifier.video_mae import (
     VideoMAEEvalConfig,
-    VideoMAETrainingConfig,
+    VideoMaeTrickClassificationCfg,
     run_evaluation as run_video_mae_evaluation,
     run_training as run_video_mae_training,
 )
@@ -30,8 +30,8 @@ TrainingRunner = Callable[[Any], str]
 EvaluationRunner = Callable[[Any], None]
 
 
-def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTCNTrainingConfig:
-    return PoseTCNTrainingConfig(
+def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTcnTrickClassificationCfg:
+    return PoseTcnTrickClassificationCfg(
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,
         target_col=cfg.task.target_column,
@@ -75,10 +75,12 @@ def _build_pose_tcn_eval_config(cfg: DictConfig, model_uri: str) -> PoseTCNEvalC
     )
 
 
-def _build_video_mae_training_config(cfg: DictConfig) -> VideoMAETrainingConfig:
+def _build_video_mae_training_config(
+    cfg: DictConfig,
+) -> VideoMaeTrickClassificationCfg:
     data_dir = Path(cfg.paths.data_dir)
 
-    return VideoMAETrainingConfig(
+    return VideoMaeTrickClassificationCfg(
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,

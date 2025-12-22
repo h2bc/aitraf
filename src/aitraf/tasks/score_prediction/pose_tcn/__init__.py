@@ -1,8 +1,8 @@
 """Pose TCN score-prediction task entrypoints."""
 
-from .training import PoseTCNRegressionTrainingConfig, run_training
+from .training import PoseTcnScorePredictionCfg, run_training
 
 __all__ = [
-    "PoseTCNRegressionTrainingConfig",
+    "PoseTcnScorePredictionCfg",
     "run_training",
 ]

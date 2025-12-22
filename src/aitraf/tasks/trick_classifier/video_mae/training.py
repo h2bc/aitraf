@@ -28,7 +28,7 @@ from mlflow.data import from_huggingface
 
 
 @dataclass
-class VideoMAETrainingConfig:
+class VideoMaeTrickClassificationCfg:
     """Minimal configuration for the current skeleton run."""
 
     task_name: str
@@ -60,7 +60,7 @@ class VideoMAETrainingConfig:
         self.model_cache_dir.mkdir(parents=True, exist_ok=True)
 
 
-def run_training(config: VideoMAETrainingConfig) -> str:
+def run_training(config: VideoMaeTrickClassificationCfg) -> str:
     load_dotenv()
 
     dataset = load_dataset(

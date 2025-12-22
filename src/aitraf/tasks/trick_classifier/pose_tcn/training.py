@@ -23,7 +23,7 @@ from aitraf.processing.utils import build_collate
 
 
 @dataclass
-class PoseTCNTrainingConfig:
+class PoseTcnTrickClassificationCfg:
     """Configuration for Pose TCN training."""
 
     task_name: str
@@ -56,7 +56,7 @@ class PoseTCNTrainingConfig:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
 
-def run_training(config: PoseTCNTrainingConfig) -> str:
+def run_training(config: PoseTcnTrickClassificationCfg) -> str:
     """Train the Pose TCN classifier and log artifacts to MLflow."""
     labels, label2id, _ = load_target_label_mappings(
         config.vocab_path, config.target_col
