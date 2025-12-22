@@ -28,6 +28,12 @@ from aitraf.tasks.score_prediction.pose_tcn import (
     run_evaluation as run_pose_tcn_score_prediction_eval,
     run_training as run_pose_tcn_score_prediction_train,
 )
+from aitraf.tasks.score_prediction.video_mae import (
+    VideoMaeScorePredictionEvalCfg,
+    VideoMaeScorePredictionTrainCfg,
+    run_evaluation as run_video_mae_score_prediction_eval,
+    run_training as run_video_mae_score_prediction_train,
+)
 
 
 
@@ -182,6 +188,58 @@ def _build_pose_tcn_score_prediction_eval_config(
     )
 
 
+def _build_video_mae_score_prediction_training_config(
+    cfg: DictConfig,
+) -> VideoMaeScorePredictionTrainCfg:
+    data_dir = Path(cfg.paths.data_dir)
+
+    return VideoMaeScorePredictionTrainCfg(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
+        backbone=cfg.model.backbone,
+        manifests_dir=cfg.task.manifests_dir,
+        target_col=cfg.task.target_column,
+        clips_dir=data_dir / "clips",
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
+        device=cfg.model.device,
+        output_dir=cfg.train_output_dir,
+        epochs=cfg.model.epochs,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.train_run_name,
+        freeze_backbone=cfg.model.freeze_backbone,
+        model_cache_dir=cfg.model.model_cache_dir,
+        max_train_samples=cfg.max_samples,
+        early_stopping_patience=cfg.model.early_stopping_patience,
+    )
+
+
+def _build_video_mae_score_prediction_eval_config(
+    cfg: DictConfig, model_uri: str
+) -> VideoMaeScorePredictionEvalCfg:
+    data_dir = Path(cfg.paths.data_dir)
+
+    return VideoMaeScorePredictionEvalCfg(
+        model_uri=model_uri,
+        manifests_dir=cfg.task.manifests_dir,
+        target_col=cfg.task.target_column,
+        clips_dir=data_dir / "clips",
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
+        device=cfg.model.device,
+        output_dir=cfg.eval_output_dir,
+        run_name=cfg.eval_run_name,
+        experiment_name=cfg.experiment_name,
+        top_k_worst=cfg.top_k_worst,
+    )
+
+
+
+
 TRAIN_EVAL_TARGETS: dict[
     tuple[str, str],
     tuple[Callable[[DictConfig], str], Callable[[DictConfig, str], None]],
@@ -208,6 +266,14 @@ TRAIN_EVAL_TARGETS: dict[
         ),
         lambda cfg, model_uri: run_pose_tcn_score_prediction_eval(
             _build_pose_tcn_score_prediction_eval_config(cfg, model_uri)
+        ),
+    ),
+    ("score_prediction", "video_mae"): (
+        lambda cfg: run_video_mae_score_prediction_train(
+            _build_video_mae_score_prediction_training_config(cfg)
+        ),
+        lambda cfg, model_uri: run_video_mae_score_prediction_eval(
+            _build_video_mae_score_prediction_eval_config(cfg, model_uri)
         ),
     ),
 }

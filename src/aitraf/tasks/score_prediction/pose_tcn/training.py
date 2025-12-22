@@ -19,6 +19,7 @@ from aitraf.datasets.pose_tcn import PoseTCNDataset
 from aitraf.models.pose_tcn import TCNRegressor
 from aitraf.processing.models.pose_tcn import process_sample
 from aitraf.processing.utils import build_collate
+from aitraf.metrics.regression import build_regression_metrics
 
 
 @dataclass
@@ -109,6 +110,7 @@ def run_training(config: PoseTcnScorePredictionTrainCfg) -> str:
     model = TCNRegressor(
         feature_dim=feature_dim,
         learning_rate=config.learning_rate,
+        metrics_fn=build_regression_metrics(),
         hidden_dim=config.hidden_dim,
         num_layers=config.num_layers,
         kernel_size=config.kernel_size,

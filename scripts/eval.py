@@ -18,6 +18,10 @@ from aitraf.tasks.score_prediction.pose_tcn import (
     PoseTcnScorePredictionEvalCfg,
     run_evaluation as run_pose_tcn_score_prediction_eval,
 )
+from aitraf.tasks.score_prediction.video_mae import (
+    VideoMaeScorePredictionEvalCfg,
+    run_evaluation as run_video_mae_score_prediction_eval,
+)
 from aitraf.tasks.trick_classifier.video_mae import (
     VideoMaeTrickClassificationEvalCfg,
     run_evaluation as run_video_mae_trick_classification_eval,
@@ -99,6 +103,28 @@ def _build_pose_tcn_score_prediction_eval_config(
     )
 
 
+def _build_video_mae_score_prediction_eval_config(
+    cfg: DictConfig,
+) -> VideoMaeScorePredictionEvalCfg:
+    data_dir = Path(cfg.paths.data_dir)
+
+    return VideoMaeScorePredictionEvalCfg(
+        model_uri=_build_model_uri(cfg),
+        manifests_dir=cfg.task.manifests_dir,
+        target_col=cfg.task.target_column,
+        clips_dir=data_dir / "clips",
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
+        device=cfg.model.device,
+        output_dir=cfg.output_dir,
+        run_name=cfg.run_name,
+        experiment_name=cfg.experiment_name,
+        top_k_worst=cfg.top_k_worst,
+    )
+
+
 EVALUATION_TARGETS: dict[tuple[str, str], Callable[[DictConfig], None]] = {
     ("trick_classification", "pose_tcn"): lambda cfg: run_pose_tcn_trick_classification_eval(
         _build_pose_tcn_eval_config(cfg)
@@ -108,6 +134,9 @@ EVALUATION_TARGETS: dict[tuple[str, str], Callable[[DictConfig], None]] = {
     ),
     ("score_prediction", "pose_tcn"): lambda cfg: run_pose_tcn_score_prediction_eval(
         _build_pose_tcn_score_prediction_eval_config(cfg)
+    ),
+    ("score_prediction", "video_mae"): lambda cfg: run_video_mae_score_prediction_eval(
+        _build_video_mae_score_prediction_eval_config(cfg)
     ),
 }
 

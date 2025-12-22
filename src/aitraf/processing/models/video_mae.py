@@ -40,7 +40,7 @@ def process_sample(
 
     return {
         "pixel_values": processed_ts["pixel_values"][0],
-        "labels": torch.as_tensor(label_transform(label), dtype=torch.long),
+        "labels": torch.as_tensor(label_transform(label)),
     }
 
 
