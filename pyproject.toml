@@ -25,7 +25,6 @@ dependencies = [
     "loguru",
     "mlflow",
     "ultralytics",
-    "evaluate>=0.4.6",
     "av>=16.0.1",
     "imageio>=2.37.2",
     "kornia>=0.8.2",

@@ -19,7 +19,7 @@ from aitraf.datasets.pose_tcn import PoseTCNDataset
 from aitraf.metrics import (
     build_classification_metrics,
     compute_pred_ids,
-    compute_dummy_pred_ids,
+    compute_dummy_classification_pred_ids,
     get_confusion_matrix_figure,
     get_per_class_f1_figure,
     get_target_distribution_figure,
@@ -107,7 +107,9 @@ def run_evaluation(config: PoseTCNEvalConfig) -> None:
     pred_ids = compute_pred_ids(logits)
 
     metrics = compute_metrics(pred_ids, actual_ids)
-    dummy_metrics = compute_metrics(compute_dummy_pred_ids(actual_ids), actual_ids)
+    dummy_metrics = compute_metrics(
+        compute_dummy_classification_pred_ids(actual_ids), actual_ids
+    )
     dummy_metrics = {f"dummy_{k}": v for k, v in dummy_metrics.items()}
 
     mlflow.set_experiment(config.experiment_name)

@@ -20,7 +20,7 @@ from aitraf.metrics import (
     get_target_distribution_figure,
     get_per_class_f1_figure,
     compute_pred_ids,
-    compute_dummy_pred_ids,
+    compute_dummy_classification_pred_ids,
     get_top_k_worst_misses,
 )
 from aitraf.processing import load_target_label_mappings
@@ -123,7 +123,7 @@ def run_evaluation(config: VideoMAEEvalConfig):
 
         mlflow.log_metrics(metrics)
 
-        dummy_pred_ids = compute_dummy_pred_ids(actual_ids)
+        dummy_pred_ids = compute_dummy_classification_pred_ids(actual_ids)
         dummy_metrics = compute_metrics(dummy_pred_ids, actual_ids)
 
         dummy_metrics_prefixed = {f"dummy_{k}": v for k, v in dummy_metrics.items()}

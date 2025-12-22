@@ -14,6 +14,10 @@ from aitraf.tasks.trick_classifier.pose_tcn import (
     PoseTCNEvalConfig,
     run_evaluation as run_pose_tcn_evaluation,
 )
+from aitraf.tasks.score_prediction.pose_tcn import (
+    PoseTcnScorePredictionEvalCfg,
+    run_evaluation as run_pose_tcn_score_prediction_evaluation,
+)
 from aitraf.tasks.trick_classifier.video_mae import (
     VideoMAEEvalConfig,
     run_evaluation as run_video_mae_evaluation,
@@ -74,6 +78,27 @@ def _build_video_mae_eval_config(cfg: DictConfig, model_id: str) -> VideoMAEEval
     )
 
 
+def _build_pose_tcn_score_prediction_eval_config(
+    cfg: DictConfig, model_id: str
+) -> PoseTcnScorePredictionEvalCfg:
+    device = "cuda" if cfg.model.accelerator == "gpu" else cfg.model.accelerator
+
+    return PoseTcnScorePredictionEvalCfg(
+        model_uri=f"models:/{model_id}",
+        manifests_dir=cfg.task.manifests_dir,
+        target_col=cfg.task.target_column,
+        poses_dir=cfg.model.poses_dir,
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
+        device=device,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.run_name,
+        top_k_worst=cfg.top_k_worst,
+    )
+
+
 EVALUATION_TARGETS: dict[
     tuple[str, str], tuple[EvaluationBuilder, EvaluationRunner]
 ] = {
@@ -84,6 +109,10 @@ EVALUATION_TARGETS: dict[
     ("trick_classification", "video_mae"): (
         _build_video_mae_eval_config,
         run_video_mae_evaluation,
+    ),
+    ("score_prediction", "pose_tcn"): (
+        _build_pose_tcn_score_prediction_eval_config,
+        run_pose_tcn_score_prediction_evaluation,
     ),
 }
 

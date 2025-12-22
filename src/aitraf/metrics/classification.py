@@ -1,16 +1,15 @@
-"""Metrics utilities shared across model pipelines."""
+"""Classification metrics utilities."""
 
 from collections import Counter
 from typing import Callable, List, Sequence
 
-import evaluate
-import numpy as np
-import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import torch
 from matplotlib.figure import Figure
-from sklearn.metrics import ConfusionMatrixDisplay, f1_score
+from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, f1_score
 
 matplotlib.use("Agg")
 
@@ -26,7 +25,7 @@ def compute_pred_confidences(logits: List[float]) -> np.ndarray:
     return probs.max(dim=-1).values.numpy()
 
 
-def compute_dummy_pred_ids(actual_ids: List[int]) -> List[int]:
+def compute_dummy_classification_pred_ids(actual_ids: List[int]) -> List[int]:
     most_common = Counter(actual_ids).most_common(1)[0][0]
 
     return np.full(len(actual_ids), most_common)
@@ -35,49 +34,15 @@ def compute_dummy_pred_ids(actual_ids: List[int]) -> List[int]:
 def build_classification_metrics() -> Callable[
     [Sequence[int], Sequence[int]], dict[str, float]
 ]:
-    accuracy_metric = evaluate.load("accuracy")
-    f1_metric = evaluate.load("f1")
-
     def _compute_metrics(
         predictions: Sequence[int], targets: Sequence[int]
     ) -> dict[str, float]:
-        acc = accuracy_metric.compute(
-            predictions=predictions,
-            references=targets,
-        )["accuracy"]
-
-        macro_f1 = f1_metric.compute(
-            predictions=predictions,
-            references=targets,
-            average="macro",
-        )["f1"]
+        acc = accuracy_score(targets, predictions)
+        macro_f1 = f1_score(targets, predictions, average="macro")
 
         return {
             "accuracy": acc,
             "f1_macro": macro_f1,
-        }
-
-    return _compute_metrics
-
-
-def build_regression_metrics() -> Callable[
-    [Sequence[float], Sequence[float]], dict[str, float]
-]:
-    mae_metric = evaluate.load("mae")
-    rmse_metric = evaluate.load("rmse")
-    r2_metric = evaluate.load("r_squared")
-
-    def _compute_metrics(
-        predictions: Sequence[float], targets: Sequence[float]
-    ) -> dict[str, float]:
-        mae = mae_metric.compute(predictions=predictions, references=targets)["mae"]
-        rmse = rmse_metric.compute(predictions=predictions, references=targets)["rmse"]
-        r2 = r2_metric.compute(predictions=predictions, references=targets)["r_squared"]
-
-        return {
-            "mae": mae,
-            "rmse": rmse,
-            "r2": r2,
         }
 
     return _compute_metrics
@@ -173,3 +138,15 @@ def get_top_k_worst_misses(
     misses = misses.sort_values("pred_confidence", ascending=False).head(top_k)
 
     return misses
+
+
+__all__ = [
+    "build_classification_metrics",
+    "compute_dummy_classification_pred_ids",
+    "compute_pred_confidences",
+    "compute_pred_ids",
+    "get_confusion_matrix_figure",
+    "get_per_class_f1_figure",
+    "get_target_distribution_figure",
+    "get_top_k_worst_misses",
+]
