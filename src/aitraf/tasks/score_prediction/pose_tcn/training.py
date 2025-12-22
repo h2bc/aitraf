@@ -22,7 +22,7 @@ from aitraf.processing.utils import build_collate
 
 
 @dataclass
-class PoseTcnScorePredictionCfg:
+class PoseTcnScorePredictionTrainCfg:
     """Configuration for Pose TCN score prediction training."""
 
     task_name: str
@@ -54,7 +54,7 @@ class PoseTcnScorePredictionCfg:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
 
-def run_training(config: PoseTcnScorePredictionCfg) -> str:
+def run_training(config: PoseTcnScorePredictionTrainCfg) -> str:
     """Train the Pose TCN regressor and log artifacts to MLflow."""
 
     process_fn = partial(
@@ -182,4 +182,4 @@ def run_training(config: PoseTcnScorePredictionCfg) -> str:
         return model_info.model_uri
 
 
-__all__ = ["PoseTcnScorePredictionCfg", "run_training"]
+__all__ = ["PoseTcnScorePredictionTrainCfg", "run_training"]

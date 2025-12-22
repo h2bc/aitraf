@@ -10,16 +10,16 @@ from omegaconf import DictConfig
 
 from aitraf.logging import logger, setup_logging
 from aitraf.tasks.trick_classifier.pose_tcn import (
-    PoseTcnTrickClassificationCfg,
-    run_training as _run_pose_tcn_training,
+    PoseTcnTrickClassificationTrainCfg,
+    run_training as run_pose_tcn_trick_classification_train,
 )
 from aitraf.tasks.trick_classifier.video_mae import (
-    VideoMaeTrickClassificationCfg,
-    run_training as _run_video_mae_training,
+    VideoMaeTrickClassificationTrainCfg,
+    run_training as run_video_mae_trick_classification_train,
 )
 from aitraf.tasks.score_prediction.pose_tcn import (
-    PoseTcnScorePredictionCfg,
-    run_training as _run_pose_tcn_regression_training,
+    PoseTcnScorePredictionTrainCfg,
+    run_training as run_pose_tcn_score_prediction_train,
 )
 
 
@@ -28,10 +28,10 @@ TrainingRunner = Callable[[DictConfig], str]
 
 def _build_video_mae_training_config(
     cfg: DictConfig,
-) -> VideoMaeTrickClassificationCfg:
+) -> VideoMaeTrickClassificationTrainCfg:
     data_dir = Path(cfg.paths.data_dir)
 
-    return VideoMaeTrickClassificationCfg(
+    return VideoMaeTrickClassificationTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
@@ -55,8 +55,10 @@ def _build_video_mae_training_config(
     )
 
 
-def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTcnTrickClassificationCfg:
-    return PoseTcnTrickClassificationCfg(
+def _build_pose_tcn_training_config(
+    cfg: DictConfig,
+) -> PoseTcnTrickClassificationTrainCfg:
+    return PoseTcnTrickClassificationTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         manifests_dir=cfg.task.manifests_dir,
@@ -82,10 +84,10 @@ def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTcnTrickClassificati
     )
 
 
-def _build_pose_tcn_regression_training_config(
+def _build_pose_tcn_score_prediction_training_config(
     cfg: DictConfig,
-) -> PoseTcnScorePredictionCfg:
-    return PoseTcnScorePredictionCfg(
+) -> PoseTcnScorePredictionTrainCfg:
+    return PoseTcnScorePredictionTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         manifests_dir=cfg.task.manifests_dir,
@@ -111,14 +113,14 @@ def _build_pose_tcn_regression_training_config(
 
 
 TRAINING_TARGETS: dict[tuple[str, str], TrainingRunner] = {
-    ("trick_classification", "video_mae"): lambda cfg: _run_video_mae_training(
+    ("trick_classification", "video_mae"): lambda cfg: run_video_mae_trick_classification_train(
         _build_video_mae_training_config(cfg)
     ),
-    ("trick_classification", "pose_tcn"): lambda cfg: _run_pose_tcn_training(
+    ("trick_classification", "pose_tcn"): lambda cfg: run_pose_tcn_trick_classification_train(
         _build_pose_tcn_training_config(cfg)
     ),
-    ("score_prediction", "pose_tcn"): lambda cfg: _run_pose_tcn_regression_training(
-        _build_pose_tcn_regression_training_config(cfg)
+    ("score_prediction", "pose_tcn"): lambda cfg: run_pose_tcn_score_prediction_train(
+        _build_pose_tcn_score_prediction_training_config(cfg)
     ),
 }
 

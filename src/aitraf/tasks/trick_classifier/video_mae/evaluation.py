@@ -30,7 +30,7 @@ from aitraf.logging import logger
 
 
 @dataclass
-class VideoMAEEvalConfig:
+class VideoMaeTrickClassificationEvalCfg:
     """Configuration for VideoMAE evaluation."""
 
     backbone: str
@@ -56,7 +56,7 @@ class VideoMAEEvalConfig:
         self.output_dir = Path(self.output_dir)
 
 
-def run_evaluation(config: VideoMAEEvalConfig):
+def run_evaluation(config: VideoMaeTrickClassificationEvalCfg):
     """Evaluate a fine-tuned VideoMAE model."""
 
     load_dotenv()

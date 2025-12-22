@@ -32,7 +32,7 @@ from aitraf.processing.utils import build_collate
 
 
 @dataclass
-class PoseTCNEvalConfig:
+class PoseTcnTrickClassificationEvalCfg:
     """Configuration for evaluating Pose TCN."""
 
     model_uri: str
@@ -55,7 +55,7 @@ class PoseTCNEvalConfig:
         self.poses_dir = Path(self.poses_dir)
 
 
-def run_evaluation(config: PoseTCNEvalConfig) -> None:
+def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
     label_names, label2id, id2label = load_target_label_mappings(
         config.vocab_path, config.target_col
     )
@@ -146,4 +146,4 @@ def run_evaluation(config: PoseTCNEvalConfig) -> None:
             mlflow.log_table(worst_misses, "worst_misses.json")
 
 
-__all__ = ["PoseTCNEvalConfig", "run_evaluation"]
+__all__ = ["PoseTcnTrickClassificationEvalCfg", "run_evaluation"]
