@@ -1,41 +1,39 @@
-"""VideoMAE finte-tuning pipeline"""
+"""VideoMAE fine-tuning pipeline for score prediction (regression)."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass
-from functools import partial
 from pathlib import Path
 
+import mlflow
+from datasets import load_dataset
+from dotenv import load_dotenv
+from mlflow.data import from_huggingface
 from transformers import (
     AutoConfig,
     AutoModelForVideoClassification,
-    EvalPrediction,
     EarlyStoppingCallback,
+    EvalPrediction,
     Trainer,
     TrainingArguments,
     VideoMAEImageProcessor,
 )
+from functools import partial
 
-from aitraf.processing import load_target_label_mappings
+from aitraf.logging import logger
+from aitraf.metrics import build_regression_metrics
 from aitraf.processing.models.video_mae import process_sample
 from aitraf.processing.utils import build_collate
-from aitraf.metrics import build_classification_metrics, compute_pred_ids
-from aitraf.logging import logger
-
-from datasets import load_dataset
-
-from dotenv import load_dotenv
-import mlflow
-from mlflow.data import from_huggingface
 
 
 @dataclass
-class VideoMaeTrickClassificationTrainCfg:
-    """Minimal configuration for the current skeleton run."""
+class VideoMaeScorePredictionTrainCfg:
+    """Configuration for VideoMAE score prediction training."""
 
     task_name: str
     model_name: str
     backbone: str
     manifests_dir: Path | str
-    vocab_path: Path | str
     target_col: str
     clips_dir: Path | str
     batch_size: int
@@ -60,7 +58,9 @@ class VideoMaeTrickClassificationTrainCfg:
         self.model_cache_dir.mkdir(parents=True, exist_ok=True)
 
 
-def run_training(config: VideoMaeTrickClassificationTrainCfg) -> str:
+def run_training(config: VideoMaeScorePredictionTrainCfg) -> str:
+    """Train the VideoMAE regressor and log artifacts to MLflow."""
+
     load_dotenv()
 
     dataset = load_dataset(
@@ -76,10 +76,6 @@ def run_training(config: VideoMaeTrickClassificationTrainCfg) -> str:
             range(min(config.max_train_samples, len(dataset["train"])))
         )
 
-    labels, label2id, id2label = load_target_label_mappings(
-        config.vocab_path, config.target_col
-    )
-
     processor = VideoMAEImageProcessor.from_pretrained(
         config.backbone, cache_dir=str(config.model_cache_dir)
     )
@@ -88,9 +84,8 @@ def run_training(config: VideoMaeTrickClassificationTrainCfg) -> str:
         config.backbone,
         cache_dir=str(config.model_cache_dir),
         trust_remote_code=True,
-        label2id=label2id,
-        id2label=id2label,
-        num_labels=len(labels),
+        num_labels=1,
+        problem_type="regression",
     )
 
     model = AutoModelForVideoClassification.from_pretrained(
@@ -106,14 +101,15 @@ def run_training(config: VideoMaeTrickClassificationTrainCfg) -> str:
         for param in model.base_model.parameters():
             param.requires_grad = False
 
-    compute_metrics = build_classification_metrics()
+    compute_metrics = build_regression_metrics()
 
     def trainer_compute_metrics(prediction: EvalPrediction) -> dict[str, float]:
-        pred_logits, actual_ids = prediction
+        pred_logits, actual_values = prediction
 
-        pred_ids = compute_pred_ids(pred_logits)
+        pred_values = pred_logits.squeeze()
+        label_values = actual_values.squeeze()
 
-        return compute_metrics(pred_ids, actual_ids)
+        return compute_metrics(pred_values, label_values)
 
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),
@@ -125,8 +121,8 @@ def run_training(config: VideoMaeTrickClassificationTrainCfg) -> str:
         eval_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,
-        metric_for_best_model="accuracy",
-        greater_is_better=True,
+        metric_for_best_model="mae",
+        greater_is_better=False,
         remove_unused_columns=False,
         report_to=["mlflow"],
         run_name=config.run_name,
@@ -138,8 +134,7 @@ def run_training(config: VideoMaeTrickClassificationTrainCfg) -> str:
         local_clips_dir=config.clips_dir,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
-        target_col=config.target_col,
-        label_transform=lambda label: label2id[str(label)],
+        target_column=config.target_col,
     )
 
     data_collator = build_collate(process_fn)
@@ -188,3 +183,6 @@ def run_training(config: VideoMaeTrickClassificationTrainCfg) -> str:
         )
 
         return model_info.model_uri
+
+
+__all__ = ["VideoMaeScorePredictionTrainCfg", "run_training"]

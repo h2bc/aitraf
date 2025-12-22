@@ -95,8 +95,8 @@ def run_evaluation(config: VideoMaeTrickClassificationEvalCfg):
     process_fn = partial(
         process_sample,
         processor=processor,
-        clips_dir=config.clips_dir,
-        sample_frames=config.sample_frames,
+        local_clips_dir=config.clips_dir,
+        num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
         target_col=config.target_col,
         label_transform=lambda label: label2id[str(label)],
