@@ -20,6 +20,7 @@ from aitraf.metrics import (
     build_regression_metrics,
     compute_dummy_regression_preds,
     get_predicted_vs_actual_scatter_figure,
+    get_residual_vs_predicted_scatter_figure,
 )
 from aitraf.models.pose_tcn import TCNRegressor
 from aitraf.processing.models.pose_tcn import process_sample
@@ -110,6 +111,8 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
         mlflow.log_metrics(dummy_metrics)
         scatter_fig = get_predicted_vs_actual_scatter_figure(predictions, labels)
         mlflow.log_figure(scatter_fig, "predicted_vs_actual.png")
+        residual_fig = get_residual_vs_predicted_scatter_figure(predictions, labels)
+        mlflow.log_figure(residual_fig, "residuals_vs_predicted.png")
 
 
 __all__ = ["PoseTcnScorePredictionEvalCfg", "run_evaluation"]

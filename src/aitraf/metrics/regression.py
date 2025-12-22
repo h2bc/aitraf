@@ -48,6 +48,7 @@ def get_predicted_vs_actual_scatter_figure(
     sns.scatterplot(x=labels, y=predictions, alpha=0.6, ax=ax)
     min_val = float(min(np.min(predictions), np.min(labels)))
     max_val = float(max(np.max(predictions), np.max(labels)))
+    
     ax.plot([min_val, max_val], [min_val, max_val], color="red", linestyle="--")
     ax.set_xlabel("Actual")
     ax.set_ylabel("Predicted")
@@ -57,8 +58,25 @@ def get_predicted_vs_actual_scatter_figure(
     return fig
 
 
+def get_residual_vs_predicted_scatter_figure(
+    predictions: Sequence[float], labels: Sequence[float]
+) -> Figure:
+    fig, ax = plt.subplots(figsize=(6, 5))
+
+    residuals = np.asarray(labels) - np.asarray(predictions)
+    sns.scatterplot(x=predictions, y=residuals, alpha=0.6, ax=ax)
+    ax.axhline(0, color="red", linestyle="--")
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("Residual (Actual - Predicted)")
+    ax.set_title("Residuals vs predicted")
+    fig.tight_layout()
+
+    return fig
+
+
 __all__ = [
     "build_regression_metrics",
     "compute_dummy_regression_preds",
     "get_predicted_vs_actual_scatter_figure",
+    "get_residual_vs_predicted_scatter_figure",
 ]
