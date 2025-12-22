@@ -138,7 +138,7 @@ def run_training(config: VideoMaeTrickClassificationTrainCfg) -> str:
         local_clips_dir=config.clips_dir,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
-        target_col=config.target_col,
+        target_column=config.target_col,
         label_transform=lambda label: label2id[str(label)],
     )
 
