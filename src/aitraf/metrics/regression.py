@@ -90,10 +90,26 @@ def get_residual_distribution_figure(
     return fig
 
 
+def get_top_k_worst_errors(
+    predictions: Sequence[float],
+    labels: Sequence[float],
+    examples_df,
+    top_k: int = 5,
+):
+    """Return metadata describing the highest-error predictions."""
+    df = examples_df.copy()
+    df["prediction"] = predictions
+    df["error"] = df["prediction"] - np.asarray(labels)
+    df["abs_error"] = df["error"].abs()
+
+    return df.sort_values("abs_error", ascending=False).head(top_k)
+
+
 __all__ = [
     "build_regression_metrics",
     "compute_dummy_regression_preds",
     "get_predicted_vs_actual_scatter_figure",
     "get_residual_vs_predicted_scatter_figure",
     "get_residual_distribution_figure",
+    "get_top_k_worst_errors",
 ]

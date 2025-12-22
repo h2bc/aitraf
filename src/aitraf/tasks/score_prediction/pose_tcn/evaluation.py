@@ -22,6 +22,7 @@ from aitraf.metrics import (
     get_predicted_vs_actual_scatter_figure,
     get_residual_vs_predicted_scatter_figure,
     get_residual_distribution_figure,
+    get_top_k_worst_errors,
 )
 from aitraf.models.pose_tcn import TCNRegressor
 from aitraf.processing.models.pose_tcn import process_sample
@@ -116,6 +117,16 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
         mlflow.log_figure(residual_fig, "residuals_vs_predicted.png")
         residual_dist_fig = get_residual_distribution_figure(predictions, labels)
         mlflow.log_figure(residual_dist_fig, "residual_distribution.png")
+
+        worst_misses = get_top_k_worst_errors(
+            predictions,
+            labels,
+            pd.DataFrame(dataset.manifest_rows()),
+            top_k=config.top_k_worst,
+        )
+
+        if not worst_misses.empty:
+            mlflow.log_table(worst_misses, "worst_misses.json")
 
 
 __all__ = ["PoseTcnScorePredictionEvalCfg", "run_evaluation"]
