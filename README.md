@@ -75,18 +75,6 @@ Run commands via [Task](https://taskfile.dev)
 - Builds train/val/test JSONL manifests under `data/manifests/<task>/`, stratifying by the target column when configured.
 - Emits a shared `vocab.json` capturing label/id mappings per task for downstream consumers.
 
-## Pre-processing
-
-### Pose TCN
-
-- **Pose sampling**: we subsample a fixed number of frames per clip via `sample_frame_indices`, supporting `gaussian_stochastic` (biased toward the center) and `uniform` distributions. Missing detections are skipped before sampling.
-- **Tensor layout**: sampled keypoints and detection confidences are stacked into `(F, J, 3)` tensors (frames × joints × coords) and flattened to feed the TCN, while raw pose, score, and frame tensors are retained for analysis.
-
-### VideoMAE
-
-- **Clip decoding**: manifests reference MP4 clips stored under `data/clips`. Each row specifies a clip ID that is decoded on-the-fly with `torchcodec`.
-- **Frame sampling**: the same `sample_frame_indices` helper selects `sample_frames` frames per clip according to the configured distribution.
-- **Rotation correction**: if a clip carries an EXIF/video rotation flag, frames are rotated back to upright orientation with Kornia before feeding the VideoMAE processor.
 
 ## Project Integrations
 
