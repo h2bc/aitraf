@@ -1,11 +1,11 @@
 """VideoMAE trick-classifier task entrypoints."""
 
-from .training import VideoMAETrainingConfig, run_training
-from .evaluation import VideoMAEEvalConfig, run_evaluation
+from .training import VideoMaeTrickClassificationTrainCfg, run_training
+from .evaluation import VideoMaeTrickClassificationEvalCfg, run_evaluation
 
 __all__ = [
-    "VideoMAETrainingConfig",
-    "VideoMAEEvalConfig",
+    "VideoMaeTrickClassificationTrainCfg",
+    "VideoMaeTrickClassificationEvalCfg",
     "run_training",
     "run_evaluation",
 ]

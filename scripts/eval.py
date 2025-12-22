@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
 
 from dotenv import load_dotenv
 from hydra import main
@@ -11,17 +11,17 @@ from omegaconf import DictConfig
 
 from aitraf.logging import logger, setup_logging
 from aitraf.tasks.trick_classifier.pose_tcn import (
-    PoseTCNEvalConfig,
-    run_evaluation as run_pose_tcn_evaluation,
+    PoseTcnTrickClassificationEvalCfg,
+    run_evaluation as run_pose_tcn_trick_classification_eval,
+)
+from aitraf.tasks.score_prediction.pose_tcn import (
+    PoseTcnScorePredictionEvalCfg,
+    run_evaluation as run_pose_tcn_score_prediction_eval,
 )
 from aitraf.tasks.trick_classifier.video_mae import (
-    VideoMAEEvalConfig,
-    run_evaluation as run_video_mae_evaluation,
+    VideoMaeTrickClassificationEvalCfg,
+    run_evaluation as run_video_mae_trick_classification_eval,
 )
-
-
-EvaluationBuilder = Callable[[DictConfig, str], Any]
-EvaluationRunner = Callable[[Any], None]
 
 
 def _require_model_id(model_id: str | None) -> str:
@@ -32,11 +32,15 @@ def _require_model_id(model_id: str | None) -> str:
     return model_id
 
 
-def _build_pose_tcn_eval_config(cfg: DictConfig, model_id: str) -> PoseTCNEvalConfig:
+def _build_model_uri(cfg: DictConfig) -> str:
+    return f"models:/{cfg.model_id}"
+
+
+def _build_pose_tcn_eval_config(cfg: DictConfig) -> PoseTcnTrickClassificationEvalCfg:
     device = "cuda" if cfg.model.accelerator == "gpu" else cfg.model.accelerator
 
-    return PoseTCNEvalConfig(
-        model_uri=f"models:/{model_id}",
+    return PoseTcnTrickClassificationEvalCfg(
+        model_uri=_build_model_uri(cfg),
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,
         target_col=cfg.task.target_column,
@@ -52,12 +56,12 @@ def _build_pose_tcn_eval_config(cfg: DictConfig, model_id: str) -> PoseTCNEvalCo
     )
 
 
-def _build_video_mae_eval_config(cfg: DictConfig, model_id: str) -> VideoMAEEvalConfig:
+def _build_video_mae_eval_config(cfg: DictConfig) -> VideoMaeTrickClassificationEvalCfg:
     data_dir = Path(cfg.paths.data_dir)
 
-    return VideoMAEEvalConfig(
+    return VideoMaeTrickClassificationEvalCfg(
         backbone=cfg.model.backbone,
-        model_uri=f"models:/{model_id}",
+        model_uri=_build_model_uri(cfg),
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,
         target_col=cfg.task.target_column,
@@ -74,16 +78,36 @@ def _build_video_mae_eval_config(cfg: DictConfig, model_id: str) -> VideoMAEEval
     )
 
 
-EVALUATION_TARGETS: dict[
-    tuple[str, str], tuple[EvaluationBuilder, EvaluationRunner]
-] = {
-    ("trick_classification", "pose_tcn"): (
-        _build_pose_tcn_eval_config,
-        run_pose_tcn_evaluation,
+def _build_pose_tcn_score_prediction_eval_config(
+    cfg: DictConfig,
+) -> PoseTcnScorePredictionEvalCfg:
+    device = "cuda" if cfg.model.accelerator == "gpu" else cfg.model.accelerator
+
+    return PoseTcnScorePredictionEvalCfg(
+        model_uri=_build_model_uri(cfg),
+        manifests_dir=cfg.task.manifests_dir,
+        target_col=cfg.task.target_column,
+        poses_dir=cfg.model.poses_dir,
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
+        device=device,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.run_name,
+        top_k_worst=cfg.top_k_worst,
+    )
+
+
+EVALUATION_TARGETS: dict[tuple[str, str], Callable[[DictConfig], None]] = {
+    ("trick_classification", "pose_tcn"): lambda cfg: run_pose_tcn_trick_classification_eval(
+        _build_pose_tcn_eval_config(cfg)
     ),
-    ("trick_classification", "video_mae"): (
-        _build_video_mae_eval_config,
-        run_video_mae_evaluation,
+    ("trick_classification", "video_mae"): lambda cfg: run_video_mae_trick_classification_eval(
+        _build_video_mae_eval_config(cfg)
+    ),
+    ("score_prediction", "pose_tcn"): lambda cfg: run_pose_tcn_score_prediction_eval(
+        _build_pose_tcn_score_prediction_eval_config(cfg)
     ),
 }
 
@@ -93,7 +117,7 @@ def run(cfg: DictConfig) -> None:
     load_dotenv()
     setup_logging()
 
-    model_id = _require_model_id(cfg.model_id)
+    cfg.model_id = _require_model_id(cfg.model_id)
 
     key = (cfg.task.name, cfg.model.name)
 
@@ -106,14 +130,11 @@ def run(cfg: DictConfig) -> None:
             f"model='{cfg.model.name}'. Available combinations: {available or 'none'}."
         )
 
-    builder, runner = target
-    eval_cfg = builder(cfg, model_id)
-
     logger.info(
         f"Starting evaluation for task='{cfg.task.name}' model='{cfg.model.name}' (run: {cfg.run_name})"
     )
 
-    runner(eval_cfg)
+    target(cfg)
 
     logger.info(
         f"Finished evaluation for task='{cfg.task.name}' model='{cfg.model.name}'."

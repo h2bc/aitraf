@@ -1,4 +1,4 @@
-"""Pose TCN evaluation pipeline."""
+"""Pose TCN evaluation pipeline for score prediction."""
 
 from __future__ import annotations
 
@@ -17,27 +17,24 @@ from torch.utils.data import DataLoader
 
 from aitraf.datasets.pose_tcn import PoseTCNDataset
 from aitraf.metrics import (
-    build_classification_metrics,
-    compute_pred_ids,
-    compute_dummy_classification_pred_ids,
-    get_confusion_matrix_figure,
-    get_per_class_f1_figure,
-    get_target_distribution_figure,
-    get_top_k_worst_misses,
+    build_regression_metrics,
+    compute_dummy_regression_preds,
+    get_predicted_vs_actual_scatter_figure,
+    get_residual_vs_predicted_scatter_figure,
+    get_residual_distribution_figure,
+    get_top_k_worst_errors,
 )
-from aitraf.models.pose_tcn import TCNClassifier
-from aitraf.processing import load_target_label_mappings
+from aitraf.models.pose_tcn import TCNRegressor
 from aitraf.processing.models.pose_tcn import process_sample
 from aitraf.processing.utils import build_collate
 
 
 @dataclass
-class PoseTcnTrickClassificationEvalCfg:
-    """Configuration for evaluating Pose TCN."""
+class PoseTcnScorePredictionEvalCfg:
+    """Configuration for evaluating Pose TCN score prediction."""
 
     model_uri: str
     manifests_dir: Path | str
-    vocab_path: Path | str
     target_col: str
     poses_dir: Path | str
     batch_size: int
@@ -51,14 +48,10 @@ class PoseTcnTrickClassificationEvalCfg:
 
     def __post_init__(self) -> None:
         self.manifests_dir = Path(self.manifests_dir)
-        self.vocab_path = Path(self.vocab_path)
         self.poses_dir = Path(self.poses_dir)
 
 
-def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
-    label_names, label2id, id2label = load_target_label_mappings(
-        config.vocab_path, config.target_col
-    )
+def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
 
     dataset = PoseTCNDataset(
         manifests_dir=config.manifests_dir,
@@ -71,7 +64,6 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
         process_sample,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
-        label_transform=lambda label: label2id[str(label)],
     )
 
     collate_fn = build_collate(process_fn)
@@ -85,31 +77,28 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
     )
 
     model = mlflow.pytorch.load_model(config.model_uri)
-    model = cast(TCNClassifier, model)
+    model = cast(TCNRegressor, model)
     model = model.to(config.device)
     model.eval()
 
-    compute_metrics = build_classification_metrics()
+    compute_metrics = build_regression_metrics()
 
-    logits_list: list[np.ndarray] = []
-    label_ids_list: list[np.ndarray] = []
+    preds_list: list[np.ndarray] = []
+    labels_list: list[np.ndarray] = []
 
     with torch.no_grad():
         for batch in dataloader:
             inputs = batch["inputs"].to(config.device)
-            batch_labels = batch["labels"].to(config.device)
-            batch_logits = model(inputs)
-            logits_list.append(batch_logits.cpu().numpy())
-            label_ids_list.append(batch_labels.cpu().numpy())
+            labels = batch["labels"].to(config.device).float()
+            preds = model(inputs)
+            preds_list.append(preds.cpu().numpy())
+            labels_list.append(labels.cpu().numpy())
 
-    logits = np.concatenate(logits_list, axis=0)
-    label_ids = np.concatenate(label_ids_list, axis=0)
-    pred_ids = compute_pred_ids(logits)
+    predictions = np.concatenate(preds_list, axis=0)
+    labels = np.concatenate(labels_list, axis=0)
 
-    metrics = compute_metrics(pred_ids, label_ids)
-    dummy_metrics = compute_metrics(
-        compute_dummy_classification_pred_ids(label_ids), label_ids
-    )
+    metrics = compute_metrics(predictions, labels)
+    dummy_metrics = compute_metrics(compute_dummy_regression_preds(labels), labels)
     dummy_metrics = {f"dummy_{k}": v for k, v in dummy_metrics.items()}
 
     mlflow.set_experiment(config.experiment_name)
@@ -122,23 +111,17 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
 
         mlflow.log_metrics(metrics)
         mlflow.log_metrics(dummy_metrics)
+        scatter_fig = get_predicted_vs_actual_scatter_figure(predictions, labels)
+        mlflow.log_figure(scatter_fig, "predicted_vs_actual.png")
+        residual_fig = get_residual_vs_predicted_scatter_figure(predictions, labels)
+        mlflow.log_figure(residual_fig, "residuals_vs_predicted.png")
+        residual_dist_fig = get_residual_distribution_figure(predictions, labels)
+        mlflow.log_figure(residual_dist_fig, "residual_distribution.png")
 
-        dist_fig = get_target_distribution_figure(
-            pred_ids, label_ids, label_names, id2label
-        )
-        mlflow.log_figure(dist_fig, "predicted_vs_actual_target_counts.png")
-
-        cm_fig = get_confusion_matrix_figure(pred_ids, label_ids, label_names)
-        mlflow.log_figure(cm_fig, "confusion_matrix.png")
-
-        f1_fig = get_per_class_f1_figure(pred_ids, label_ids, label_names)
-        mlflow.log_figure(f1_fig, "per_class_f1.png")
-
-        worst_misses = get_top_k_worst_misses(
-            logits,
-            label_ids,
+        worst_misses = get_top_k_worst_errors(
+            predictions,
+            labels,
             pd.DataFrame(dataset.manifest_rows()),
-            id2label,
             top_k=config.top_k_worst,
         )
 
@@ -146,4 +129,4 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
             mlflow.log_table(worst_misses, "worst_misses.json")
 
 
-__all__ = ["PoseTcnTrickClassificationEvalCfg", "run_evaluation"]
+__all__ = ["PoseTcnScorePredictionEvalCfg", "run_evaluation"]

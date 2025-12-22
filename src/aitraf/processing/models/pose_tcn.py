@@ -7,7 +7,7 @@ from typing import Any, Callable
 import numpy as np
 import torch
 
-from aitraf.processing import sample_frame_indices
+from aitraf.processing.utils import sample_frame_indices
 
 
 def process_sample(
@@ -15,7 +15,7 @@ def process_sample(
     *,
     num_frames: int,
     sampling_dist: str,
-    label2id: dict[str, int] | None = None,
+    label_transform: Callable[[Any], Any] = lambda x: x,
 ) -> dict[str, torch.Tensor]:
     """Convert a raw dataset sample into TCN-ready tensors."""
 
@@ -29,51 +29,16 @@ def process_sample(
     )
 
     inputs = pose_tensor.flatten(start_dim=1)
-    label_value = torch.tensor(label2id[sample["label"]], dtype=torch.long)
+    label_value = label_transform(sample["label"])
+    label_tensor = torch.as_tensor(label_value)
 
     return {
         "inputs": inputs,
-        "labels": label_value,
+        "labels": label_tensor,
         "poses": pose_tensor,
         "scores": score_tensor,
         "frames": frame_tensor,
     }
-
-
-def build_collate(
-    *,
-    num_frames: int,
-    sampling_dist: str,
-    label2id: dict[str, int] | None = None,
-) -> Callable[[list[dict[str, Any]]], dict[str, torch.Tensor]]:
-    """Create a collate_fn that prepares batches for the TCN."""
-
-    def _collate(batch: list[dict[str, Any]]) -> dict[str, torch.Tensor]:
-        processed = [
-            process_sample(
-                sample,
-                num_frames=num_frames,
-                sampling_dist=sampling_dist,
-                label2id=label2id,
-            )
-            for sample in batch
-        ]
-
-        inputs = torch.stack([item["inputs"] for item in processed], dim=0)
-        labels = torch.stack([item["labels"] for item in processed], dim=0)
-        poses = torch.stack([item["poses"] for item in processed], dim=0)
-        scores = torch.stack([item["scores"] for item in processed], dim=0)
-        frames = torch.stack([item["frames"] for item in processed], dim=0)
-
-        return {
-            "inputs": inputs,
-            "labels": labels,
-            "poses": poses,
-            "scores": scores,
-            "frames": frames,
-        }
-
-    return _collate
 
 
 def _sample_pose_tensor(
@@ -120,4 +85,4 @@ def _sample_pose_tensor(
     )
 
 
-__all__ = ["process_sample", "build_collate"]
+__all__ = ["process_sample"]

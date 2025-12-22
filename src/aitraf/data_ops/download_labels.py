@@ -7,8 +7,10 @@ from pathlib import Path
 import pandas as pd
 from dotenv import load_dotenv
 from label_studio_sdk import LabelStudio
+from functools import partial
 
-from aitraf.data_ops import schema
+from aitraf.data_ops.schema import LabelsSchema
+from aitraf.data_ops.utils import apply_dtypes, apply_processors
 from aitraf.logging import logger
 
 
@@ -44,18 +46,30 @@ def download_labels(config: LabelStudioExportConfig) -> Path:
     client = LabelStudio(base_url=base_url, api_key=token.strip())
     df: pd.DataFrame = client.projects.exports.as_pandas(int(project_id))
 
-    missing_cols = [col for col in schema.LabelsSchema.columns if col not in df.columns]
+    missing_cols = [col for col in LabelsSchema.columns if col not in df.columns]
+
     if missing_cols:
         raise RuntimeError(
             f"Export missing expected columns: {', '.join(missing_cols)}"
         )
 
+    apply_label_processors = partial(
+        apply_processors, processors=LabelsSchema.processors
+    )
+
+    apply_label_dtypes = partial(apply_dtypes, dtypes=LabelsSchema.types)
+
+    df = df.pipe(apply_label_processors).pipe(apply_label_dtypes)
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
+
     df.to_json(
         output_path,
         orient="records",
         lines=True,
         force_ascii=False,
     )
+
     logger.info("Saved {} labeled rows to {}", len(df), output_path)
+
     return output_path

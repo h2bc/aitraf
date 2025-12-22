@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
 
 from dotenv import load_dotenv
 from hydra import main
@@ -11,27 +11,32 @@ from omegaconf import DictConfig
 
 from aitraf.logging import logger, setup_logging
 from aitraf.tasks.trick_classifier.pose_tcn import (
-    PoseTCNEvalConfig,
-    PoseTCNTrainingConfig,
-    run_evaluation as run_pose_tcn_evaluation,
-    run_training as run_pose_tcn_training,
+    PoseTcnTrickClassificationEvalCfg,
+    PoseTcnTrickClassificationTrainCfg,
+    run_evaluation as run_pose_tcn_trick_classification_eval,
+    run_training as run_pose_tcn_trick_classification_train,
 )
 from aitraf.tasks.trick_classifier.video_mae import (
-    VideoMAEEvalConfig,
-    VideoMAETrainingConfig,
-    run_evaluation as run_video_mae_evaluation,
-    run_training as run_video_mae_training,
+    VideoMaeTrickClassificationEvalCfg,
+    VideoMaeTrickClassificationTrainCfg,
+    run_evaluation as run_video_mae_trick_classification_eval,
+    run_training as run_video_mae_trick_classification_train,
+)
+from aitraf.tasks.score_prediction.pose_tcn import (
+    PoseTcnScorePredictionTrainCfg,
+    PoseTcnScorePredictionEvalCfg,
+    run_evaluation as run_pose_tcn_score_prediction_eval,
+    run_training as run_pose_tcn_score_prediction_train,
 )
 
 
-TrainingBuilder = Callable[[DictConfig], Any]
-EvaluationBuilder = Callable[[DictConfig, str], Any]
-TrainingRunner = Callable[[Any], str]
-EvaluationRunner = Callable[[Any], None]
 
 
-def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTCNTrainingConfig:
-    return PoseTCNTrainingConfig(
+
+def _build_pose_tcn_training_config(
+    cfg: DictConfig,
+) -> PoseTcnTrickClassificationTrainCfg:
+    return PoseTcnTrickClassificationTrainCfg(
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,
         target_col=cfg.task.target_column,
@@ -55,10 +60,12 @@ def _build_pose_tcn_training_config(cfg: DictConfig) -> PoseTCNTrainingConfig:
     )
 
 
-def _build_pose_tcn_eval_config(cfg: DictConfig, model_uri: str) -> PoseTCNEvalConfig:
+def _build_pose_tcn_eval_config(
+    cfg: DictConfig, model_uri: str
+) -> PoseTcnTrickClassificationEvalCfg:
     device = "cuda" if cfg.model.accelerator == "gpu" else cfg.model.accelerator
 
-    return PoseTCNEvalConfig(
+    return PoseTcnTrickClassificationEvalCfg(
         model_uri=model_uri,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,
@@ -75,10 +82,12 @@ def _build_pose_tcn_eval_config(cfg: DictConfig, model_uri: str) -> PoseTCNEvalC
     )
 
 
-def _build_video_mae_training_config(cfg: DictConfig) -> VideoMAETrainingConfig:
+def _build_video_mae_training_config(
+    cfg: DictConfig,
+) -> VideoMaeTrickClassificationTrainCfg:
     data_dir = Path(cfg.paths.data_dir)
 
-    return VideoMAETrainingConfig(
+    return VideoMaeTrickClassificationTrainCfg(
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,
@@ -100,10 +109,12 @@ def _build_video_mae_training_config(cfg: DictConfig) -> VideoMAETrainingConfig:
     )
 
 
-def _build_video_mae_eval_config(cfg: DictConfig, model_uri: str) -> VideoMAEEvalConfig:
+def _build_video_mae_eval_config(
+    cfg: DictConfig, model_uri: str
+) -> VideoMaeTrickClassificationEvalCfg:
     data_dir = Path(cfg.paths.data_dir)
 
-    return VideoMAEEvalConfig(
+    return VideoMaeTrickClassificationEvalCfg(
         backbone=cfg.model.backbone,
         model_uri=model_uri,
         manifests_dir=cfg.task.manifests_dir,
@@ -122,27 +133,82 @@ def _build_video_mae_eval_config(cfg: DictConfig, model_uri: str) -> VideoMAEEva
     )
 
 
+def _build_pose_tcn_score_prediction_training_config(
+    cfg: DictConfig,
+) -> PoseTcnScorePredictionTrainCfg:
+    return PoseTcnScorePredictionTrainCfg(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
+        manifests_dir=cfg.task.manifests_dir,
+        target_col=cfg.task.target_column,
+        poses_dir=cfg.model.poses_dir,
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
+        learning_rate=cfg.model.learning_rate,
+        hidden_dim=cfg.model.hidden_dim,
+        num_layers=cfg.model.num_layers,
+        kernel_size=cfg.model.kernel_size,
+        dropout=cfg.model.dropout,
+        max_epochs=cfg.model.max_epochs,
+        accelerator=cfg.model.accelerator,
+        early_stopping_patience=cfg.model.early_stopping_patience,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.train_run_name,
+        output_dir=cfg.train_output_dir,
+        max_train_samples=cfg.max_samples,
+    )
+
+
+def _build_pose_tcn_score_prediction_eval_config(
+    cfg: DictConfig, model_uri: str
+) -> PoseTcnScorePredictionEvalCfg:
+    device = "cuda" if cfg.model.accelerator == "gpu" else cfg.model.accelerator
+
+    return PoseTcnScorePredictionEvalCfg(
+        model_uri=model_uri,
+        manifests_dir=cfg.task.manifests_dir,
+        target_col=cfg.task.target_column,
+        poses_dir=cfg.model.poses_dir,
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
+        device=device,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.eval_run_name,
+        top_k_worst=cfg.top_k_worst,
+    )
+
+
 TRAIN_EVAL_TARGETS: dict[
     tuple[str, str],
-    tuple[TrainingBuilder, TrainingRunner, EvaluationBuilder, EvaluationRunner],
+    tuple[Callable[[DictConfig], str], Callable[[DictConfig, str], None]],
 ] = {
-    (
-        "trick_classification",
-        "pose_tcn",
-    ): (
-        _build_pose_tcn_training_config,
-        run_pose_tcn_training,
-        _build_pose_tcn_eval_config,
-        run_pose_tcn_evaluation,
+    ("trick_classification", "pose_tcn"): (
+        lambda cfg: run_pose_tcn_trick_classification_train(
+            _build_pose_tcn_training_config(cfg)
+        ),
+        lambda cfg, model_uri: run_pose_tcn_trick_classification_eval(
+            _build_pose_tcn_eval_config(cfg, model_uri)
+        ),
     ),
-    (
-        "trick_classification",
-        "video_mae",
-    ): (
-        _build_video_mae_training_config,
-        run_video_mae_training,
-        _build_video_mae_eval_config,
-        run_video_mae_evaluation,
+    ("trick_classification", "video_mae"): (
+        lambda cfg: run_video_mae_trick_classification_train(
+            _build_video_mae_training_config(cfg)
+        ),
+        lambda cfg, model_uri: run_video_mae_trick_classification_eval(
+            _build_video_mae_eval_config(cfg, model_uri)
+        ),
+    ),
+    ("score_prediction", "pose_tcn"): (
+        lambda cfg: run_pose_tcn_score_prediction_train(
+            _build_pose_tcn_score_prediction_training_config(cfg)
+        ),
+        lambda cfg, model_uri: run_pose_tcn_score_prediction_eval(
+            _build_pose_tcn_score_prediction_eval_config(cfg, model_uri)
+        ),
     ),
 }
 
@@ -162,30 +228,24 @@ def run(cfg: DictConfig) -> None:
             f"model='{cfg.model.name}'. Available combinations: {available or 'none'}."
         )
 
-    build_train, run_train, build_eval, run_eval = target
-
-    training_cfg = build_train(cfg)
+    run_train, run_eval = target
 
     logger.info(
         f"Starting training for task='{cfg.task.name}' model='{cfg.model.name}' "
         f"(run: {cfg.train_run_name})"
     )
-
-    model_uri = run_train(training_cfg)
+    model_uri = run_train(cfg)
 
     logger.info(
         f"Finished training for task='{cfg.task.name}' model='{cfg.model.name}'. "
         f"Model URI: {model_uri}"
     )
 
-    eval_cfg = build_eval(cfg, model_uri)
-
     logger.info(
         f"Starting evaluation for task='{cfg.task.name}' model='{cfg.model.name}' "
         f"(run: {cfg.eval_run_name})"
     )
-
-    run_eval(eval_cfg)
+    run_eval(cfg, model_uri)
 
     logger.info(
         f"Finished evaluation for task='{cfg.task.name}' model='{cfg.model.name}'."

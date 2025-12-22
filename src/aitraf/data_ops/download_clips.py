@@ -62,7 +62,7 @@ def download_clips(config: ClipDownloadConfig) -> None:
         destination.parent.mkdir(parents=True, exist_ok=True)
         try:
             s3_client.download_file(bucket, key, str(destination))
-        except ClientError as exc:  # pragma: no cover - network path log
+        except ClientError as exc:
             failure_count += 1
             logger.warning("Failed to download {}: {}", uri, exc)
         else:

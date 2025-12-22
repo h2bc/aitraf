@@ -1,6 +1,7 @@
 """VideoMAE evaluation pipeline."""
 
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 
 from datasets import load_dataset
@@ -19,16 +20,17 @@ from aitraf.metrics import (
     get_target_distribution_figure,
     get_per_class_f1_figure,
     compute_pred_ids,
-    compute_dummy_pred_ids,
+    compute_dummy_classification_pred_ids,
     get_top_k_worst_misses,
 )
-from aitraf.processing.video_mae import build_collate
 from aitraf.processing import load_target_label_mappings
+from aitraf.processing.models.video_mae import process_sample
+from aitraf.processing.utils import build_collate
 from aitraf.logging import logger
 
 
 @dataclass
-class VideoMAEEvalConfig:
+class VideoMaeTrickClassificationEvalCfg:
     """Configuration for VideoMAE evaluation."""
 
     backbone: str
@@ -54,7 +56,7 @@ class VideoMAEEvalConfig:
         self.output_dir = Path(self.output_dir)
 
 
-def run_evaluation(config: VideoMAEEvalConfig):
+def run_evaluation(config: VideoMaeTrickClassificationEvalCfg):
     """Evaluate a fine-tuned VideoMAE model."""
 
     load_dotenv()
@@ -66,7 +68,7 @@ def run_evaluation(config: VideoMAEEvalConfig):
 
     eval_dataset = dataset["test"]
 
-    labels, label2id, id2label = load_target_label_mappings(
+    label_names, label2id, id2label = load_target_label_mappings(
         config.vocab_path, config.target_col
     )
 
@@ -90,14 +92,17 @@ def run_evaluation(config: VideoMAEEvalConfig):
         run_name=config.run_name,
     )
 
-    data_collator = build_collate(
-        processor,
-        config.clips_dir,
-        label2id,
-        config.sample_frames,
-        config.sampling_dist,
-        config.target_col,
+    process_fn = partial(
+        process_sample,
+        processor=processor,
+        clips_dir=config.clips_dir,
+        sample_frames=config.sample_frames,
+        sampling_dist=config.sampling_dist,
+        target_col=config.target_col,
+        label_transform=lambda label: label2id[str(label)],
     )
+
+    data_collator = build_collate(process_fn)
 
     trainer = Trainer(
         model=model,
@@ -111,35 +116,35 @@ def run_evaluation(config: VideoMAEEvalConfig):
     with mlflow.start_run(run_name=config.run_name):
         mlflow.log_input(from_huggingface(eval_dataset, name="test"), context="test")
 
-        pred_logits, actual_ids, _ = trainer.predict(eval_dataset)
+        pred_logits, label_ids, _ = trainer.predict(eval_dataset)
 
         pred_ids = compute_pred_ids(pred_logits)
-        metrics = compute_metrics(pred_ids, actual_ids)
+        metrics = compute_metrics(pred_ids, label_ids)
 
         mlflow.log_metrics(metrics)
 
-        dummy_pred_ids = compute_dummy_pred_ids(actual_ids)
-        dummy_metrics = compute_metrics(dummy_pred_ids, actual_ids)
+        dummy_pred_ids = compute_dummy_classification_pred_ids(label_ids)
+        dummy_metrics = compute_metrics(dummy_pred_ids, label_ids)
 
         dummy_metrics_prefixed = {f"dummy_{k}": v for k, v in dummy_metrics.items()}
 
         mlflow.log_metrics(dummy_metrics_prefixed)
 
         dist_fig = get_target_distribution_figure(
-            pred_ids, actual_ids, labels, id2label
+            pred_ids, label_ids, label_names, id2label
         )
 
         mlflow.log_figure(dist_fig, "predicted_vs_actual_target_counts.png")
 
-        cm_fig = get_confusion_matrix_figure(pred_ids, actual_ids, labels)
+        cm_fig = get_confusion_matrix_figure(pred_ids, label_ids, label_names)
         mlflow.log_figure(cm_fig, "confusion_matrix.png")
 
-        f1_fig = get_per_class_f1_figure(pred_ids, actual_ids, labels)
+        f1_fig = get_per_class_f1_figure(pred_ids, label_ids, label_names)
         mlflow.log_figure(f1_fig, "per_class_f1.png")
 
         worst_misses = get_top_k_worst_misses(
             pred_logits,
-            actual_ids,
+            label_ids,
             eval_dataset.to_pandas(),
             id2label,
             top_k=config.top_k_worst,

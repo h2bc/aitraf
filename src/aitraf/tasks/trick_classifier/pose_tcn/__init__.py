@@ -1,11 +1,11 @@
 """Pose TCN trick-classifier task entrypoints."""
 
-from .training import PoseTCNTrainingConfig, run_training
-from .evaluation import PoseTCNEvalConfig, run_evaluation
+from .training import PoseTcnTrickClassificationTrainCfg, run_training
+from .evaluation import PoseTcnTrickClassificationEvalCfg, run_evaluation
 
 __all__ = [
-    "PoseTCNTrainingConfig",
-    "PoseTCNEvalConfig",
+    "PoseTcnTrickClassificationTrainCfg",
+    "PoseTcnTrickClassificationEvalCfg",
     "run_training",
     "run_evaluation",
 ]

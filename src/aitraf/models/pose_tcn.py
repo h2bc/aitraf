@@ -128,7 +128,7 @@ class TCNRegressionHead(nn.Module):
         )
 
     def forward(self, features: torch.Tensor) -> torch.Tensor:
-        return self.net(features)
+        return self.net(features).squeeze(-1)
 
 
 class TCNClassifier(pl.LightningModule):
@@ -217,14 +217,14 @@ class TCNRegressor(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         preds = self(batch["inputs"])
-        targets = batch["targets"].float()
+        targets = batch["labels"].float()
         loss = self.loss_fn(preds, targets)
         self.log("train_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         preds = self(batch["inputs"])
-        targets = batch["targets"].float()
+        targets = batch["labels"].float()
         loss = self.loss_fn(preds, targets)
         mae = torch.nn.functional.l1_loss(preds, targets)
         self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
