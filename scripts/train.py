@@ -23,9 +23,6 @@ from aitraf.tasks.score_prediction.pose_tcn import (
 )
 
 
-TrainingRunner = Callable[[DictConfig], str]
-
-
 def _build_video_mae_training_config(
     cfg: DictConfig,
 ) -> VideoMaeTrickClassificationTrainCfg:
@@ -112,7 +109,7 @@ def _build_pose_tcn_score_prediction_training_config(
     )
 
 
-TRAINING_TARGETS: dict[tuple[str, str], TrainingRunner] = {
+TRAINING_TARGETS: dict[tuple[str, str], Callable[[DictConfig], str]] = {
     ("trick_classification", "video_mae"): lambda cfg: run_video_mae_trick_classification_train(
         _build_video_mae_training_config(cfg)
     ),
