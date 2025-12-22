@@ -56,7 +56,7 @@ class PoseTCNEvalConfig:
 
 
 def run_evaluation(config: PoseTCNEvalConfig) -> None:
-    labels, label2id, id2label = load_target_label_mappings(
+    label_names, label2id, id2label = load_target_label_mappings(
         config.vocab_path, config.target_col
     )
 
@@ -92,7 +92,7 @@ def run_evaluation(config: PoseTCNEvalConfig) -> None:
     compute_metrics = build_classification_metrics()
 
     logits_list: list[np.ndarray] = []
-    labels_list: list[np.ndarray] = []
+    label_ids_list: list[np.ndarray] = []
 
     with torch.no_grad():
         for batch in dataloader:
@@ -100,15 +100,15 @@ def run_evaluation(config: PoseTCNEvalConfig) -> None:
             batch_labels = batch["labels"].to(config.device)
             batch_logits = model(inputs)
             logits_list.append(batch_logits.cpu().numpy())
-            labels_list.append(batch_labels.cpu().numpy())
+            label_ids_list.append(batch_labels.cpu().numpy())
 
     logits = np.concatenate(logits_list, axis=0)
-    actual_ids = np.concatenate(labels_list, axis=0)
+    label_ids = np.concatenate(label_ids_list, axis=0)
     pred_ids = compute_pred_ids(logits)
 
-    metrics = compute_metrics(pred_ids, actual_ids)
+    metrics = compute_metrics(pred_ids, label_ids)
     dummy_metrics = compute_metrics(
-        compute_dummy_classification_pred_ids(actual_ids), actual_ids
+        compute_dummy_classification_pred_ids(label_ids), label_ids
     )
     dummy_metrics = {f"dummy_{k}": v for k, v in dummy_metrics.items()}
 
@@ -124,19 +124,19 @@ def run_evaluation(config: PoseTCNEvalConfig) -> None:
         mlflow.log_metrics(dummy_metrics)
 
         dist_fig = get_target_distribution_figure(
-            pred_ids, actual_ids, labels, id2label
+            pred_ids, label_ids, label_names, id2label
         )
         mlflow.log_figure(dist_fig, "predicted_vs_actual_target_counts.png")
 
-        cm_fig = get_confusion_matrix_figure(pred_ids, actual_ids, labels)
+        cm_fig = get_confusion_matrix_figure(pred_ids, label_ids, label_names)
         mlflow.log_figure(cm_fig, "confusion_matrix.png")
 
-        f1_fig = get_per_class_f1_figure(pred_ids, actual_ids, labels)
+        f1_fig = get_per_class_f1_figure(pred_ids, label_ids, label_names)
         mlflow.log_figure(f1_fig, "per_class_f1.png")
 
         worst_misses = get_top_k_worst_misses(
             logits,
-            actual_ids,
+            label_ids,
             pd.DataFrame(dataset.manifest_rows()),
             id2label,
             top_k=config.top_k_worst,

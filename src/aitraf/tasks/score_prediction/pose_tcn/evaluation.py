@@ -16,7 +16,11 @@ from mlflow.data import from_pandas
 from torch.utils.data import DataLoader
 
 from aitraf.datasets.pose_tcn import PoseTCNDataset
-from aitraf.metrics import build_regression_metrics, compute_dummy_regression_preds
+from aitraf.metrics import (
+    build_regression_metrics,
+    compute_dummy_regression_preds,
+    get_predicted_vs_actual_scatter_figure,
+)
 from aitraf.models.pose_tcn import TCNRegressor
 from aitraf.processing.models.pose_tcn import process_sample
 from aitraf.processing.utils import build_collate
@@ -45,7 +49,7 @@ class PoseTcnScorePredictionEvalCfg:
 
 
 def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
-    
+
     dataset = PoseTCNDataset(
         manifests_dir=config.manifests_dir,
         poses_dir=config.poses_dir,
@@ -104,6 +108,8 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
 
         mlflow.log_metrics(metrics)
         mlflow.log_metrics(dummy_metrics)
+        scatter_fig = get_predicted_vs_actual_scatter_figure(predictions, labels)
+        mlflow.log_figure(scatter_fig, "predicted_vs_actual.png")
 
 
 __all__ = ["PoseTcnScorePredictionEvalCfg", "run_evaluation"]

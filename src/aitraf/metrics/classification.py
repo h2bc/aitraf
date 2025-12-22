@@ -25,20 +25,20 @@ def compute_pred_confidences(logits: List[float]) -> np.ndarray:
     return probs.max(dim=-1).values.numpy()
 
 
-def compute_dummy_classification_pred_ids(actual_ids: List[int]) -> List[int]:
-    most_common = Counter(actual_ids).most_common(1)[0][0]
+def compute_dummy_classification_pred_ids(labels: List[int]) -> List[int]:
+    most_common = Counter(labels).most_common(1)[0][0]
 
-    return np.full(len(actual_ids), most_common)
+    return np.full(len(labels), most_common)
 
 
 def build_classification_metrics() -> Callable[
     [Sequence[int], Sequence[int]], dict[str, float]
 ]:
     def _compute_metrics(
-        predictions: Sequence[int], targets: Sequence[int]
+        predictions: Sequence[int], labels: Sequence[int]
     ) -> dict[str, float]:
-        acc = accuracy_score(targets, predictions)
-        macro_f1 = f1_score(targets, predictions, average="macro")
+        acc = accuracy_score(labels, predictions)
+        macro_f1 = f1_score(labels, predictions, average="macro")
 
         return {
             "accuracy": acc,
@@ -50,11 +50,11 @@ def build_classification_metrics() -> Callable[
 
 def get_target_distribution_figure(
     pred_ids: List[int],
-    actual_ids: List[int],
+    labels: List[int],
     label_names: List[str],
     id2label: dict[str, str],
 ) -> Figure:
-    actual_labels = [id2label[str(x)] for x in actual_ids]
+    actual_labels = [id2label[str(x)] for x in labels]
     predicted_labels = [id2label[str(x)] for x in pred_ids]
 
     actual_counts = (
@@ -76,13 +76,13 @@ def get_target_distribution_figure(
 
 def get_confusion_matrix_figure(
     pred_ids: List[int],
-    actual_ids: List[int],
+    labels: List[int],
     label_names: List[str],
 ) -> Figure:
     fig, ax = plt.subplots(figsize=(6, 5))
 
     ConfusionMatrixDisplay.from_predictions(
-        actual_ids,
+        labels,
         pred_ids,
         labels=range(len(label_names)),
         display_labels=label_names,
@@ -98,11 +98,11 @@ def get_confusion_matrix_figure(
 
 def get_per_class_f1_figure(
     pred_ids: List[int],
-    actual_ids: List[int],
+    labels: List[int],
     label_names: List[str],
 ):
     f1_per_class = f1_score(
-        actual_ids,
+        labels,
         pred_ids,
         average=None,
         labels=range(len(label_names)),
@@ -121,7 +121,7 @@ def get_per_class_f1_figure(
 
 def get_top_k_worst_misses(
     pred_logits,
-    actual_ids,
+    labels,
     examples_df: pd.DataFrame,
     id2label: dict[str, str],
     top_k: int = 5,
@@ -132,7 +132,7 @@ def get_top_k_worst_misses(
     df["pred_id"] = compute_pred_ids(pred_logits)
     df["pred_confidence"] = compute_pred_confidences(pred_logits)
     df["pred_trick"] = df["pred_id"].map(lambda idx: id2label[str(idx)])
-    df["actual_id"] = actual_ids
+    df["actual_id"] = labels
 
     misses = df[df["pred_id"] != df["actual_id"]].copy()
     misses = misses.sort_values("pred_confidence", ascending=False).head(top_k)

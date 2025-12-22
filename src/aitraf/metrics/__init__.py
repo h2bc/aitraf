@@ -13,6 +13,7 @@ from .classification import (
 from .regression import (
     build_regression_metrics,
     compute_dummy_regression_preds,
+    get_predicted_vs_actual_scatter_figure,
 )
 
 __all__ = [
@@ -20,6 +21,7 @@ __all__ = [
     "build_regression_metrics",
     "compute_dummy_classification_pred_ids",
     "compute_dummy_regression_preds",
+    "get_predicted_vs_actual_scatter_figure",
     "compute_pred_confidences",
     "compute_pred_ids",
     "get_confusion_matrix_figure",

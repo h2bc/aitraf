@@ -19,6 +19,7 @@ dependencies = [
     "matplotlib",
     "pandas",
     "scikit-learn",
+    "seaborn",
     "label-studio-sdk",
     "boto3",
     "python-dotenv",
