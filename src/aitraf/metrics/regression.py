@@ -74,9 +74,26 @@ def get_residual_vs_predicted_scatter_figure(
     return fig
 
 
+def get_residual_distribution_figure(
+    predictions: Sequence[float], labels: Sequence[float]
+) -> Figure:
+    fig, ax = plt.subplots(figsize=(6, 5))
+
+    residuals = np.asarray(labels) - np.asarray(predictions)
+    sns.histplot(residuals, kde=True, ax=ax)
+    ax.axvline(0, color="red", linestyle="--")
+    ax.set_xlabel("Residual (Actual - Predicted)")
+    ax.set_ylabel("Count")
+    ax.set_title("Residual distribution")
+    fig.tight_layout()
+
+    return fig
+
+
 __all__ = [
     "build_regression_metrics",
     "compute_dummy_regression_preds",
     "get_predicted_vs_actual_scatter_figure",
     "get_residual_vs_predicted_scatter_figure",
+    "get_residual_distribution_figure",
 ]

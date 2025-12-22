@@ -15,6 +15,7 @@ from .regression import (
     compute_dummy_regression_preds,
     get_predicted_vs_actual_scatter_figure,
     get_residual_vs_predicted_scatter_figure,
+    get_residual_distribution_figure,
 )
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "compute_dummy_regression_preds",
     "get_predicted_vs_actual_scatter_figure",
     "get_residual_vs_predicted_scatter_figure",
+    "get_residual_distribution_figure",
     "compute_pred_confidences",
     "compute_pred_ids",
     "get_confusion_matrix_figure",
