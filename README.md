@@ -1,6 +1,7 @@
 # AITRAF: Aggressive Inline Trick Recognition and Feedback
 
-Model training and evaluation stack for inline skating trick recognition.
+Model training and evaluation stack for inline skating trick recognition & performance feedback
+
 
 ## Prerequisites
 
@@ -19,6 +20,27 @@ Model training and evaluation stack for inline skating trick recognition.
 
 - `task lint` — run Ruff lint checks.
 - `task format` — apply Ruff formatting fixes.
+
+## Dataset
+
+The dataset is customly filmed from a single fixed angle with multiple people. It currently covers 7 tricks, uses a consistent obstacle, and is captured under similar lighting conditions.
+
+## Tasks
+
+- **trick_classification**  
+  Predicts the discrete trick label for each clip. Train/val/test splits are stratified by the target to preserve class balance. Available labels: `ao-soul`, `bs-royale`, `fs-royale`, `fs-savanah`, `mizou`, `soul`, `top-soul`.
+- **score_prediction**  
+  Predicts the execution score for each clip. Scores are collected as 1–4 ★★★★ and converted to a 0–1 percentage for training. We plan to extend this to pairwise ranking with separated goals (component scores vs a single overall score).
+
+
+## Models
+
+- **pose_tcn** (`configs/model/pose_tcn.yaml`)  
+  Temporal convolutional network over pose keypoints sampled from pose sequences. Configurable depth/hidden size, Gaussian frame sampling, and Lightning-based training on GPU.
+- **video_mae** (`configs/model/video_mae.yaml`)  
+  Hugging Face VideoMAE backbone fine-tuned on sampled clips. Supports freezing the backbone, cacheable weights, and MLflow logging via the Hugging Face Trainer stack.
+
+
 
 ## Pipelines
 
@@ -52,18 +74,6 @@ Run commands via [Task](https://taskfile.dev)
 
 - Builds train/val/test JSONL manifests under `data/manifests/<task>/`, stratifying by the target column when configured.
 - Emits a shared `vocab.json` capturing label/id mappings per task for downstream consumers.
-
-## Tasks
-
-- **trick_classification**  
-  Classification task predicting the discrete trick label. Uses manifests under `data/manifests/trick_classification/` with the target column `trick`. Training/validation/test splits are stratified by the target to preserve class balance.
-
-## Models
-
-- **pose_tcn** (`configs/model/pose_tcn.yaml`)  
-  Temporal convolutional network over pose keypoints sampled from pose sequences. Configurable depth/hidden size, Gaussian frame sampling, and Lightning-based training on GPU.
-- **video_mae** (`configs/model/video_mae.yaml`)  
-  Hugging Face VideoMAE backbone fine-tuned on sampled clips. Supports freezing the backbone, cacheable weights, and MLflow logging via the Hugging Face Trainer stack.
 
 ## Pre-processing
 
