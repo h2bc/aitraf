@@ -7,8 +7,6 @@ from pathlib import Path
 import pandas as pd
 from dotenv import load_dotenv
 from label_studio_sdk import LabelStudio
-from functools import partial
-
 from aitraf.data_ops.schema import LabelsSchema
 from aitraf.data_ops.utils import apply_dtypes, apply_processors
 from aitraf.logging import logger
@@ -53,13 +51,9 @@ def download_labels(config: LabelStudioExportConfig) -> Path:
             f"Export missing expected columns: {', '.join(missing_cols)}"
         )
 
-    apply_label_processors = partial(
-        apply_processors, processors=LabelsSchema.processors
+    df = df.pipe(apply_processors, processors=LabelsSchema.processors).pipe(
+        apply_dtypes, dtypes=LabelsSchema.types
     )
-
-    apply_label_dtypes = partial(apply_dtypes, dtypes=LabelsSchema.types)
-
-    df = df.pipe(apply_label_processors).pipe(apply_label_dtypes)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 

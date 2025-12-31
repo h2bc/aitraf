@@ -2,7 +2,13 @@ from typing import ClassVar, Dict, Callable, Any
 import json
 
 
-class LabelsSchema:
+class DataSchema:
+    columns: ClassVar[tuple[str, ...]] = ()
+    types: ClassVar[Dict[str, str]] = {}
+    processors: ClassVar[Dict[str, Callable[[Any], Any]]] = {}
+
+
+class LabelsSchema(DataSchema):
     columns: ClassVar[tuple[str, ...]] = (
         "annotation_id",
         "annotator",
@@ -22,7 +28,7 @@ class LabelsSchema:
         "annotation_id": "string",
         "annotator": "string",
         "id": "string",
-        "execution_score": "Float64",
+        "execution_score": "Int64",
         "lead_time": "Float64",
         "created_at": "string",
         "updated_at": "string",
@@ -35,14 +41,14 @@ class LabelsSchema:
 
     processors: ClassVar[Dict[str, Callable[[Any], Any]]] = {
         "execution_score": lambda x: (
-            (json.loads(x)[0]["rating"] / 4) if isinstance(x, str) else x
+            json.loads(x)[0]["rating"] if isinstance(x, str) else x
         )
     }
 
     input_col: ClassVar[str] = "video"
 
 
-class ManifestSchema:
+class ManifestSchema(DataSchema):
     columns: ClassVar[tuple[str, ...]] = (
         "video_id",
         "s3_path",
@@ -61,6 +67,10 @@ class ManifestSchema:
         "person": "string",
         "execution_score": "Float64",
         "execution_explanation": "string",
+    }
+
+    processors: ClassVar[Dict[str, Callable[[Any], Any]]] = {
+        "execution_score": lambda x: x / 4
     }
 
     categorical: ClassVar[tuple[str, ...]] = ("trick", "key_foot", "person")

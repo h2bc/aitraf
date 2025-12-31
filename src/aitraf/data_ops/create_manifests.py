@@ -9,6 +9,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from aitraf.data_ops import schema
+from aitraf.data_ops.utils import apply_dtypes, apply_processors
 from aitraf.logging import logger
 
 
@@ -55,6 +56,7 @@ def create_manifests(config: ManifestBuildConfig) -> None:
         raise RuntimeError("No tasks provided for manifest creation.")
 
     labels_df = pd.read_json(config.input_path, orient="records", lines=True)
+    labels_df = labels_df.pipe(apply_dtypes, dtypes=schema.LabelsSchema.types)
 
     built_any = False
     for task in config.tasks:
@@ -102,16 +104,17 @@ def _build_task_manifests(
             f"for task '{task.name}'."
         )
 
+    manifest_df = _build_manifest_df(filtered_df, target_column)
+
     val_ratio = float(config.val_ratio)
     test_ratio = float(config.test_ratio)
     train_ratio = 1.0 - (val_ratio + test_ratio)
-
     stratify_labels = _get_stratify_labels(
-        filtered_df, target_column, task.stratify_by_target, task.task_type
+        manifest_df, target_column, task.stratify_by_target, task.task_type
     )
 
     train_val_df, test_df = _split(
-        filtered_df,
+        manifest_df,
         test_ratio,
         stratify_labels,
     )
@@ -132,7 +135,7 @@ def _build_task_manifests(
 
     for name, split_df in splits.items():
         out_path = task_output_dir / f"{name}.jsonl"
-        _write_manifest(split_df, out_path, target_column)
+        _write_manifest(split_df, out_path)
         logger.info("Task '{}' wrote {} ({} rows)", task.name, out_path, len(split_df))
 
 
@@ -195,24 +198,33 @@ def _get_stratify_labels(
     return labels.astype(str)
 
 
-def _write_manifest(df: pd.DataFrame, path: Path, target_column: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
+def _build_manifest_df(df: pd.DataFrame, target_column: str) -> pd.DataFrame:
     extra_columns = [
         col
         for col in schema.ManifestSchema.columns
         if col not in ("video_id", "s3_path", target_column) and col in df.columns
     ]
 
-    with path.open("w", encoding="utf-8") as fh:
-        for _, row in df.iterrows():
-            source = str(row[schema.LabelsSchema.input_col])
-            record = {
-                "video_id": Path(source).name,
-                "s3_path": source,
-                target_column: row[target_column],
-            }
-            record.update({col: row[col] for col in extra_columns})
-            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
+    sources = df[schema.LabelsSchema.input_col]
+
+    manifest_df = pd.DataFrame(
+        {
+            "video_id": sources.map(lambda value: Path(value).name),
+            "s3_path": sources,
+            target_column: df[target_column],
+        }
+    )
+    for col in extra_columns:
+        manifest_df[col] = df[col]
+
+    return manifest_df.pipe(
+        apply_processors, processors=schema.ManifestSchema.processors
+    ).pipe(apply_dtypes, dtypes=schema.ManifestSchema.types)
+
+
+def _write_manifest(df: pd.DataFrame, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_json(path, orient="records", lines=True, force_ascii=False)
 
 
 def _build_vocab_metadata(
@@ -222,7 +234,7 @@ def _build_vocab_metadata(
     for col in schema.ManifestSchema.categorical:
         if col not in df.columns:
             continue
-        labels = sorted(df[col].dropna().astype(str).unique().tolist())
+        labels = sorted(df[col].dropna().unique().tolist())
         payload[col] = {
             "labels": labels,
             "label2id": {label: idx for idx, label in enumerate(labels)},

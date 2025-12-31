@@ -21,7 +21,7 @@ def apply_processors(
 ) -> pd.DataFrame:
     for col, fn in processors.items():
         if col in df.columns:
-            df[col] = df[col].apply(fn)
+            df[col] = df[col].apply(lambda value: value if pd.isna(value) else fn(value))
     return df
 
 
