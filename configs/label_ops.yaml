@@ -1,0 +1,9 @@
+defaults:
+  - base
+  - _self_
+
+label_ops:
+  download_labels:
+    enabled: true
+    force: true
+    output_path: ${paths.data_dir}/labels.jsonl

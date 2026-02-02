@@ -48,14 +48,31 @@ Run commands via [Task](https://taskfile.dev)
 
 | Command | Description |
 |---------|-------------|
-| `task data -- [overrides]` | Executes the Hydra-managed data pipeline (`scripts/data_pipeline.py`). Pass Hydra overrides after `--`. |
-| `task train -- task=<task> model=<model> [overrides]` | Runs the Hydra-managed training entrypoint (`scripts/train.py`). |
-| `task eval -- task=<task> model=<model> model_id=<model_id> [overrides]` | Runs the unified evaluation entrypoint (`scripts/eval.py`). |
-| `task train_eval -- task=<task> model=<model> [overrides]` | Runs the combined train+eval workflow (`scripts/train_eval.py`). |
+| `task label_ops -- [overrides]` | Executes the label ops pipeline (`scripts/label_ops_pipeline.py`). |
+| `task data_ops -- [overrides]` | Executes the data ops pipeline (`scripts/data_ops_pipeline.py`). |
+| `task train -- task=<task> model=<model> [overrides]` | Runs the training pipeline (`scripts/train.py`). |
+| `task eval -- task=<task> model=<model> model_id=<model_id> [overrides]` | Runs the evaluation pipeline (`scripts/eval.py`). |
+| `task train_eval -- task=<task> model=<model> [overrides]` | Runs the combined train+eval pipeline (`scripts/train_eval.py`). |
+
+### Label ops script
+
+`task label_ops` runs `scripts/label_ops_pipeline.py`, a workflow composed of three stages (enable/disable each and set `force` flags in `configs/label_ops.yaml` or via cmd args):
+
+#### Download Labels
+
+- Pulls the latest Label Studio export (`data/labels.jsonl`) to refresh annotations used downstream.
+
+#### Create pairwise ranking tasks
+
+- Builds same-trick comparison pairs, writing one JSON file per pair with the `{"data": {"trick": ..., "left": ..., "right": ...}}` format.
+
+#### Upload Pairs
+
+- Uploads the generated pair files to S3. The pairs then later synched by a label tool to start the pairwise ranking labeling.
 
 ### Data ops script
 
-`task data` runs `scripts/data_pipeline.py`, a Hydra-driven workflow composed of four stages (enable/disable each and set `force` flags in `configs/data_ops.yaml` or via cmd args):
+`task data_ops` runs `scripts/data_ops_pipeline.py`, a workflow composed of four stages (enable/disable each and set `force` flags in `configs/data_ops.yaml` or via cmd args):
 
 #### Download Labels
 

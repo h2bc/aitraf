@@ -12,10 +12,15 @@ tasks:
     cmds: 
       - uv run ruff format .  
 
-  data:
+  data_ops:
     desc: Run the data ops pipeline
     cmds:
-      - "uv run python scripts/data_pipeline.py {{.CLI_ARGS}}"
+      - "uv run python scripts/data_ops_pipeline.py {{.CLI_ARGS}}"
+
+  label_ops:
+    desc: Run the label ops pipeline
+    cmds:
+      - "uv run python scripts/label_ops_pipeline.py {{.CLI_ARGS}}"
 
   train:
     desc: Run the Hydra-managed training pipeline
