@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from aitraf.data_ops import schema
-from aitraf.data_ops.utils import apply_dtypes, apply_processors
+from aitraf.data_ops.utils import apply_dtypes, apply_processors, validate_required_columns
 from aitraf.logging import logger
 
 
@@ -81,7 +81,7 @@ def _build_task_manifests(
     labels_df: pd.DataFrame, config: ManifestBuildConfig, task: TaskConfig
 ) -> None:
     target_column = task.target_column
-    _validate_required_columns(labels_df, schema.LabelsSchema.input_col, target_column)
+    validate_required_columns(labels_df, schema.LabelsSchema.input_col, target_column)
 
     task_output_dir = task.manifests_dir or config.output_dir / task.name
     task_output_dir.mkdir(parents=True, exist_ok=True)
@@ -137,14 +137,6 @@ def _build_task_manifests(
         out_path = task_output_dir / f"{name}.jsonl"
         _write_manifest(split_df, out_path)
         logger.info("Task '{}' wrote {} ({} rows)", task.name, out_path, len(split_df))
-
-
-def _validate_required_columns(df: pd.DataFrame, *columns: str) -> None:
-    missing = [c for c in columns if c not in df.columns]
-    if missing:
-        raise RuntimeError(
-            "Input is missing required columns: " + ", ".join(sorted(missing))
-        )
 
 
 def _check_required_columns(df: pd.DataFrame, task_name: str, *columns: str) -> bool:

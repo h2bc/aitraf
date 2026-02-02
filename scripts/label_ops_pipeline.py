@@ -5,6 +5,7 @@ from omegaconf import DictConfig
 from dotenv import load_dotenv
 
 from aitraf.data_ops.download_labels import LabelStudioExportConfig, download_labels
+from aitraf.label_ops.create_pairs import PairGenerationConfig, create_pairs
 from aitraf.logging import setup_logging, heading
 
 
@@ -24,6 +25,18 @@ def run(cfg: DictConfig) -> None:
         )
     else:
         heading("Skip label download (disabled)")
+
+    if ops_cfg.create_pairs.enabled:
+        heading("Create Pair Files")
+        create_pairs(
+            PairGenerationConfig(
+                labels_path=ops_cfg.create_pairs.labels_path,
+                output_dir=ops_cfg.create_pairs.output_dir,
+                force=ops_cfg.create_pairs.force,
+            )
+        )
+    else:
+        heading("Skip pair creation (disabled)")
 
 
 if __name__ == "__main__":

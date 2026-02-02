@@ -33,3 +33,11 @@ def apply_dtypes(
         if col in df.columns:
             df[col] = df[col].astype(dtype)
     return df
+
+
+def validate_required_columns(df: pd.DataFrame, *columns: str) -> None:
+    missing = [c for c in columns if c not in df.columns]
+    if missing:
+        raise RuntimeError(
+            "Input is missing required columns: " + ", ".join(sorted(missing))
+        )
