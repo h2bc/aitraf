@@ -12,3 +12,4 @@ label_ops:
     force: true
     labels_path: ${label_ops.download_labels.output_path}
     output_dir: ${paths.data_dir}/pairs
+    k_per_video: 3

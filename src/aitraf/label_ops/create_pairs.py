@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from pathlib import Path
 import json
+import random
 import shutil
-from itertools import combinations
 
 import pandas as pd
 
@@ -19,6 +19,7 @@ class PairGenerationConfig:
 
     labels_path: Path | str
     output_dir: Path | str
+    k_per_video: int
     force: bool = False
 
     def __post_init__(self) -> None:
@@ -32,11 +33,13 @@ def create_pairs(config: PairGenerationConfig) -> int:
 
     if not labels_path.exists():
         raise RuntimeError(f"Labels file not found: {labels_path}")
+    if config.k_per_video < 0:
+        raise ValueError("k_per_video must be >= 0.")
 
     labels_df = pd.read_json(labels_path, orient="records", lines=True)
 
     validate_required_columns(labels_df, "trick", "video")
-    
+
     labels_df = (
         labels_df.pipe(apply_dtypes, dtypes=schema.LabelsSchema.types)
         .dropna(subset=["trick", "video"])
@@ -48,6 +51,7 @@ def create_pairs(config: PairGenerationConfig) -> int:
 
     total_pairs = 0
     skipped_tricks = 0
+    rng = random.Random(42)
 
     for trick, group_df in labels_df.groupby("trick"):
         videos = group_df["video"].tolist()
@@ -57,14 +61,36 @@ def create_pairs(config: PairGenerationConfig) -> int:
             skipped_tricks += 1
             continue
 
+        shuffled = list(unique_videos)
+        rng.shuffle(shuffled)
+
+        pairs: set[tuple[str, str]] = set()
+
+        for left, right in zip(shuffled, shuffled[1:]):
+            pair = (left, right) if left <= right else (right, left)
+            pairs.add(pair)
+
+        for video in shuffled:
+            opponents = [other for other in unique_videos if other != video]
+            if not opponents:
+                continue
+            if len(opponents) <= config.k_per_video:
+                picks = opponents
+            else:
+                picks = rng.sample(opponents, config.k_per_video)
+            for other in picks:
+                pair = (video, other) if video <= other else (other, video)
+                pairs.add(pair)
+
         trick_name = str(trick)
-        for idx, (left, right) in enumerate(combinations(unique_videos, 2), start=1):
+        for idx, (left, right) in enumerate(sorted(pairs), start=1):
             payload = {"data": {"trick": trick_name, "left": left, "right": right}}
             filename = f"{trick_name}__{idx:06d}.json"
             out_path = output_dir / filename
             with out_path.open("w", encoding="utf-8") as handle:
                 json.dump(payload, handle, ensure_ascii=False)
             total_pairs += 1
+        logger.info("Trick '{}' -> {} pairs", trick_name, len(pairs))
 
     logger.info(
         "Created {} pair files in {} ({} tricks skipped)",
