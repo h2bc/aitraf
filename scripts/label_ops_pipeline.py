@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 from aitraf.data_ops.download_labels import LabelStudioExportConfig, download_labels
 from aitraf.label_ops.create_pairs import PairGenerationConfig, create_pairs
+from aitraf.label_ops.upload_pairs import PairUploadConfig, upload_pairs
 from aitraf.logging import setup_logging, heading
 
 
@@ -38,6 +39,17 @@ def run(cfg: DictConfig) -> None:
         )
     else:
         heading("Skip pair creation (disabled)")
+
+    if ops_cfg.upload_pairs.enabled:
+        heading("Upload Pairs")
+        upload_pairs(
+            PairUploadConfig(
+                pairs_dir=ops_cfg.upload_pairs.pairs_dir,
+                force=ops_cfg.upload_pairs.force,
+            )
+        )
+    else:
+        heading("Skip pair upload (disabled)")
 
 
 if __name__ == "__main__":

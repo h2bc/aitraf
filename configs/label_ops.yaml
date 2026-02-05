@@ -13,3 +13,7 @@ label_ops:
     labels_path: ${label_ops.download_labels.output_path}
     output_dir: ${paths.data_dir}/pairs
     k_per_video: 3
+  upload_pairs:
+    enabled: true
+    force: true
+    pairs_dir: ${label_ops.create_pairs.output_dir}
