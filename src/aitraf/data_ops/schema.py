@@ -45,7 +45,7 @@ class LabelsSchema(DataSchema):
         )
     }
 
-    input_col: ClassVar[str] = "video"
+    video_col: ClassVar[str] = "video"
 
 
 class ManifestSchema(DataSchema):

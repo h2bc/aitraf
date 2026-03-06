@@ -1,5 +1,7 @@
 name: score_prediction
-type: regression
+video_col: video
 target_column: execution_score
-stratify_by_target: true
+required_cols: [video, execution_score]
+stratify_col: execution_score
+stratify_strategy: binned
 manifests_dir: ${paths.manifests_dir}/${.name}

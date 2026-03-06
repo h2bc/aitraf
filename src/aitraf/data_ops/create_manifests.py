@@ -19,11 +19,14 @@ class TaskConfig:
 
     name: str
     target_column: str
+    video_col: str
+    required_cols: Sequence[str]
     manifests_dir: Path | str | None = None
-    stratify_by_target: bool = True
-    task_type: str | None = None
+    stratify_col: str | None = None
+    stratify_strategy: str = "label"
 
     def __post_init__(self) -> None:
+        self.required_cols = tuple(self.required_cols)
         if self.manifests_dir is not None:
             self.manifests_dir = Path(self.manifests_dir)
 
@@ -58,21 +61,8 @@ def create_manifests(config: ManifestBuildConfig) -> None:
     labels_df = pd.read_json(config.input_path, orient="records", lines=True)
     labels_df = labels_df.pipe(apply_dtypes, dtypes=schema.LabelsSchema.types)
 
-    built_any = False
     for task in config.tasks:
-        target_column = task.target_column
-
-        if not _check_required_columns(labels_df, task.name, target_column):
-            continue
-
         _build_task_manifests(labels_df, config, task)
-
-        built_any = True
-
-    if not built_any:
-        raise RuntimeError(
-            "No manifests were created because none of the requested target columns exist in the labels."
-        )
 
     _write_vocab(labels_df, config.output_dir, force=config.force)
 
@@ -81,7 +71,9 @@ def _build_task_manifests(
     labels_df: pd.DataFrame, config: ManifestBuildConfig, task: TaskConfig
 ) -> None:
     target_column = task.target_column
-    validate_required_columns(labels_df, schema.LabelsSchema.input_col, target_column)
+    required_cols = tuple(task.required_cols)
+    if required_cols:
+        validate_required_columns(labels_df, *required_cols)
 
     task_output_dir = task.manifests_dir or config.output_dir / task.name
     task_output_dir.mkdir(parents=True, exist_ok=True)
@@ -94,23 +86,27 @@ def _build_task_manifests(
                     f"{out_path} exists. Set force=true to overwrite manifests."
                 )
 
-    filtered_df = labels_df.dropna(
-        subset=[schema.LabelsSchema.input_col, target_column]
-    ).reset_index(drop=True)
+    if required_cols:
+        filtered_df = labels_df.dropna(subset=list(required_cols)).reset_index(drop=True)
+    else:
+        filtered_df = labels_df.reset_index(drop=True)
 
     if len(filtered_df) < 3:
-        raise RuntimeError(
-            f"Need at least 3 rows with '{schema.LabelsSchema.input_col}' and '{target_column}' "
-            f"for task '{task.name}'."
-        )
+        if required_cols:
+            required_cols_csv = ", ".join(required_cols)
+            raise RuntimeError(
+                f"Need at least 3 rows with required columns ({required_cols_csv}) "
+                f"for task '{task.name}'."
+            )
+        raise RuntimeError(f"Need at least 3 rows for task '{task.name}'.")
 
-    manifest_df = _build_manifest_df(filtered_df, target_column)
+    manifest_df = _build_manifest_df(filtered_df, target_column, task.video_col)
 
     val_ratio = float(config.val_ratio)
     test_ratio = float(config.test_ratio)
     train_ratio = 1.0 - (val_ratio + test_ratio)
     stratify_labels = _get_stratify_labels(
-        manifest_df, target_column, task.stratify_by_target, task.task_type
+        manifest_df, task.stratify_col, task.stratify_strategy
     )
 
     train_val_df, test_df = _split(
@@ -139,23 +135,6 @@ def _build_task_manifests(
         logger.info("Task '{}' wrote {} ({} rows)", task.name, out_path, len(split_df))
 
 
-def _check_required_columns(df: pd.DataFrame, task_name: str, *columns: str) -> bool:
-    missing = [c for c in columns if c not in df.columns]
-
-    if not missing:
-        return True
-
-    quoted = ", ".join(f"'{col}'" for col in missing)
-
-    logger.warning(
-        "Skipping task '{}': missing required columns {} in labels",
-        task_name,
-        quoted,
-    )
-
-    return False
-
-
 def _split(
     df: pd.DataFrame, fraction: float, stratify: pd.Series | None
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -171,33 +150,38 @@ def _split(
 
 
 def _get_stratify_labels(
-    df: pd.DataFrame, target_column: str, enabled: bool, task_type: str | None
+    df: pd.DataFrame, stratify_col: str | None, strategy: str
 ) -> pd.Series | None:
-    if not enabled:
+    if stratify_col is None:
         return None
 
-    is_numerical = str(task_type).lower() == "regression" if task_type else False
+    labels = df[stratify_col]
 
-    labels = df[target_column]
-    if is_numerical:
+    if strategy == "binned":
         binned = pd.qcut(labels, q=min(5, len(labels)), duplicates="drop")
         if binned.nunique() < 2:
             raise RuntimeError(
-                f"Cannot stratify '{target_column}': not enough variation to form bins."
+                f"Cannot stratify '{stratify_col}': not enough variation to form bins."
             )
         return binned.astype(str)
 
-    return labels.astype(str)
+    if strategy == "label":
+        return labels.astype(str)
+
+    raise RuntimeError(
+        f"Unsupported stratify_strategy '{strategy}'. "
+        "Expected one of: label, binned"
+    )
 
 
-def _build_manifest_df(df: pd.DataFrame, target_column: str) -> pd.DataFrame:
+def _build_manifest_df(df: pd.DataFrame, target_column: str, video_col: str) -> pd.DataFrame:
     extra_columns = [
         col
         for col in schema.ManifestSchema.columns
         if col not in ("video_id", "s3_path", target_column) and col in df.columns
     ]
 
-    sources = df[schema.LabelsSchema.input_col]
+    sources = df[video_col]
 
     manifest_df = pd.DataFrame(
         {

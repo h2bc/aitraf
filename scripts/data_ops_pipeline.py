@@ -79,8 +79,10 @@ def run(cfg: DictConfig) -> None:
                     TaskConfig(
                         name=task_cfg.name,
                         target_column=task_cfg.target_column,
-                        stratify_by_target=task_cfg.stratify_by_target,
-                        task_type=task_cfg.type,
+                        video_col=task_cfg.video_col,
+                        required_cols=task_cfg.required_cols,
+                        stratify_col=task_cfg.stratify_col,
+                        stratify_strategy=task_cfg.stratify_strategy,
                         manifests_dir=task_cfg.manifests_dir,
                     )
                     for task_cfg in data_cfg.create_manifests.tasks.values()
