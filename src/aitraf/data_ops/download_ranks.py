@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import boto3
 import pandas as pd
 from dotenv import load_dotenv
 
 from aitraf.logging import logger
+from aitraf.utils.s3_utils import build_s3_client, iter_keys, load_s3_settings
 
 
 @dataclass
@@ -40,18 +39,14 @@ def download_ranks(config: RankDownloadConfig) -> Path:
         logger.info("Ranks already exist at {}; skipping", output_path)
         return output_path
 
-    endpoint_url, region_name, access_key, secret_key, bucket = (
-        _load_required_aws_settings()
-    )
-    s3_client = _build_s3_client(
-        endpoint_url=endpoint_url,
-        region_name=region_name,
-        access_key=access_key,
-        secret_key=secret_key,
-    )
+    settings = load_s3_settings(require_bucket=True)
+    if settings.bucket is None:
+        raise RuntimeError("AWS_BUCKET must be set.")
+    bucket = settings.bucket
+    s3_client = build_s3_client(settings)
 
     list_prefix = f"{config.prefix}/"
-    keys = list(_iter_keys(s3_client, bucket=bucket, prefix=list_prefix))
+    keys = list(iter_keys(s3_client, bucket=bucket, prefix=list_prefix))
     if not keys:
         raise RuntimeError(f"No rank files found at s3://{bucket}/{list_prefix}")
 
@@ -193,54 +188,4 @@ def _parse_payload(text: str) -> list[dict[str, Any]]:
     if isinstance(parsed, list):
         return [obj for obj in parsed if isinstance(obj, dict)]
     return []
-
-
-def _iter_keys(s3_client, *, bucket: str, prefix: str):
-    paginator = s3_client.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
-        for obj in page.get("Contents", []):
-            key = obj.get("Key")
-            if key and not key.endswith("/"):
-                yield key
-
-
-def _build_s3_client(
-    *,
-    endpoint_url: str,
-    region_name: str,
-    access_key: str,
-    secret_key: str,
-):
-    return boto3.client(
-        "s3",
-        endpoint_url=endpoint_url,
-        region_name=region_name,
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-    )
-
-
-def _load_required_aws_settings() -> tuple[str, str, str, str, str]:
-    settings = {
-        "AWS_ENDPOINT_URL": os.getenv("AWS_ENDPOINT_URL"),
-        "AWS_DEFAULT_REGION": os.getenv("AWS_DEFAULT_REGION"),
-        "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
-        "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
-        "AWS_BUCKET": os.getenv("AWS_BUCKET"),
-    }
-    missing = [name for name, value in settings.items() if not value]
-    if missing:
-        raise RuntimeError(
-            "The following AWS environment variables must be set: " + ", ".join(missing)
-        )
-
-    return (
-        settings["AWS_ENDPOINT_URL"],
-        settings["AWS_DEFAULT_REGION"],
-        settings["AWS_ACCESS_KEY_ID"],
-        settings["AWS_SECRET_ACCESS_KEY"],
-        settings["AWS_BUCKET"],
-    )
-
-
 __all__ = ["RankDownloadConfig", "download_ranks"]

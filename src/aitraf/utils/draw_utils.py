@@ -1,10 +1,8 @@
-"""Utility helpers used across visualization and preprocessing."""
+"""Drawing helpers used in preprocessing/visualization."""
 
 from __future__ import annotations
 
 from typing import Iterable, Sequence
-
-import av
 
 
 POSE_DEFAULT_SKELETON: tuple[tuple[int, int], ...] = (
@@ -25,18 +23,6 @@ POSE_DEFAULT_SKELETON: tuple[tuple[int, int], ...] = (
     (12, 14),
     (14, 16),
 )
-
-
-def get_video_rotation_deg(path) -> int:
-    with av.open(str(path)) as c:
-        frame = next(c.decode(video=0))
-        rot = getattr(frame, "rotation", None)
-        if rot is None:
-            raise ValueError("No rotation metadata found")
-
-        return (rot + 360) % 360
-
-
 def draw_bounding_boxes(
     draw,
     boxes: Iterable[Sequence[float]],

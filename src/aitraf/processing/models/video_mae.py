@@ -11,7 +11,7 @@ from torchcodec.decoders import VideoDecoder
 from transformers import VideoMAEImageProcessor
 
 from aitraf.processing.utils import sample_frame_indices
-from aitraf.utils import get_video_rotation_deg
+from aitraf.utils.video_utils import get_video_rotation_deg
 
 
 def process_sample(

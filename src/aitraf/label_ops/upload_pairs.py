@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
 
-import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
 from aitraf.logging import logger
+from aitraf.utils.s3_utils import build_s3_client, load_s3_settings, object_exists
 
 
 @dataclass
@@ -38,20 +37,16 @@ def upload_pairs(config: PairUploadConfig) -> int:
     if not config.prefix:
         raise RuntimeError("S3 prefix must be provided for pair upload.")
 
-    endpoint_url, region_name, access_key, secret_key, bucket = (
-        _load_required_aws_settings()
-    )
+    settings = load_s3_settings(require_bucket=True)
+    if settings.bucket is None:
+        raise RuntimeError("AWS_BUCKET must be set.")
+    bucket = settings.bucket
 
     files = sorted(p for p in pairs_dir.rglob("*") if p.is_file())
     if not files:
         raise RuntimeError(f"No pair files found under {pairs_dir}")
 
-    s3_client = _build_s3_client(
-        endpoint_url=endpoint_url,
-        region_name=region_name,
-        access_key=access_key,
-        secret_key=secret_key,
-    )
+    s3_client = build_s3_client(settings)
 
     uploaded = 0
     skipped = 0
@@ -71,13 +66,13 @@ def upload_pairs(config: PairUploadConfig) -> int:
         rel = path.relative_to(pairs_dir)
         key = f"{config.prefix}/{rel.as_posix()}"
 
-        if not config.force and _object_exists(s3_client, bucket=bucket, key=key):
+        if not config.force and object_exists(s3_client, bucket=bucket, key=key):
             skipped += 1
             continue
 
         try:
             s3_client.upload_file(str(path), bucket, key)
-        except ClientError as exc:
+        except ClientError as exc:  # pragma: no cover - log only
             failed += 1
             logger.warning(
                 "Failed to upload {} -> s3://{}/{}: {}", path, bucket, key, exc
@@ -105,54 +100,3 @@ def upload_pairs(config: PairUploadConfig) -> int:
         raise RuntimeError("No pair files were uploaded.")
 
     return uploaded
-
-
-def _object_exists(s3_client, bucket: str, key: str) -> bool:
-    try:
-        s3_client.head_object(Bucket=bucket, Key=key)
-    except ClientError as exc:
-        code = str(exc.response.get("Error", {}).get("Code", ""))
-        if code in {"404", "NoSuchKey", "NotFound"}:
-            return False
-        raise
-    else:
-        return True
-
-
-def _build_s3_client(
-    *,
-    endpoint_url: str,
-    region_name: str,
-    access_key: str,
-    secret_key: str,
-):
-    return boto3.client(
-        "s3",
-        endpoint_url=endpoint_url,
-        region_name=region_name,
-        aws_access_key_id=access_key,
-        aws_secret_access_key=secret_key,
-    )
-
-
-def _load_required_aws_settings() -> tuple[str, str, str, str, str]:
-    settings = {
-        "AWS_ENDPOINT_URL": os.getenv("AWS_ENDPOINT_URL"),
-        "AWS_DEFAULT_REGION": os.getenv("AWS_DEFAULT_REGION"),
-        "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
-        "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
-        "AWS_BUCKET": os.getenv("AWS_BUCKET"),
-    }
-    missing = [name for name, value in settings.items() if not value]
-    if missing:
-        raise RuntimeError(
-            "The following AWS environment variables must be set: " + ", ".join(missing)
-        )
-
-    return (
-        settings["AWS_ENDPOINT_URL"],
-        settings["AWS_DEFAULT_REGION"],
-        settings["AWS_ACCESS_KEY_ID"],
-        settings["AWS_SECRET_ACCESS_KEY"],
-        settings["AWS_BUCKET"],
-    )

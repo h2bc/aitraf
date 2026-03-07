@@ -11,7 +11,7 @@ import numpy as np
 from ultralytics import YOLO
 
 from aitraf.logging import logger
-from aitraf.utils import get_video_rotation_deg
+from aitraf.utils.video_utils import get_video_rotation_deg
 
 
 @dataclass
