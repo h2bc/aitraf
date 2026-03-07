@@ -1,0 +1,246 @@
+"""Download rank annotation files from S3 and merge into one JSONL."""
+
+from __future__ import annotations
+
+import json
+import os
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import boto3
+import pandas as pd
+from dotenv import load_dotenv
+
+from aitraf.logging import logger
+
+
+@dataclass
+class RankDownloadConfig:
+    """Configuration for downloading and merging rank annotations from S3."""
+
+    prefix: str
+    output_path: Path | str
+    force: bool = False
+
+    def __post_init__(self) -> None:
+        self.output_path = Path(self.output_path)
+        self.prefix = self.prefix.strip().strip("/")
+
+
+def download_ranks(config: RankDownloadConfig) -> Path:
+    """Download rank annotation objects from S3 and write a merged JSONL file."""
+    load_dotenv()
+
+    if not config.prefix:
+        raise RuntimeError("S3 prefix must be provided for rank download.")
+
+    output_path = config.output_path
+    if output_path.exists() and not config.force:
+        logger.info("Ranks already exist at {}; skipping", output_path)
+        return output_path
+
+    endpoint_url, region_name, access_key, secret_key, bucket = (
+        _load_required_aws_settings()
+    )
+    s3_client = _build_s3_client(
+        endpoint_url=endpoint_url,
+        region_name=region_name,
+        access_key=access_key,
+        secret_key=secret_key,
+    )
+
+    list_prefix = f"{config.prefix}/"
+    keys = list(_iter_keys(s3_client, bucket=bucket, prefix=list_prefix))
+    if not keys:
+        raise RuntimeError(f"No rank files found at s3://{bucket}/{list_prefix}")
+
+    logger.info(
+        "Downloading {} rank objects from s3://{}/{}",
+        len(keys),
+        bucket,
+        list_prefix,
+    )
+
+    rows: list[dict[str, Any]] = []
+    progress_step = max(1, len(keys) // 10)
+
+    for idx, key in enumerate(keys, start=1):
+        body = s3_client.get_object(Bucket=bucket, Key=key)["Body"].read()
+        text = body.decode("utf-8")
+        records = _parse_payload(text)
+
+        for record in records:
+            rows.extend(_flatten_to_rows(record, source_key=key))
+
+        if idx == len(keys) or idx % progress_step == 0:
+            pct = (idx / len(keys)) * 100
+            logger.info("Rank download progress: {}/{} ({:.1f}%)", idx, len(keys), pct)
+
+    if not rows:
+        raise RuntimeError(
+            f"Found rank files at s3://{bucket}/{list_prefix}, but parsed zero rows."
+        )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_json(
+        output_path, orient="records", lines=True, force_ascii=False
+    )
+    logger.info("Wrote {} merged rank rows to {}", len(rows), output_path)
+    return output_path
+
+
+def _flatten_to_rows(record: dict[str, Any], *, source_key: str) -> list[dict[str, Any]]:
+    """Convert one payload object into one or more flattened annotation rows."""
+    if "result" in record:
+        return [_flatten_annotation(record, source_key=source_key)]
+
+    annotations = record.get("annotations")
+    if isinstance(annotations, list):
+        task_stub = {
+            "id": record.get("id"),
+            "data": record.get("data", {}),
+        }
+        flattened: list[dict[str, Any]] = []
+        for ann in annotations:
+            if not isinstance(ann, dict):
+                continue
+            ann_record = dict(ann)
+            ann_record.setdefault("task", task_stub)
+            flattened.append(_flatten_annotation(ann_record, source_key=source_key))
+        return flattened
+
+    return []
+
+
+def _flatten_annotation(annotation: dict[str, Any], *, source_key: str) -> dict[str, Any]:
+    task = annotation.get("task") or {}
+    task_data = task.get("data") or {}
+    completed_by = annotation.get("completed_by") or {}
+
+    row: dict[str, Any] = {
+        "annotation_id": annotation.get("id"),
+        "task_id": task.get("id"),
+        "created_at": annotation.get("created_at"),
+        "updated_at": annotation.get("updated_at"),
+        "lead_time": annotation.get("lead_time"),
+        "annotator_id": completed_by.get("id"),
+        "annotator_email": completed_by.get("email"),
+        "created_username": annotation.get("created_username"),
+        "source_s3_key": source_key,
+    }
+
+    if isinstance(task_data, dict):
+        for key, value in task_data.items():
+            row[str(key)] = value
+
+    result = annotation.get("result")
+    if isinstance(result, list):
+        for item in result:
+            if not isinstance(item, dict):
+                continue
+            field_name = item.get("from_name")
+            if not field_name:
+                continue
+            row[str(field_name)] = _extract_result_value(item)
+
+    return row
+
+
+def _extract_result_value(item: dict[str, Any]) -> Any:
+    payload = item.get("value") or {}
+    if not isinstance(payload, dict):
+        return payload
+
+    if "choices" in payload:
+        choices = payload.get("choices")
+        if isinstance(choices, list):
+            return choices[0] if choices else None
+        return choices
+
+    if "rating" in payload:
+        return payload.get("rating")
+
+    if "text" in payload:
+        text = payload.get("text")
+        if isinstance(text, list):
+            return text[0] if text else None
+        return text
+
+    return payload
+
+
+def _parse_payload(text: str) -> list[dict[str, Any]]:
+    stripped = text.strip()
+    if not stripped:
+        return []
+
+    try:
+        parsed = json.loads(stripped)
+    except json.JSONDecodeError:
+        rows: list[dict[str, Any]] = []
+        for line in stripped.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            obj = json.loads(line)
+            if isinstance(obj, dict):
+                rows.append(obj)
+        return rows
+
+    if isinstance(parsed, dict):
+        return [parsed]
+    if isinstance(parsed, list):
+        return [obj for obj in parsed if isinstance(obj, dict)]
+    return []
+
+
+def _iter_keys(s3_client, *, bucket: str, prefix: str):
+    paginator = s3_client.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+        for obj in page.get("Contents", []):
+            key = obj.get("Key")
+            if key and not key.endswith("/"):
+                yield key
+
+
+def _build_s3_client(
+    *,
+    endpoint_url: str,
+    region_name: str,
+    access_key: str,
+    secret_key: str,
+):
+    return boto3.client(
+        "s3",
+        endpoint_url=endpoint_url,
+        region_name=region_name,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+    )
+
+
+def _load_required_aws_settings() -> tuple[str, str, str, str, str]:
+    settings = {
+        "AWS_ENDPOINT_URL": os.getenv("AWS_ENDPOINT_URL"),
+        "AWS_DEFAULT_REGION": os.getenv("AWS_DEFAULT_REGION"),
+        "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
+        "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
+        "AWS_BUCKET": os.getenv("AWS_BUCKET"),
+    }
+    missing = [name for name, value in settings.items() if not value]
+    if missing:
+        raise RuntimeError(
+            "The following AWS environment variables must be set: " + ", ".join(missing)
+        )
+
+    return (
+        settings["AWS_ENDPOINT_URL"],
+        settings["AWS_DEFAULT_REGION"],
+        settings["AWS_ACCESS_KEY_ID"],
+        settings["AWS_SECRET_ACCESS_KEY"],
+        settings["AWS_BUCKET"],
+    )
+
+
+__all__ = ["RankDownloadConfig", "download_ranks"]

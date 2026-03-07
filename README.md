@@ -68,11 +68,11 @@ Run commands via [Task](https://taskfile.dev)
 
 #### Upload Pairs
 
-- Uploads the generated pair files to S3. The pairs then later synched by a label tool to start the pairwise ranking labeling.
+- Uploads the generated pair files to S3 under a configurable prefix
 
 ### Data ops script
 
-`task data_ops` runs `scripts/data_ops_pipeline.py`, a workflow composed of four stages (enable/disable each and set `force` flags in `configs/data_ops.yaml` or via cmd args):
+`task data_ops` runs `scripts/data_ops_pipeline.py`, a workflow composed of five stages (enable/disable each and set `force` flags in `configs/data_ops.yaml` or via cmd args):
 
 #### Download Labels
 
@@ -86,6 +86,10 @@ Run commands via [Task](https://taskfile.dev)
 
 - Applies the Ultralytics pose + detection model to cached clips, writing keypoints to `data/poses/` and detection boxes to `data/boxes/`.
 - Parameters cover device selection, image size, confidence thresholds, batch size, and optional clip limits.
+
+#### Download Ranks
+
+- Downloads annotation files from a configurable S3 prefix and merges them into one JSONL file
 
 #### Manifest Creation
 

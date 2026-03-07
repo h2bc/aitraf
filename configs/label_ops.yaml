@@ -16,4 +16,5 @@ label_ops:
   upload_pairs:
     enabled: true
     force: true
+    prefix: pairs
     pairs_dir: ${label_ops.create_pairs.output_dir}

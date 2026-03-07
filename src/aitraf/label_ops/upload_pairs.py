@@ -18,14 +18,16 @@ class PairUploadConfig:
     """Configuration for uploading generated pair files to S3."""
 
     pairs_dir: Path | str
+    prefix: str = "pairs"
     force: bool = False
 
     def __post_init__(self) -> None:
         self.pairs_dir = Path(self.pairs_dir)
+        self.prefix = self.prefix.strip().strip("/")
 
 
 def upload_pairs(config: PairUploadConfig) -> int:
-    """Upload pair files to `s3://$AWS_BUCKET/pairs/`."""
+    """Upload pair files to `s3://$AWS_BUCKET/<prefix>/`."""
     load_dotenv()
 
     pairs_dir = config.pairs_dir
@@ -33,6 +35,8 @@ def upload_pairs(config: PairUploadConfig) -> int:
         raise RuntimeError(f"Pairs directory not found: {pairs_dir}")
     if not pairs_dir.is_dir():
         raise RuntimeError(f"Pairs path is not a directory: {pairs_dir}")
+    if not config.prefix:
+        raise RuntimeError("S3 prefix must be provided for pair upload.")
 
     endpoint_url, region_name, access_key, secret_key, bucket = (
         _load_required_aws_settings()
@@ -54,9 +58,10 @@ def upload_pairs(config: PairUploadConfig) -> int:
     failed = 0
 
     logger.info(
-        "Uploading {} pair files to s3://{}/pairs/ (force={})",
+        "Uploading {} pair files to s3://{}/{}/ (force={})",
         len(files),
         bucket,
+        config.prefix,
         config.force,
     )
 
@@ -64,7 +69,7 @@ def upload_pairs(config: PairUploadConfig) -> int:
 
     for idx, path in enumerate(files, start=1):
         rel = path.relative_to(pairs_dir)
-        key = f"pairs/{rel.as_posix()}"
+        key = f"{config.prefix}/{rel.as_posix()}"
 
         if not config.force and _object_exists(s3_client, bucket=bucket, key=key):
             skipped += 1

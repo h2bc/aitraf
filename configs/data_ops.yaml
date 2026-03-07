@@ -23,6 +23,12 @@ download_clips:
   labels_path: ${download_labels.output_path}
   output_dir: ${paths.data_dir}/clips
 
+download_ranks:
+  enabled: true
+  force: true
+  prefix: ranks
+  output_path: ${paths.data_dir}/ranks.jsonl
+
 pose_and_bbox_extraction:
   enabled: true
   force: false

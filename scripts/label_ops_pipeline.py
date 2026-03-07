@@ -45,6 +45,7 @@ def run(cfg: DictConfig) -> None:
         upload_pairs(
             PairUploadConfig(
                 pairs_dir=ops_cfg.upload_pairs.pairs_dir,
+                prefix=ops_cfg.upload_pairs.prefix,
                 force=ops_cfg.upload_pairs.force,
             )
         )

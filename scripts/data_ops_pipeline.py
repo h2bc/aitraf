@@ -15,6 +15,7 @@ from aitraf.data_ops.pose_and_bbox_extraction import (
     PoseAndBBoxExtractionConfig,
     pose_and_bbox_extraction,
 )
+from aitraf.data_ops.download_ranks import RankDownloadConfig, download_ranks
 
 
 @main(config_path="../configs", config_name="data_ops", version_base=None)
@@ -65,6 +66,18 @@ def run(cfg: DictConfig) -> None:
         )
     else:
         heading("Skip pose/bbox extraction (disabled)")
+
+    if data_cfg.download_ranks.enabled:
+        heading("Download Ranks")
+        download_ranks(
+            RankDownloadConfig(
+                prefix=data_cfg.download_ranks.prefix,
+                output_path=data_cfg.download_ranks.output_path,
+                force=data_cfg.download_ranks.force,
+            )
+        )
+    else:
+        heading("Skip rank download (disabled)")
 
     if data_cfg.create_manifests.enabled:
         heading("Build Manifests")
