@@ -3,7 +3,7 @@
 from hydra import main
 from omegaconf import DictConfig
 from dotenv import load_dotenv
-from aitraf.data_ops.download_labels import LabelStudioExportConfig, download_labels
+from aitraf.data_ops.download_labels import LabelDownloadConfig, download_labels
 from aitraf.data_ops.create_manifests import (
     ManifestBuildConfig,
     TaskConfig,
@@ -27,7 +27,8 @@ def run(cfg: DictConfig) -> None:
     if data_cfg.download_labels.enabled:
         heading("Download Labels")
         download_labels(
-            LabelStudioExportConfig(
+            LabelDownloadConfig(
+                prefix=data_cfg.download_labels.prefix,
                 output_path=data_cfg.download_labels.output_path,
                 force=data_cfg.download_labels.force,
             )
