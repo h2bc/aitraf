@@ -5,9 +5,13 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
+import pandas as pd
 from dotenv import load_dotenv
 
+from aitraf.data_ops.schema import LabelsSchema
+from aitraf.data_ops.utils import apply_dtypes, apply_processors
 from aitraf.logging import logger
 from aitraf.utils.s3_utils import build_s3_client, iter_keys, load_s3_settings
 
@@ -55,13 +59,13 @@ def download_labels(config: LabelDownloadConfig) -> Path:
         list_prefix,
     )
 
-    rows: list[dict] = []
+    rows: list[dict[str, Any]] = []
     progress_step = max(1, len(keys) // 10)
 
     for idx, key in enumerate(keys, start=1):
         body = s3_client.get_object(Bucket=bucket, Key=key)["Body"].read()
         text = body.decode("utf-8")
-        rows.append(json.loads(text))
+        rows.append(_flatten_annotation(json.loads(text)))
 
         if idx == len(keys) or idx % progress_step == 0:
             pct = (idx / len(keys)) * 100
@@ -72,14 +76,42 @@ def download_labels(config: LabelDownloadConfig) -> Path:
             f"Found label files at s3://{bucket}/{list_prefix}, but parsed zero rows."
         )
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", encoding="utf-8") as handle:
-        for obj in rows:
-            handle.write(json.dumps(obj, ensure_ascii=False))
-            handle.write("\n")
+    df = pd.DataFrame(rows)
 
-    logger.info("Wrote {} merged label rows to {}", len(rows), output_path)
+    df = df.pipe(apply_processors, processors=LabelsSchema.processors).pipe(
+        apply_dtypes, dtypes=LabelsSchema.types
+    )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_json(output_path, orient="records", lines=True, force_ascii=False)
+    logger.info("Wrote {} merged label rows to {}", len(df), output_path)
     return output_path
+
+
+def _flatten_annotation(annotation: dict[str, Any]) -> dict[str, Any]:
+    task = annotation.get("task") or {}
+    completed_by = annotation.get("completed_by") or {}
+    flat: dict[str, Any] = dict(task.get("data") or {})
+    flat.update(
+        annotation_id=annotation.get("id"),
+        annotator=completed_by.get("id"),
+        id=task.get("id"),
+        created_at=annotation.get("created_at"),
+        updated_at=annotation.get("updated_at"),
+        lead_time=annotation.get("lead_time"),
+    )
+
+    for item in annotation.get("result", []):
+        if not isinstance(item, dict):
+            continue
+        name = item.get("from_name")
+        value = item.get("value")
+        if not name or not isinstance(value, dict):
+            continue
+        payload = next(iter(value.values()), None)
+        flat[str(name)] = payload[0] if isinstance(payload, list) and payload else payload
+
+    return flat
 
 
 __all__ = ["LabelDownloadConfig", "download_labels"]

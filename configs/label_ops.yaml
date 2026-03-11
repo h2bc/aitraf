@@ -16,6 +16,6 @@ label_ops:
     k_per_video: 3
   upload_pairs:
     enabled: true
-    force: true
+    force: false
     prefix: pairs
     pairs_dir: ${label_ops.create_pairs.output_dir}
