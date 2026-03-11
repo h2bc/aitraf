@@ -6,6 +6,7 @@ label_ops:
   download_labels:
     enabled: true
     force: true
+    prefix: labels
     output_path: ${paths.data_dir}/labels.jsonl
   create_pairs:
     enabled: true

@@ -4,7 +4,7 @@ from hydra import main
 from omegaconf import DictConfig
 from dotenv import load_dotenv
 
-from aitraf.data_ops.download_labels import LabelStudioExportConfig, download_labels
+from aitraf.data_ops.download_labels import LabelDownloadConfig, download_labels
 from aitraf.label_ops.create_pairs import PairGenerationConfig, create_pairs
 from aitraf.label_ops.upload_pairs import PairUploadConfig, upload_pairs
 from aitraf.logging import setup_logging, heading
@@ -19,7 +19,8 @@ def run(cfg: DictConfig) -> None:
     if ops_cfg.download_labels.enabled:
         heading("Download Labels")
         download_labels(
-            LabelStudioExportConfig(
+            LabelDownloadConfig(
+                prefix=ops_cfg.download_labels.prefix,
                 output_path=ops_cfg.download_labels.output_path,
                 force=ops_cfg.download_labels.force,
             )

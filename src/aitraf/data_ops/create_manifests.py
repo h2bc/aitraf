@@ -1,4 +1,4 @@
-"""Split Label Studio export into train/val/test manifests per task."""
+"""Split labels into train/val/test manifests per task."""
 
 from dataclasses import dataclass
 import json

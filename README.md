@@ -7,12 +7,12 @@ Model training and evaluation stack for inline skating trick recognition & perfo
 
 - Nvidia GPU with drivers for CUDA 12.6+
 - Docker (used by the dev container)
-- Access to project infra: S3 bucket `aitraf`, Label Studio, and MLflow (see links below)
+- Access to project infra: S3 bucket `aitraf` and MLflow (see links below)
 
 ## Environment Setup
 
 1. Start the dev container (VS Code `Reopen in Container` or `devcontainer up`).
-2. Copy `.env.example` to `.env` and fill in the Label Studio + AWS credentials.
+2. Copy `.env.example` to `.env` and fill in the AWS + MLflow credentials.
 3. Install task runner dependencies once with `uv sync`
 
 
@@ -60,7 +60,7 @@ Run commands via [Task](https://taskfile.dev)
 
 #### Download Labels
 
-- Pulls the latest Label Studio export (`data/labels.jsonl`) to refresh annotations used downstream.
+- Downloads annotation files from a configurable S3 prefix and merges them into `data/labels.jsonl`.
 
 #### Create pairwise ranking tasks
 
@@ -76,7 +76,7 @@ Run commands via [Task](https://taskfile.dev)
 
 #### Download Labels
 
-- Pulls the latest Label Studio export (`data/labels.jsonl`) to refresh annotations used downstream.
+- Downloads annotation files from a configurable S3 prefix and merges them into `data/labels.jsonl`.
 
 #### Download Clips
 
@@ -100,5 +100,4 @@ Run commands via [Task](https://taskfile.dev)
 ## Project Integrations
 
 - **S3 storage**: https://storage.h2bcweb.com (bucket `aitraf`)
-- **Label Studio**: https://label.h2bcweb.com/
 - **MLflow**: https://mlops.h2bcweb.com/
