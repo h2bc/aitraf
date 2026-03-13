@@ -1,0 +1,7 @@
+name: score_prediction_rank
+video_col: video
+target_column: null
+required_cols: [video, trick]
+stratify_col: trick
+stratify_strategy: label
+manifests_dir: ${paths.manifests_dir}/${.name}

@@ -19,10 +19,12 @@ class RankDownloadConfig:
     """Configuration for downloading and merging rank annotations from S3."""
 
     prefix: str
+    output_dir: Path | str
     output_path: Path | str
     force: bool = False
 
     def __post_init__(self) -> None:
+        self.output_dir = Path(self.output_dir)
         self.output_path = Path(self.output_path)
         self.prefix = self.prefix.strip().strip("/")
 
@@ -33,11 +35,6 @@ def download_ranks(config: RankDownloadConfig) -> Path:
 
     if not config.prefix:
         raise RuntimeError("S3 prefix must be provided for rank download.")
-
-    output_path = config.output_path
-    if output_path.exists() and not config.force:
-        logger.info("Ranks already exist at {}; skipping", output_path)
-        return output_path
 
     settings = load_s3_settings(require_bucket=True)
     if settings.bucket is None:
@@ -57,12 +54,24 @@ def download_ranks(config: RankDownloadConfig) -> Path:
         list_prefix,
     )
 
+    output_dir = config.output_dir
     rows: list[dict[str, Any]] = []
+    downloaded = 0
+    skipped = 0
     progress_step = max(1, len(keys) // 10)
 
     for idx, key in enumerate(keys, start=1):
-        body = s3_client.get_object(Bucket=bucket, Key=key)["Body"].read()
-        text = body.decode("utf-8")
+        relative_key = key[len(list_prefix) :] if key.startswith(list_prefix) else key
+        local_path = output_dir / relative_key
+
+        if local_path.exists() and not config.force:
+            skipped += 1
+        else:
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            s3_client.download_file(bucket, key, str(local_path))
+            downloaded += 1
+
+        text = local_path.read_text(encoding="utf-8")
         records = _parse_payload(text)
 
         for record in records:
@@ -77,11 +86,18 @@ def download_ranks(config: RankDownloadConfig) -> Path:
             f"Found rank files at s3://{bucket}/{list_prefix}, but parsed zero rows."
         )
 
+    output_path = config.output_path
     output_path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_json(
         output_path, orient="records", lines=True, force_ascii=False
     )
-    logger.info("Wrote {} merged rank rows to {}", len(rows), output_path)
+    logger.info(
+        "Rank download summary: {} downloaded, {} skipped, {} merged rows written to {}",
+        downloaded,
+        skipped,
+        len(rows),
+        output_path,
+    )
     return output_path
 
 

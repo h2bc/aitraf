@@ -175,23 +175,10 @@ def _get_stratify_labels(
 
 
 def _build_manifest_df(df: pd.DataFrame, target_column: str, video_col: str) -> pd.DataFrame:
-    extra_columns = [
-        col
-        for col in schema.ManifestSchema.columns
-        if col not in ("video_id", "s3_path", target_column) and col in df.columns
-    ]
-
     sources = df[video_col]
-
-    manifest_df = pd.DataFrame(
-        {
-            "video_id": sources.map(lambda value: Path(value).name),
-            "s3_path": sources,
-            target_column: df[target_column],
-        }
-    )
-    for col in extra_columns:
-        manifest_df[col] = df[col]
+    manifest_df = df[[col for col in schema.ManifestSchema.columns if col in df.columns]].copy()
+    manifest_df["video_id"] = sources.map(lambda value: Path(value).name)
+    manifest_df["s3_path"] = sources
 
     return manifest_df.pipe(
         apply_processors, processors=schema.ManifestSchema.processors

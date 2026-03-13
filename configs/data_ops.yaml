@@ -1,7 +1,8 @@
 defaults:
   - base
-  - task@create_manifests.tasks.score_prediction: score_prediction
   - task@create_manifests.tasks.trick_classification: trick_classification
+  - task@create_manifests.tasks.score_prediction: score_prediction
+  - task@create_manifests.tasks.score_prediction_rank: score_prediction_rank
   - _self_
 
 download_labels:
@@ -26,8 +27,9 @@ download_clips:
 
 download_ranks:
   enabled: true
-  force: true
+  force: false
   prefix: ranks
+  output_dir: ${paths.data_dir}/ranks
   output_path: ${paths.data_dir}/ranks.jsonl
 
 pose_and_bbox_extraction:

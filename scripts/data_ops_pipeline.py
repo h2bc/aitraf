@@ -73,6 +73,7 @@ def run(cfg: DictConfig) -> None:
         download_ranks(
             RankDownloadConfig(
                 prefix=data_cfg.download_ranks.prefix,
+                output_dir=data_cfg.download_ranks.output_dir,
                 output_path=data_cfg.download_ranks.output_path,
                 force=data_cfg.download_ranks.force,
             )
