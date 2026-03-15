@@ -1,3 +1,5 @@
 """Task entrypoints grouped by modality."""
 
-__all__: list[str] = []
+from . import score_prediction, score_prediction_rank, trick_classifier
+
+__all__ = ["score_prediction", "score_prediction_rank", "trick_classifier"]

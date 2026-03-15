@@ -25,6 +25,10 @@ from aitraf.tasks.score_prediction.video_mae import (
     VideoMaeScorePredictionTrainCfg,
     run_training as run_video_mae_score_prediction_train,
 )
+from aitraf.tasks.score_prediction_rank.video_mae import (
+    VideoMaeScorePredictionRankTrainCfg,
+    run_training as run_video_mae_score_prediction_rank_train,
+)
 
 
 def _build_video_mae_training_config(
@@ -141,6 +145,18 @@ def _build_video_mae_score_prediction_training_config(
     )
 
 
+def _build_video_mae_score_prediction_rank_training_config(
+    cfg: DictConfig,
+) -> VideoMaeScorePredictionRankTrainCfg:
+    return VideoMaeScorePredictionRankTrainCfg(
+        manifests_dir=cfg.task.manifests_dir,
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        device=cfg.model.device,
+        output_dir=cfg.output_dir,
+    )
+
+
 TRAINING_TARGETS: dict[tuple[str, str], Callable[[DictConfig], str]] = {
     ("trick_classification", "video_mae"): lambda cfg: run_video_mae_trick_classification_train(
         _build_video_mae_training_config(cfg)
@@ -153,6 +169,9 @@ TRAINING_TARGETS: dict[tuple[str, str], Callable[[DictConfig], str]] = {
     ),
     ("score_prediction", "video_mae"): lambda cfg: run_video_mae_score_prediction_train(
         _build_video_mae_score_prediction_training_config(cfg)
+    ),
+    ("score_prediction_rank", "video_mae"): lambda cfg: run_video_mae_score_prediction_rank_train(
+        _build_video_mae_score_prediction_rank_training_config(cfg)
     ),
 }
 
