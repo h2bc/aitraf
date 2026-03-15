@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
 from pathlib import Path
 
 from torch.utils.data import DataLoader
@@ -15,6 +16,7 @@ class VideoMaeScorePredictionRankTrainCfg:
     """Configuration for the current rank dataloading experiment."""
 
     manifests_dir: Path | str
+    ranks_path: Path | str
     batch_size: int
     num_workers: int
     device: str
@@ -22,6 +24,7 @@ class VideoMaeScorePredictionRankTrainCfg:
 
     def __post_init__(self) -> None:
         self.manifests_dir = Path(self.manifests_dir)
+        self.ranks_path = Path(self.ranks_path)
         self.output_dir = Path(self.output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -33,8 +36,11 @@ def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
 
     train_dataset = ScorePredictionRankDataset(
         manifests_dir=config.manifests_dir,
+        ranks_path=config.ranks_path,
         split="train",
     )
+
+    print(f"dataset_length={len(train_dataset)}")
 
     train_loader = DataLoader(
         train_dataset,
@@ -47,10 +53,7 @@ def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
 
     first_batch = next(iter(train_loader))
 
-    print(f"batch_length={len(first_batch)}")
-    print("video_ids:")
-    for sample in first_batch:
-        print(sample["video_id"])
+    print(json.dumps(first_batch, indent=2, ensure_ascii=False))
 
 
 __all__ = ["VideoMaeScorePredictionRankTrainCfg", "run_training"]

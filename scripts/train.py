@@ -150,6 +150,7 @@ def _build_video_mae_score_prediction_rank_training_config(
 ) -> VideoMaeScorePredictionRankTrainCfg:
     return VideoMaeScorePredictionRankTrainCfg(
         manifests_dir=cfg.task.manifests_dir,
+        ranks_path=cfg.task.ranks_path,
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         device=cfg.model.device,
