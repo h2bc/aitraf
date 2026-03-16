@@ -31,7 +31,6 @@ class PoseTcnTrickClassificationTrainCfg:
     model_name: str
     manifests_dir: Path | str
     vocab_path: Path | str
-    target_col: str
     poses_dir: Path | str
     batch_size: int
     num_workers: int
@@ -60,13 +59,14 @@ class PoseTcnTrickClassificationTrainCfg:
 def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
     """Train the Pose TCN classifier and log artifacts to MLflow."""
     labels, label2id, _ = load_target_label_mappings(
-        config.vocab_path, config.target_col
+        config.vocab_path, "trick"
     )
 
     process_fn = partial(
         process_sample,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
+        label_key="trick",
         label_transform=lambda label: label2id[str(label)],
     )
 
@@ -77,7 +77,6 @@ def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
     train_dataset = PoseTCNDataset(
         manifests_dir=config.manifests_dir,
         poses_dir=config.poses_dir,
-        target_column=config.target_col,
         split="train",
     )
 
@@ -88,7 +87,6 @@ def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
     val_dataset = PoseTCNDataset(
         manifests_dir=config.manifests_dir,
         poses_dir=config.poses_dir,
-        target_column=config.target_col,
         split="val",
     )
 

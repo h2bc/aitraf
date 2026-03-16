@@ -35,7 +35,6 @@ class PoseTcnScorePredictionEvalCfg:
 
     model_uri: str
     manifests_dir: Path | str
-    target_col: str
     poses_dir: Path | str
     batch_size: int
     num_workers: int
@@ -56,7 +55,6 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
     dataset = PoseTCNDataset(
         manifests_dir=config.manifests_dir,
         poses_dir=config.poses_dir,
-        target_column=config.target_col,
         split="test",
     )
 
@@ -64,6 +62,7 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
         process_sample,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
+        label_key="execution_score",
     )
 
     collate_fn = build_collate(process_fn)

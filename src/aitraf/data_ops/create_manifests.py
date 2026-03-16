@@ -18,7 +18,6 @@ class TaskConfig:
     """Task-specific manifest settings."""
 
     name: str
-    target_column: str
     video_col: str
     required_cols: Sequence[str]
     manifests_dir: Path | str | None = None
@@ -70,7 +69,6 @@ def create_manifests(config: ManifestBuildConfig) -> None:
 def _build_task_manifests(
     labels_df: pd.DataFrame, config: ManifestBuildConfig, task: TaskConfig
 ) -> None:
-    target_column = task.target_column
     required_cols = tuple(task.required_cols)
     if required_cols:
         validate_required_columns(labels_df, *required_cols)
@@ -100,7 +98,7 @@ def _build_task_manifests(
             )
         raise RuntimeError(f"Need at least 3 rows for task '{task.name}'.")
 
-    manifest_df = _build_manifest_df(filtered_df, target_column, task.video_col)
+    manifest_df = _build_manifest_df(filtered_df, task.video_col)
 
     val_ratio = float(config.val_ratio)
     test_ratio = float(config.test_ratio)
@@ -174,7 +172,7 @@ def _get_stratify_labels(
     )
 
 
-def _build_manifest_df(df: pd.DataFrame, target_column: str, video_col: str) -> pd.DataFrame:
+def _build_manifest_df(df: pd.DataFrame, video_col: str) -> pd.DataFrame:
     sources = df[video_col]
     manifest_df = df[[col for col in schema.ManifestSchema.columns if col in df.columns]].copy()
     manifest_df["video_id"] = sources.map(lambda value: Path(value).name)

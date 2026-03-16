@@ -47,7 +47,6 @@ def _build_pose_tcn_eval_config(cfg: DictConfig) -> PoseTcnTrickClassificationEv
         model_uri=_build_model_uri(cfg),
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,
-        target_col=cfg.task.target_column,
         poses_dir=cfg.model.poses_dir,
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -68,7 +67,6 @@ def _build_video_mae_eval_config(cfg: DictConfig) -> VideoMaeTrickClassification
         model_uri=_build_model_uri(cfg),
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,
-        target_col=cfg.task.target_column,
         clips_dir=data_dir / "clips",
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -90,7 +88,6 @@ def _build_pose_tcn_score_prediction_eval_config(
     return PoseTcnScorePredictionEvalCfg(
         model_uri=_build_model_uri(cfg),
         manifests_dir=cfg.task.manifests_dir,
-        target_col=cfg.task.target_column,
         poses_dir=cfg.model.poses_dir,
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -111,7 +108,6 @@ def _build_video_mae_score_prediction_eval_config(
     return VideoMaeScorePredictionEvalCfg(
         model_uri=_build_model_uri(cfg),
         manifests_dir=cfg.task.manifests_dir,
-        target_col=cfg.task.target_column,
         clips_dir=data_dir / "clips",
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,

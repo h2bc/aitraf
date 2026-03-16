@@ -1,4 +1,4 @@
-"""Helpers for turning a manifest row into VideoMAE-ready tensors."""
+"""Helpers for turning samples into VideoMAE-ready tensors."""
 
 from __future__ import annotations
 
@@ -20,12 +20,61 @@ def process_sample(
     local_clips_dir: str | Path,
     num_frames: int,
     sampling_dist: str,
-    target_column: str,
+    label_key: str,
     label_transform: Callable[[Any], Any] = lambda x: x,
 ) -> dict[str, torch.Tensor]:
-    """Load a local clip referenced by a manifest row and prepare VideoMAE inputs."""
+    """Load a single-sample task row and prepare VideoMAE inputs."""
 
-    clip_path = local_clips_dir / manifest_row["video_id"]
+    return {
+        "pixel_values": _process_video(
+            video_id=manifest_row["video_id"],
+            processor=processor,
+            local_clips_dir=local_clips_dir,
+            num_frames=num_frames,
+            sampling_dist=sampling_dist,
+        ),
+        "labels": torch.as_tensor(label_transform(manifest_row[label_key])),
+    }
+
+
+def process_pair_sample(
+    sample: dict[str, Any],
+    processor: VideoMAEImageProcessor,
+    local_clips_dir: str | Path,
+    num_frames: int,
+    sampling_dist: str,
+    label_transform: Callable[[Any], Any] = lambda x: x,
+) -> dict[str, torch.Tensor]:
+    """Load a left/right clip pair and prepare VideoMAE inputs."""
+
+    return {
+        "left_pixel_values": _process_video(
+            video_id=sample["left_video_id"],
+            processor=processor,
+            local_clips_dir=local_clips_dir,
+            num_frames=num_frames,
+            sampling_dist=sampling_dist,
+        ),
+        "right_pixel_values": _process_video(
+            video_id=sample["right_video_id"],
+            processor=processor,
+            local_clips_dir=local_clips_dir,
+            num_frames=num_frames,
+            sampling_dist=sampling_dist,
+        ),
+        "labels": torch.as_tensor(label_transform(sample["pair_label"])),
+    }
+
+
+def _process_video(
+    *,
+    video_id: str,
+    processor: VideoMAEImageProcessor,
+    local_clips_dir: str | Path,
+    num_frames: int,
+    sampling_dist: str,
+) -> torch.Tensor:
+    clip_path = Path(local_clips_dir) / video_id
     decoder = VideoDecoder(str(clip_path), dimension_order="NHWC")
     frame_indices = sample_frame_indices(
         len(decoder),
@@ -36,12 +85,7 @@ def process_sample(
     frames = [decoder[int(idx)] for idx in frame_indices]
     frames = _rotate_frames(frames, get_video_rotation_deg(clip_path))
     processed_ts = processor(frames, return_tensors="pt")
-    label = manifest_row[target_column]
-
-    return {
-        "pixel_values": processed_ts["pixel_values"][0],
-        "labels": torch.as_tensor(label_transform(label)),
-    }
+    return processed_ts["pixel_values"][0]
 
 
 def _rotate_frames(frames: List[torch.Tensor], rotation_deg: int) -> List[torch.Tensor]:
@@ -61,4 +105,4 @@ def _rotate_frames(frames: List[torch.Tensor], rotation_deg: int) -> List[torch.
     return list(x.permute(0, 2, 3, 1))  # (B, C, H, W) -> B, (H, W, C)
 
 
-__all__ = ["process_sample"]
+__all__ = ["process_pair_sample", "process_sample"]

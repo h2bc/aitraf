@@ -15,7 +15,25 @@ def process_sample(
     *,
     num_frames: int,
     sampling_dist: str,
+    label_key: str,
     label_transform: Callable[[Any], Any] = lambda x: x,
+) -> dict[str, torch.Tensor]:
+    """Convert a single-sample task row into TCN-ready tensors."""
+
+    return _build_processed_sample(
+        sample,
+        num_frames=num_frames,
+        sampling_dist=sampling_dist,
+        label_value=label_transform(sample[label_key]),
+    )
+
+
+def _build_processed_sample(
+    sample: dict[str, Any],
+    *,
+    num_frames: int,
+    sampling_dist: str,
+    label_value: Any,
 ) -> dict[str, torch.Tensor]:
     """Convert a raw dataset sample into TCN-ready tensors."""
 
@@ -29,7 +47,6 @@ def process_sample(
     )
 
     inputs = pose_tensor.flatten(start_dim=1)
-    label_value = label_transform(sample["label"])
     label_tensor = torch.as_tensor(label_value)
 
     return {
