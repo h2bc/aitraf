@@ -42,7 +42,6 @@ def _build_video_mae_training_config(
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,
-        target_col=cfg.task.target_column,
         clips_dir=data_dir / "clips",
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -68,7 +67,6 @@ def _build_pose_tcn_training_config(
         model_name=cfg.model.name,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.paths.vocab_path,
-        target_col=cfg.task.target_column,
         poses_dir=cfg.model.poses_dir,
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -96,7 +94,6 @@ def _build_pose_tcn_score_prediction_training_config(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         manifests_dir=cfg.task.manifests_dir,
-        target_col=cfg.task.target_column,
         poses_dir=cfg.model.poses_dir,
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -127,7 +124,6 @@ def _build_video_mae_score_prediction_training_config(
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
-        target_col=cfg.task.target_column,
         clips_dir=data_dir / "clips",
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -148,13 +144,20 @@ def _build_video_mae_score_prediction_training_config(
 def _build_video_mae_score_prediction_rank_training_config(
     cfg: DictConfig,
 ) -> VideoMaeScorePredictionRankTrainCfg:
+    data_dir = Path(cfg.paths.data_dir)
+
     return VideoMaeScorePredictionRankTrainCfg(
+        backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         ranks_path=cfg.task.ranks_path,
+        clips_dir=data_dir / "clips",
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.output_dir,
+        model_cache_dir=cfg.model.model_cache_dir,
     )
 
 

@@ -93,7 +93,6 @@ def run(cfg: DictConfig) -> None:
                 tasks=[
                     TaskConfig(
                         name=task_cfg.name,
-                        target_column=task_cfg.target_column,
                         video_col=task_cfg.video_col,
                         required_cols=task_cfg.required_cols,
                         stratify_col=task_cfg.stratify_col,

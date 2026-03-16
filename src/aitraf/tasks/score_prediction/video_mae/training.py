@@ -34,7 +34,6 @@ class VideoMaeScorePredictionTrainCfg:
     model_name: str
     backbone: str
     manifests_dir: Path | str
-    target_col: str
     clips_dir: Path | str
     batch_size: int
     num_workers: int
@@ -134,7 +133,7 @@ def run_training(config: VideoMaeScorePredictionTrainCfg) -> str:
         local_clips_dir=config.clips_dir,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
-        target_column=config.target_col,
+        label_key="execution_score",
     )
 
     data_collator = build_collate(process_fn)

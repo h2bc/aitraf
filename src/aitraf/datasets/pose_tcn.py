@@ -29,12 +29,10 @@ class PoseTCNDataset(Dataset):
         *,
         manifests_dir: Path | str,
         poses_dir: Path | str,
-        target_column: str,
         split: str,
     ) -> None:
         self.manifests_dir = Path(manifests_dir)
         self.poses_dir = Path(poses_dir)
-        self.target_column = target_column
         self.split = split
         self.records = self._load_manifest(self.manifests_dir / f"{split}.jsonl")
 
@@ -48,11 +46,10 @@ class PoseTCNDataset(Dataset):
         payload = np.load(pose_path, allow_pickle=True)
 
         return {
-            "video_id": row["video_id"],
+            **row,
             "keypoints": payload["keypoints"],
             "scores": payload["scores"],
             "frames": payload["frames"],
-            "label": row[self.target_column],
         }
 
     def _resolve_pose_path(self, video_id: str) -> Path:

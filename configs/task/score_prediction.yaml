@@ -1,6 +1,5 @@
 name: score_prediction
 video_col: video
-target_column: execution_score
 required_cols: [video, execution_score]
 stratify_col: execution_score
 stratify_strategy: binned

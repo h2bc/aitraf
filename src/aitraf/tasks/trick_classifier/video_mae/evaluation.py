@@ -37,7 +37,6 @@ class VideoMaeTrickClassificationEvalCfg:
     model_uri: str
     manifests_dir: Path | str
     vocab_path: Path | str
-    target_col: str
     clips_dir: Path | str
     batch_size: int
     num_workers: int
@@ -69,7 +68,7 @@ def run_evaluation(config: VideoMaeTrickClassificationEvalCfg):
     eval_dataset = dataset["test"]
 
     label_names, label2id, id2label = load_target_label_mappings(
-        config.vocab_path, config.target_col
+        config.vocab_path, "trick"
     )
 
     components = mlflow_transformers.load_model(
@@ -98,7 +97,7 @@ def run_evaluation(config: VideoMaeTrickClassificationEvalCfg):
         local_clips_dir=config.clips_dir,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
-        target_column=config.target_col,
+        label_key="trick",
         label_transform=lambda label: label2id[str(label)],
     )
 

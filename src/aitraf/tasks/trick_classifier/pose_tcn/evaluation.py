@@ -38,7 +38,6 @@ class PoseTcnTrickClassificationEvalCfg:
     model_uri: str
     manifests_dir: Path | str
     vocab_path: Path | str
-    target_col: str
     poses_dir: Path | str
     batch_size: int
     num_workers: int
@@ -57,13 +56,12 @@ class PoseTcnTrickClassificationEvalCfg:
 
 def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
     label_names, label2id, id2label = load_target_label_mappings(
-        config.vocab_path, config.target_col
+        config.vocab_path, "trick"
     )
 
     dataset = PoseTCNDataset(
         manifests_dir=config.manifests_dir,
         poses_dir=config.poses_dir,
-        target_column=config.target_col,
         split="test",
     )
 
@@ -71,6 +69,7 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
         process_sample,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
+        label_key="trick",
         label_transform=lambda label: label2id[str(label)],
     )
 
