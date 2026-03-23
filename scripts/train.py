@@ -41,7 +41,7 @@ def _build_video_mae_training_config(
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
-        vocab_path=cfg.paths.vocab_path,
+        vocab_path=cfg.task.vocab_path,
         clips_dir=data_dir / "clips",
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -66,7 +66,7 @@ def _build_pose_tcn_training_config(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         manifests_dir=cfg.task.manifests_dir,
-        vocab_path=cfg.paths.vocab_path,
+        vocab_path=cfg.task.vocab_path,
         poses_dir=cfg.model.poses_dir,
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -149,7 +149,7 @@ def _build_video_mae_score_prediction_rank_training_config(
     return VideoMaeScorePredictionRankTrainCfg(
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
-        ranks_path=cfg.task.ranks_path,
+        vocab_path=cfg.task.vocab_path,
         clips_dir=data_dir / "clips",
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -162,10 +162,16 @@ def _build_video_mae_score_prediction_rank_training_config(
 
 
 TRAINING_TARGETS: dict[tuple[str, str], Callable[[DictConfig], str]] = {
-    ("trick_classification", "video_mae"): lambda cfg: run_video_mae_trick_classification_train(
+    (
+        "trick_classification",
+        "video_mae",
+    ): lambda cfg: run_video_mae_trick_classification_train(
         _build_video_mae_training_config(cfg)
     ),
-    ("trick_classification", "pose_tcn"): lambda cfg: run_pose_tcn_trick_classification_train(
+    (
+        "trick_classification",
+        "pose_tcn",
+    ): lambda cfg: run_pose_tcn_trick_classification_train(
         _build_pose_tcn_training_config(cfg)
     ),
     ("score_prediction", "pose_tcn"): lambda cfg: run_pose_tcn_score_prediction_train(
@@ -174,7 +180,10 @@ TRAINING_TARGETS: dict[tuple[str, str], Callable[[DictConfig], str]] = {
     ("score_prediction", "video_mae"): lambda cfg: run_video_mae_score_prediction_train(
         _build_video_mae_score_prediction_training_config(cfg)
     ),
-    ("score_prediction_rank", "video_mae"): lambda cfg: run_video_mae_score_prediction_rank_train(
+    (
+        "score_prediction_rank",
+        "video_mae",
+    ): lambda cfg: run_video_mae_score_prediction_rank_train(
         _build_video_mae_score_prediction_rank_training_config(cfg)
     ),
 }

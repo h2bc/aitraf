@@ -87,14 +87,14 @@ Run commands via [Task](https://taskfile.dev)
 - Applies the Ultralytics pose + detection model to cached clips, writing keypoints to `data/poses/` and detection boxes to `data/boxes/`.
 - Parameters cover device selection, image size, confidence thresholds, batch size, and optional clip limits.
 
-#### Download Ranks
+#### Download Pairwise Labels
 
 - Downloads annotation files from a configurable S3 prefix and merges them into one JSONL file
 
 #### Manifest Creation
 
 - Builds train/val/test JSONL manifests under `data/manifests/<task>/`, stratifying by the target column when configured.
-- Emits a shared `vocab.json` capturing label/id mappings per task for downstream consumers.
+- Emits a task-local `vocab.json` under `data/manifests/<task>/` for downstream consumers.
 
 
 ## Project Integrations
