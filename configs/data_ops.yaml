@@ -25,12 +25,12 @@ download_clips:
   labels_path: ${download_labels.output_path}
   output_dir: ${paths.data_dir}/clips
 
-download_ranks:
+download_pairwise_labels:
   enabled: true
   force: false
   prefix: ranks
-  output_dir: ${paths.data_dir}/ranks
-  output_path: ${paths.data_dir}/ranks.jsonl
+  output_dir: ${paths.data_dir}/pairwise_labels
+  output_path: ${paths.data_dir}/pairwise_labels.jsonl
 
 pose_and_bbox_extraction:
   enabled: true

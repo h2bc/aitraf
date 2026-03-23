@@ -1,7 +1,9 @@
 name: score_prediction_rank
-video_col: video
-required_cols: [video, trick]
-stratify_col: trick
-stratify_strategy: label
+manifest_type: pairwise
+pairwise_labels_path: ${download_pairwise_labels.output_path}
+labels_path: ${download_labels.output_path}
+pairwise_labels_required_cols: [left, right, pref]
+labels_required_cols: [video, trick]
+stratify_col: null
 manifests_dir: ${paths.manifests_dir}/${.name}
-ranks_path: ${paths.data_dir}/ranks.jsonl
+vocab_path: ${.manifests_dir}/vocab.json

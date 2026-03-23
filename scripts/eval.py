@@ -46,7 +46,7 @@ def _build_pose_tcn_eval_config(cfg: DictConfig) -> PoseTcnTrickClassificationEv
     return PoseTcnTrickClassificationEvalCfg(
         model_uri=_build_model_uri(cfg),
         manifests_dir=cfg.task.manifests_dir,
-        vocab_path=cfg.paths.vocab_path,
+        vocab_path=cfg.task.vocab_path,
         poses_dir=cfg.model.poses_dir,
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
@@ -66,7 +66,7 @@ def _build_video_mae_eval_config(cfg: DictConfig) -> VideoMaeTrickClassification
         backbone=cfg.model.backbone,
         model_uri=_build_model_uri(cfg),
         manifests_dir=cfg.task.manifests_dir,
-        vocab_path=cfg.paths.vocab_path,
+        vocab_path=cfg.task.vocab_path,
         clips_dir=data_dir / "clips",
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,

@@ -65,7 +65,7 @@ def download_labels(config: LabelDownloadConfig) -> Path:
     for idx, key in enumerate(keys, start=1):
         body = s3_client.get_object(Bucket=bucket, Key=key)["Body"].read()
         text = body.decode("utf-8")
-        rows.append(_flatten_annotation(json.loads(text)))
+        rows.append(_flatten_labels_annotation(json.loads(text)))
 
         if idx == len(keys) or idx % progress_step == 0:
             pct = (idx / len(keys)) * 100
@@ -88,7 +88,7 @@ def download_labels(config: LabelDownloadConfig) -> Path:
     return output_path
 
 
-def _flatten_annotation(annotation: dict[str, Any]) -> dict[str, Any]:
+def _flatten_labels_annotation(annotation: dict[str, Any]) -> dict[str, Any]:
     task = annotation.get("task") or {}
     completed_by = annotation.get("completed_by") or {}
     flat: dict[str, Any] = dict(task.get("data") or {})
