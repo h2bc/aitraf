@@ -147,6 +147,8 @@ def _build_video_mae_score_prediction_rank_training_config(
     data_dir = Path(cfg.paths.data_dir)
 
     return VideoMaeScorePredictionRankTrainCfg(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
@@ -158,6 +160,10 @@ def _build_video_mae_score_prediction_rank_training_config(
         device=cfg.model.device,
         output_dir=cfg.output_dir,
         model_cache_dir=cfg.model.model_cache_dir,
+        epochs=cfg.model.epochs,
+        freeze_backbone=cfg.model.freeze_backbone,
+        early_stopping_patience=cfg.model.early_stopping_patience,
+        max_train_samples=cfg.max_samples,
     )
 
 

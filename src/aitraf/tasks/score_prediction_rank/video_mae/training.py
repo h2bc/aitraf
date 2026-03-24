@@ -1,4 +1,4 @@
-"""Basic dataloading loop for score prediction rank experiments."""
+"""VideoMAE training pipeline for pairwise ranking."""
 
 from __future__ import annotations
 
@@ -6,10 +6,22 @@ from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
 
-from transformers import VideoMAEImageProcessor
-from torch.utils.data import DataLoader
+import numpy as np
+from torch import nn
+from torch.utils.data import Subset
+from transformers import (
+    AutoConfig,
+    AutoModelForVideoClassification,
+    EarlyStoppingCallback,
+    EvalPrediction,
+    Trainer,
+    TrainingArguments,
+    VideoMAEImageProcessor,
+)
 
 from aitraf.datasets.score_prediction_rank import ScorePredictionRankDataset
+from aitraf.metrics import build_pairwise_metrics
+from aitraf.models import PairwiseRanker
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.video_mae import process_pair_sample
 from aitraf.processing.utils import build_collate
@@ -17,8 +29,10 @@ from aitraf.processing.utils import build_collate
 
 @dataclass
 class VideoMaeScorePredictionRankTrainCfg:
-    """Configuration for the current rank dataloading experiment."""
+    """Configuration for VideoMAE pairwise ranking training."""
 
+    task_name: str
+    model_name: str
     backbone: str
     manifests_dir: Path | str
     vocab_path: Path | str
@@ -30,6 +44,10 @@ class VideoMaeScorePredictionRankTrainCfg:
     device: str
     output_dir: Path | str
     model_cache_dir: Path | str
+    epochs: int
+    freeze_backbone: bool
+    early_stopping_patience: int
+    max_train_samples: int | None = None
 
     def __post_init__(self) -> None:
         self.manifests_dir = Path(self.manifests_dir)
@@ -42,14 +60,74 @@ class VideoMaeScorePredictionRankTrainCfg:
 
 
 def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
-    """Load the current rank dataset and inspect the first processed batch."""
+    """Train a VideoMAE scorer from pairwise preference labels."""
 
-    pin_memory = config.device != "cpu"
+    train_dataset = ScorePredictionRankDataset(
+        manifests_dir=config.manifests_dir,
+        split="train",
+    )
+
+    if config.max_train_samples is not None:
+        max_count = min(config.max_train_samples, len(train_dataset))
+        train_dataset = Subset(train_dataset, range(max_count))
+
+    val_dataset = ScorePredictionRankDataset(
+        manifests_dir=config.manifests_dir,
+        split="val",
+    )
+
+    if len(train_dataset) == 0:
+        raise RuntimeError("No training pairs found for score_prediction_rank.")
+    
+    if len(val_dataset) == 0:
+        raise RuntimeError("No validation pairs found for score_prediction_rank.")
 
     processor = VideoMAEImageProcessor.from_pretrained(
         config.backbone, cache_dir=str(config.model_cache_dir)
     )
+
     _, label2id, _ = load_target_label_mappings(config.vocab_path, "pair_label")
+
+    model_config = AutoConfig.from_pretrained(
+        config.backbone,
+        cache_dir=str(config.model_cache_dir),
+        trust_remote_code=True,
+        num_labels=1,
+        problem_type="regression",
+    )
+
+    scorer = AutoModelForVideoClassification.from_pretrained(
+        config.backbone,
+        config=model_config,
+        cache_dir=str(config.model_cache_dir),
+        trust_remote_code=True,
+    ).to(config.device)
+
+    if config.freeze_backbone:
+        for param in scorer.base_model.parameters():
+            param.requires_grad = False
+
+    model = PairwiseRanker(
+        scorer=scorer,
+        loss_fn=nn.BCEWithLogitsLoss(),
+    ).to(config.device)
+
+    training_args = TrainingArguments(
+        output_dir=str(config.output_dir),
+        dataloader_num_workers=config.num_workers,
+        per_device_train_batch_size=config.batch_size,
+        per_device_eval_batch_size=config.batch_size,
+        num_train_epochs=config.epochs,
+        logging_strategy="epoch",
+        eval_strategy="epoch",
+        save_strategy="epoch",
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_loss",
+        greater_is_better=False,
+        remove_unused_columns=False,
+        report_to=[],
+        save_total_limit=1,
+    )
 
     process_fn = partial(
         process_pair_sample,
@@ -59,59 +137,48 @@ def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
         sampling_dist=config.sampling_dist,
         label_transform=lambda label: label2id[str(label)],
     )
-    collate_fn = build_collate(process_fn)
 
-    train_dataset = ScorePredictionRankDataset(
-        manifests_dir=config.manifests_dir,
-        split="train",
-    )
-    val_dataset = ScorePredictionRankDataset(
-        manifests_dir=config.manifests_dir,
-        split="val",
-    )
+    data_collator = build_collate(process_fn)
+    compute_metrics = build_pairwise_metrics()
 
-    print(f"train_dataset_length={len(train_dataset)}")
-    print(f"val_dataset_length={len(val_dataset)}")
+    def trainer_compute_metrics(prediction: EvalPrediction) -> dict[str, float]:
+        pair_logits, labels = prediction
+        pred_labels = (np.asarray(pair_logits).squeeze(-1) >= 0).astype(int)
+        return compute_metrics(pred_labels, np.asarray(labels))
 
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=config.batch_size,
-        num_workers=config.num_workers,
-        shuffle=True,
-        pin_memory=pin_memory,
-        collate_fn=collate_fn,
-    )
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=config.batch_size,
-        num_workers=config.num_workers,
-        shuffle=False,
-        pin_memory=pin_memory,
-        collate_fn=collate_fn,
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_dataset,
+        eval_dataset=val_dataset,
+        data_collator=data_collator,
+        compute_metrics=trainer_compute_metrics,
+        callbacks=[
+            EarlyStoppingCallback(
+                early_stopping_patience=config.early_stopping_patience
+            )
+        ],
     )
 
-    first_train_batch = next(iter(train_loader))
-    first_val_batch = next(iter(val_loader))
+    print(f"train_pairs={len(train_dataset)}")
+    print(f"val_pairs={len(val_dataset)}")
+    trainer.train()
 
-    print(f"train_batch_keys={list(first_train_batch.keys())}")
-    print(
-        f"train_left_pixel_values_shape={tuple(first_train_batch['left_pixel_values'].shape)}"
+    final_metrics = trainer.evaluate()
+    
+    metrics_text = " ".join(
+        f"{key}={value:.4f}"
+        for key, value in sorted(final_metrics.items())
+        if isinstance(value, (int, float))
     )
-    print(
-        f"train_right_pixel_values_shape={tuple(first_train_batch['right_pixel_values'].shape)}"
-    )
-    print(f"train_labels_shape={tuple(first_train_batch['labels'].shape)}")
-    print(f"train_labels={first_train_batch['labels'].tolist()}")
 
-    print(f"val_batch_keys={list(first_val_batch.keys())}")
-    print(
-        f"val_left_pixel_values_shape={tuple(first_val_batch['left_pixel_values'].shape)}"
-    )
-    print(
-        f"val_right_pixel_values_shape={tuple(first_val_batch['right_pixel_values'].shape)}"
-    )
-    print(f"val_labels_shape={tuple(first_val_batch['labels'].shape)}")
-    print(f"val_labels={first_val_batch['labels'].tolist()}")
+    print(metrics_text)
+
+    best_model_dir = config.output_dir / "best_model"
+    model.scorer.save_pretrained(best_model_dir)
+    processor.save_pretrained(best_model_dir)
+
+    return str(best_model_dir.resolve())
 
 
 __all__ = ["VideoMaeScorePredictionRankTrainCfg", "run_training"]
