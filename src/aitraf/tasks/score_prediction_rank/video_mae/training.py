@@ -6,9 +6,12 @@ from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
 
+import mlflow
 import numpy as np
+import pandas as pd
+from dotenv import load_dotenv
+from mlflow.data import from_pandas
 from torch import nn
-from torch.utils.data import Subset
 from transformers import (
     AutoConfig,
     AutoModelForVideoClassification,
@@ -19,7 +22,11 @@ from transformers import (
     VideoMAEImageProcessor,
 )
 
-from aitraf.datasets.score_prediction_rank import ScorePredictionRankDataset
+from aitraf.datasets.score_prediction_rank import (
+    ScorePredictionRankDataset,
+    ScorePredictionRankSubset,
+)
+from aitraf.logging import logger
 from aitraf.metrics import build_pairwise_metrics
 from aitraf.models import PairwiseRanker
 from aitraf.processing import load_target_label_mappings
@@ -45,6 +52,8 @@ class VideoMaeScorePredictionRankTrainCfg:
     output_dir: Path | str
     model_cache_dir: Path | str
     epochs: int
+    experiment_name: str
+    run_name: str
     freeze_backbone: bool
     early_stopping_patience: int
     max_train_samples: int | None = None
@@ -60,7 +69,9 @@ class VideoMaeScorePredictionRankTrainCfg:
 
 
 def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
-    """Train a VideoMAE scorer from pairwise preference labels."""
+    """Train the VideoMAE pairwise ranker and log artifacts to MLflow."""
+
+    load_dotenv()
 
     train_dataset = ScorePredictionRankDataset(
         manifests_dir=config.manifests_dir,
@@ -69,7 +80,7 @@ def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
 
     if config.max_train_samples is not None:
         max_count = min(config.max_train_samples, len(train_dataset))
-        train_dataset = Subset(train_dataset, range(max_count))
+        train_dataset = ScorePredictionRankSubset(train_dataset, range(max_count))
 
     val_dataset = ScorePredictionRankDataset(
         manifests_dir=config.manifests_dir,
@@ -78,7 +89,6 @@ def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
 
     if len(train_dataset) == 0:
         raise RuntimeError("No training pairs found for score_prediction_rank.")
-    
     if len(val_dataset) == 0:
         raise RuntimeError("No validation pairs found for score_prediction_rank.")
 
@@ -103,6 +113,8 @@ def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
         trust_remote_code=True,
     ).to(config.device)
 
+    logger.info(f"VideoMAE trainer using device: {next(scorer.parameters()).device}")
+
     if config.freeze_backbone:
         for param in scorer.base_model.parameters():
             param.requires_grad = False
@@ -125,7 +137,8 @@ def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
         metric_for_best_model="eval_loss",
         greater_is_better=False,
         remove_unused_columns=False,
-        report_to=[],
+        report_to=["mlflow"],
+        run_name=config.run_name,
         save_total_limit=1,
     )
 
@@ -160,25 +173,36 @@ def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
         ],
     )
 
-    print(f"train_pairs={len(train_dataset)}")
-    print(f"val_pairs={len(val_dataset)}")
-    trainer.train()
+    mlflow.set_experiment(config.experiment_name)
 
-    final_metrics = trainer.evaluate()
-    
-    metrics_text = " ".join(
-        f"{key}={value:.4f}"
-        for key, value in sorted(final_metrics.items())
-        if isinstance(value, (int, float))
-    )
+    with mlflow.start_run(run_name=config.run_name):
+        mlflow.log_input(
+            from_pandas(pd.DataFrame(train_dataset.manifest_rows()), name="train"),
+            context="training",
+        )
+        mlflow.log_input(
+            from_pandas(pd.DataFrame(val_dataset.manifest_rows()), name="validation"),
+            context="validation",
+        )
 
-    print(metrics_text)
+        trainer.train()
 
-    best_model_dir = config.output_dir / "best_model"
-    model.scorer.save_pretrained(best_model_dir)
-    processor.save_pretrained(best_model_dir)
+        sample_pair = process_fn(train_dataset.manifest_rows()[0])
+        model_info = mlflow.transformers.log_model(
+            transformers_model={
+                "model": model.scorer,
+                "image_processor": processor,
+            },
+            name=f"{config.task_name}_{config.model_name}",
+            input_example={
+                "pixel_values": sample_pair["left_pixel_values"]
+                .unsqueeze(0)
+                .numpy()
+                .tolist()
+            },
+        )
 
-    return str(best_model_dir.resolve())
+        return model_info.model_uri
 
 
 __all__ = ["VideoMaeScorePredictionRankTrainCfg", "run_training"]

@@ -161,6 +161,8 @@ def _build_video_mae_score_prediction_rank_training_config(
         output_dir=cfg.output_dir,
         model_cache_dir=cfg.model.model_cache_dir,
         epochs=cfg.model.epochs,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.run_name,
         freeze_backbone=cfg.model.freeze_backbone,
         early_stopping_patience=cfg.model.early_stopping_patience,
         max_train_samples=cfg.max_samples,

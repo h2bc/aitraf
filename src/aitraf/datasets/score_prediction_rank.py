@@ -4,9 +4,24 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Subset
+
+
+class ScorePredictionRankSubset(Subset):
+    def __init__(
+        self, dataset: ScorePredictionRankDataset, indices: Sequence[int]
+    ) -> None:
+        if not isinstance(dataset, ScorePredictionRankDataset):
+            raise TypeError(
+                "ScorePredictionRankSubset requires a ScorePredictionRankDataset base."
+            )
+        super().__init__(dataset, indices)
+
+    def manifest_rows(self) -> list[dict]:
+        base_rows = self.dataset.manifest_rows()
+        return [base_rows[idx] for idx in self.indices]
 
 
 class ScorePredictionRankDataset(Dataset):
@@ -38,5 +53,4 @@ class ScorePredictionRankDataset(Dataset):
     def manifest_rows(self) -> list[dict[str, Any]]:
         return list(self.records)
 
-
-__all__ = ["ScorePredictionRankDataset"]
+__all__ = ["ScorePredictionRankDataset", "ScorePredictionRankSubset"]
