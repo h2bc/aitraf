@@ -34,6 +34,12 @@ from aitraf.tasks.score_prediction.video_mae import (
     run_evaluation as run_video_mae_score_prediction_eval,
     run_training as run_video_mae_score_prediction_train,
 )
+from aitraf.tasks.score_prediction_rank.video_mae import (
+    VideoMaeScorePredictionRankEvalCfg,
+    VideoMaeScorePredictionRankTrainCfg,
+    run_evaluation as run_video_mae_score_prediction_rank_eval,
+    run_training as run_video_mae_score_prediction_rank_train,
+)
 
 
 
@@ -230,6 +236,56 @@ def _build_video_mae_score_prediction_eval_config(
     )
 
 
+def _build_video_mae_score_prediction_rank_training_config(
+    cfg: DictConfig,
+) -> VideoMaeScorePredictionRankTrainCfg:
+    data_dir = Path(cfg.paths.data_dir)
+
+    return VideoMaeScorePredictionRankTrainCfg(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
+        backbone=cfg.model.backbone,
+        manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.task.vocab_path,
+        clips_dir=data_dir / "clips",
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
+        device=cfg.model.device,
+        output_dir=cfg.train_output_dir,
+        model_cache_dir=cfg.model.model_cache_dir,
+        epochs=cfg.model.epochs,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.train_run_name,
+        freeze_backbone=cfg.model.freeze_backbone,
+        early_stopping_patience=cfg.model.early_stopping_patience,
+        max_train_samples=cfg.max_samples,
+    )
+
+
+def _build_video_mae_score_prediction_rank_eval_config(
+    cfg: DictConfig, model_uri: str
+) -> VideoMaeScorePredictionRankEvalCfg:
+    data_dir = Path(cfg.paths.data_dir)
+
+    return VideoMaeScorePredictionRankEvalCfg(
+        model_uri=model_uri,
+        manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.task.vocab_path,
+        clips_dir=data_dir / "clips",
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
+        device=cfg.model.device,
+        output_dir=cfg.eval_output_dir,
+        run_name=cfg.eval_run_name,
+        experiment_name=cfg.experiment_name,
+        top_k_worst=cfg.top_k_worst,
+    )
+
+
 
 
 TRAIN_EVAL_TARGETS: dict[
@@ -266,6 +322,14 @@ TRAIN_EVAL_TARGETS: dict[
         ),
         lambda cfg, model_uri: run_video_mae_score_prediction_eval(
             _build_video_mae_score_prediction_eval_config(cfg, model_uri)
+        ),
+    ),
+    ("score_prediction_rank", "video_mae"): (
+        lambda cfg: run_video_mae_score_prediction_rank_train(
+            _build_video_mae_score_prediction_rank_training_config(cfg)
+        ),
+        lambda cfg, model_uri: run_video_mae_score_prediction_rank_eval(
+            _build_video_mae_score_prediction_rank_eval_config(cfg, model_uri)
         ),
     ),
 }
