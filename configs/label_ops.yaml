@@ -10,7 +10,7 @@ label_ops:
     output_path: ${paths.data_dir}/labels.jsonl
   create_pairs:
     enabled: true
-    force: true
+    force: false
     labels_path: ${label_ops.download_labels.output_path}
     output_dir: ${paths.data_dir}/pairs
     k_per_video: 3
