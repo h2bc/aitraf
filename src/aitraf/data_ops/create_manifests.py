@@ -47,6 +47,7 @@ class ManifestBuildConfig:
     output_dir: Path | str
     val_ratio: float = 0.1
     test_ratio: float = 0.1
+    split_seed: int = 42
     force: bool = False
     tasks: Sequence[TaskConfig] | None = None
 
@@ -127,6 +128,7 @@ def _build_task_manifests(
         manifest_df,
         test_ratio,
         stratify_labels,
+        seed=config.split_seed,
     )
 
     val_fraction = val_ratio / (val_ratio + train_ratio)
@@ -139,6 +141,7 @@ def _build_task_manifests(
         train_val_df,
         val_fraction,
         train_stratify_labels,
+        seed=config.split_seed,
     )
 
     splits = {"train": train_df, "val": val_df, "test": test_df}

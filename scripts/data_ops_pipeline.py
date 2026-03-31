@@ -156,6 +156,7 @@ def run(cfg: DictConfig) -> None:
                     output_dir=data_cfg.create_manifests.output_dir,
                     val_ratio=data_cfg.create_manifests.val_ratio,
                     test_ratio=data_cfg.create_manifests.test_ratio,
+                    split_seed=data_cfg.create_manifests.split_seed,
                     force=data_cfg.create_manifests.force,
                     tasks=pointwise_tasks,
                 )
@@ -167,6 +168,7 @@ def run(cfg: DictConfig) -> None:
                     output_dir=data_cfg.create_manifests.output_dir,
                     val_ratio=data_cfg.create_manifests.val_ratio,
                     test_ratio=data_cfg.create_manifests.test_ratio,
+                    split_seed=data_cfg.create_manifests.split_seed,
                     force=data_cfg.create_manifests.force,
                     tasks=pairwise_tasks,
                 )

@@ -48,7 +48,11 @@ def validate_required_columns(df: pd.DataFrame, *columns: str) -> None:
 
 
 def split_df(
-    df: pd.DataFrame, fraction: float, stratify: pd.Series | None
+    df: pd.DataFrame,
+    fraction: float,
+    stratify: pd.Series | None,
+    *,
+    seed: int,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     if not 0 < fraction < 1:
         raise RuntimeError("Split fraction must be between 0 and 1.")
@@ -57,6 +61,7 @@ def split_df(
         df,
         test_size=fraction,
         stratify=stratify,
+        random_state=seed,
     )
     return train_df, test_df
 

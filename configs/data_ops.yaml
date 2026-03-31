@@ -18,6 +18,7 @@ create_manifests:
   output_dir: ${paths.manifests_dir}
   val_ratio: 0.1
   test_ratio: 0.1
+  split_seed: 42
 
 download_clips:
   enabled: true

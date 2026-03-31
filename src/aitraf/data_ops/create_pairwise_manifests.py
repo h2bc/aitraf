@@ -53,6 +53,7 @@ class PairwiseManifestBuildConfig:
     output_dir: Path | str
     val_ratio: float = 0.1
     test_ratio: float = 0.1
+    split_seed: int = 42
     force: bool = False
     tasks: Sequence[PairwiseTaskConfig] | None = None
 
@@ -124,7 +125,12 @@ def _build_task_manifests(
     )
 
     try:
-        train_val_df, test_df = split_df(manifest_df, test_ratio, stratify_labels)
+        train_val_df, test_df = split_df(
+            manifest_df,
+            test_ratio,
+            stratify_labels,
+            seed=config.split_seed,
+        )
     except ValueError as exc:
         raise RuntimeError(
             _build_split_error(task.name, "train/test", stratify_labels)
@@ -134,7 +140,12 @@ def _build_task_manifests(
         stratify_labels.loc[train_val_df.index] if stratify_labels is not None else None
     )
     try:
-        train_df, val_df = split_df(train_val_df, val_fraction, train_stratify_labels)
+        train_df, val_df = split_df(
+            train_val_df,
+            val_fraction,
+            train_stratify_labels,
+            seed=config.split_seed,
+        )
     except ValueError as exc:
         raise RuntimeError(
             _build_split_error(task.name, "train/val", train_stratify_labels)

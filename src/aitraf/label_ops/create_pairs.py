@@ -21,6 +21,7 @@ class PairGenerationConfig:
     labels_path: Path | str
     output_dir: Path | str
     k_per_video: int
+    seed: int = 42
     force: bool = False
 
     def __post_init__(self) -> None:
@@ -55,7 +56,7 @@ def create_pairs(config: PairGenerationConfig) -> int:
 
     created_pairs = 0
     skipped_tricks = 0
-    rng = random.Random(42)
+    rng = random.Random(config.seed)
 
     for trick, group_df in labels_df.groupby("trick"):
         videos = group_df["video"].tolist()

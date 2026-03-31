@@ -35,6 +35,7 @@ def run(cfg: DictConfig) -> None:
                 labels_path=ops_cfg.create_pairs.labels_path,
                 output_dir=ops_cfg.create_pairs.output_dir,
                 k_per_video=ops_cfg.create_pairs.k_per_video,
+                seed=ops_cfg.create_pairs.seed,
                 force=ops_cfg.create_pairs.force,
             )
         )

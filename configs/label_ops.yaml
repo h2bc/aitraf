@@ -14,6 +14,7 @@ label_ops:
     labels_path: ${label_ops.download_labels.output_path}
     output_dir: ${paths.data_dir}/pairs
     k_per_video: 3
+    seed: 42
   upload_pairs:
     enabled: true
     force: false
