@@ -28,7 +28,7 @@ download_clips:
 
 download_pairwise_labels:
   enabled: true
-  force: false
+  force: true
   prefix: ranks
   output_dir: ${paths.data_dir}/pairwise_labels
   output_path: ${paths.data_dir}/pairwise_labels.jsonl
