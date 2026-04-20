@@ -17,6 +17,11 @@ tasks:
     cmds:
       - "uv run python scripts/data_ops_pipeline.py {{.CLI_ARGS}}"
 
+  prepare:
+    desc: Run the task preparation pipeline
+    cmds:
+      - "uv run python scripts/prepare.py {{.CLI_ARGS}}"
+
   label_ops:
     desc: Run the label ops pipeline
     cmds:

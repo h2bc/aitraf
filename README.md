@@ -50,6 +50,7 @@ Run commands via [Task](https://taskfile.dev)
 |---------|-------------|
 | `task label_ops -- [overrides]` | Executes the label ops pipeline (`scripts/label_ops_pipeline.py`). |
 | `task data_ops -- [overrides]` | Executes the data ops pipeline (`scripts/data_ops_pipeline.py`). |
+| `task prepare -- task=<task> [overrides]` | Executes the task preparation pipeline (`scripts/prepare.py`). |
 | `task train -- task=<task> model=<model> [overrides]` | Runs the training pipeline (`scripts/train.py`). |
 | `task eval -- task=<task> model=<model> model_id=<model_id> [overrides]` | Runs the evaluation pipeline (`scripts/eval.py`). |
 | `task train_eval -- task=<task> model=<model> [overrides]` | Runs the combined train+eval pipeline (`scripts/train_eval.py`). |
@@ -72,7 +73,7 @@ Run commands via [Task](https://taskfile.dev)
 
 ### Data ops script
 
-`task data_ops` runs `scripts/data_ops_pipeline.py`, a workflow composed of five stages (enable/disable each and set `force` flags in `configs/data_ops.yaml` or via cmd args):
+`task data_ops` runs `scripts/data_ops_pipeline.py`, a workflow composed of four shared-data stages (enable/disable each and set `force` flags in `configs/data_ops.yaml` or via cmd args):
 
 #### Download Labels
 
@@ -91,10 +92,13 @@ Run commands via [Task](https://taskfile.dev)
 
 - Downloads annotation files from a configurable S3 prefix and merges them into one JSONL file
 
-#### Manifest Creation
+### Prepare script
 
-- Builds train/val/test JSONL manifests under `data/manifests/<task>/`, stratifying by the target column when configured.
-- Emits a task-local `vocab.json` under `data/manifests/<task>/` for downstream consumers.
+`task prepare` runs `scripts/prepare.py`, which dispatches to the selected task's own preparation module.
+
+- Builds train/val/test JSONL manifests under `data/manifests/<task>/`.
+- Emits a task-local `vocab.json` under `data/manifests/<task>/` when the task defines one.
+- Use `task prepare -- task=score_prediction` to prepare one task.
 
 
 ## Project Integrations
