@@ -8,7 +8,7 @@ from typing import Any
 import pandas as pd
 from omegaconf import DictConfig
 
-from aitraf.data_ops.task_preparation import (
+from aitraf.prepare import (
     ensure_manifest_targets_clear,
     load_manifest_df,
     load_pairwise_labels_df,

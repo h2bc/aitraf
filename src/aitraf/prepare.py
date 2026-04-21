@@ -1,4 +1,4 @@
-"""Shared helpers for task-owned data preparation modules."""
+"""Shared helpers for the prepare pipeline."""
 
 from __future__ import annotations
 

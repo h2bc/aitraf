@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 from omegaconf import DictConfig
 
-from aitraf.data_ops.task_preparation import (
+from aitraf.prepare import (
     build_clip_manifest_base,
     ensure_manifest_targets_clear,
     load_labels_df,
