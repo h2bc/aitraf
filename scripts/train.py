@@ -25,6 +25,10 @@ from aitraf.tasks.score_prediction.video_mae import (
     VideoMaeScorePredictionTrainCfg,
     run_training as run_video_mae_score_prediction_train,
 )
+from aitraf.tasks.score_prediction_binary.video_mae import (
+    VideoMaeScorePredictionBinaryTrainCfg,
+    run_training as run_video_mae_score_prediction_binary_train,
+)
 from aitraf.tasks.score_prediction_rank.video_mae import (
     VideoMaeScorePredictionRankTrainCfg,
     run_training as run_video_mae_score_prediction_rank_train,
@@ -141,6 +145,34 @@ def _build_video_mae_score_prediction_training_config(
     )
 
 
+def _build_video_mae_score_prediction_binary_training_config(
+    cfg: DictConfig,
+) -> VideoMaeScorePredictionBinaryTrainCfg:
+    data_dir = Path(cfg.paths.data_dir)
+
+    return VideoMaeScorePredictionBinaryTrainCfg(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
+        backbone=cfg.model.backbone,
+        manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.task.vocab_path,
+        clips_dir=data_dir / "clips",
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
+        device=cfg.model.device,
+        output_dir=cfg.output_dir,
+        epochs=cfg.model.epochs,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.run_name,
+        freeze_backbone=cfg.model.freeze_backbone,
+        model_cache_dir=cfg.model.model_cache_dir,
+        max_train_samples=cfg.max_samples,
+        early_stopping_patience=cfg.model.early_stopping_patience,
+    )
+
+
 def _build_video_mae_score_prediction_rank_training_config(
     cfg: DictConfig,
 ) -> VideoMaeScorePredictionRankTrainCfg:
@@ -187,6 +219,12 @@ TRAINING_TARGETS: dict[tuple[str, str], Callable[[DictConfig], str]] = {
     ),
     ("score_prediction", "video_mae"): lambda cfg: run_video_mae_score_prediction_train(
         _build_video_mae_score_prediction_training_config(cfg)
+    ),
+    (
+        "score_prediction_binary",
+        "video_mae",
+    ): lambda cfg: run_video_mae_score_prediction_binary_train(
+        _build_video_mae_score_prediction_binary_training_config(cfg)
     ),
     (
         "score_prediction_rank",

@@ -31,6 +31,8 @@ The dataset is customly filmed from a single fixed angle with multiple people. I
   Predicts the discrete trick label for each clip. Train/val/test splits are stratified by the target to preserve class balance. Available labels: `ao-soul`, `bs-royale`, `fs-royale`, `fs-savanah`, `mizou`, `soul`, `top-soul`.
 - **score_prediction**  
   Predicts the execution score for each clip. Scores are collected as 1–4 ★★★★ and converted to a 0–1 percentage for training. We plan to extend this to pairwise ranking with separated goals (component scores vs a single overall score).
+- **score_prediction_binary**
+  Predicts a binary quality label for each clip using only 1-star (`bad`) and 4-star (`good`) examples.
 
 
 ## Models
