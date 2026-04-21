@@ -1,8 +1,5 @@
 defaults:
   - base
-  - task@create_manifests.tasks.trick_classification: trick_classification
-  - task@create_manifests.tasks.score_prediction: score_prediction
-  - task@create_manifests.tasks.score_prediction_rank: score_prediction_rank
   - _self_
 
 download_labels:
@@ -10,15 +7,6 @@ download_labels:
   force: true
   prefix: labels
   output_path: ${paths.data_dir}/labels.jsonl
-
-create_manifests:
-  enabled: true
-  force: true
-  input_path: ${download_labels.output_path}
-  output_dir: ${paths.manifests_dir}
-  val_ratio: 0.1
-  test_ratio: 0.1
-  split_seed: 42
 
 download_clips:
   enabled: true
