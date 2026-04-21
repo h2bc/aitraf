@@ -12,6 +12,9 @@ from aitraf.logging import heading, setup_logging
 from aitraf.tasks.score_prediction.prepare import (
     run_prepare as run_score_prediction_prepare,
 )
+from aitraf.tasks.score_prediction_binary.prepare import (
+    run_prepare as run_score_prediction_binary_prepare,
+)
 from aitraf.tasks.score_prediction_rank.prepare import (
     run_prepare as run_score_prediction_rank_prepare,
 )
@@ -26,6 +29,7 @@ PrepareTarget = Callable[[DictConfig, DictConfig], None]
 PREPARE_TARGETS: dict[str, PrepareTarget] = {
     "trick_classification": run_trick_classification_prepare,
     "score_prediction": run_score_prediction_prepare,
+    "score_prediction_binary": run_score_prediction_binary_prepare,
     "score_prediction_rank": run_score_prediction_rank_prepare,
 }
 
