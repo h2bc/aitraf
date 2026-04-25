@@ -29,7 +29,6 @@ MANIFEST_COLUMNS = (
     "key_foot",
     "person",
     "execution_score",
-    "execution_explanation",
 )
 MANIFEST_DTYPES = {
     "video_id": "string",
@@ -37,8 +36,7 @@ MANIFEST_DTYPES = {
     "trick": "string",
     "key_foot": "string",
     "person": "string",
-    "execution_score": "Int64",
-    "execution_explanation": "string",
+    "execution_score": "string",
 }
 
 
@@ -92,7 +90,6 @@ def _build_manifest_df(labels_df: pd.DataFrame) -> pd.DataFrame:
         "key_foot",
         "person",
         "execution_score",
-        "execution_explanation",
     ):
         if col in labels_df.columns:
             manifest_df[col] = labels_df[col]
