@@ -26,9 +26,9 @@ from aitraf.tasks.score_prediction_binary.video_mae import (
     VideoMaeScorePredictionBinaryEvalCfg,
     run_evaluation as run_video_mae_score_prediction_binary_eval,
 )
-from aitraf.tasks.score_prediction_rank.video_mae import (
-    VideoMaeScorePredictionRankEvalCfg,
-    run_evaluation as run_video_mae_score_prediction_rank_eval,
+from aitraf.tasks.score_prediction_pairwise.video_mae import (
+    VideoMaeScorePredictionPairwiseEvalCfg,
+    run_evaluation as run_video_mae_score_prediction_pairwise_eval,
 )
 from aitraf.tasks.trick_classifier.video_mae import (
     VideoMaeTrickClassificationEvalCfg,
@@ -151,12 +151,12 @@ def _build_video_mae_score_prediction_binary_eval_config(
     )
 
 
-def _build_video_mae_score_prediction_rank_eval_config(
+def _build_video_mae_score_prediction_pairwise_eval_config(
     cfg: DictConfig,
-) -> VideoMaeScorePredictionRankEvalCfg:
+) -> VideoMaeScorePredictionPairwiseEvalCfg:
     data_dir = Path(cfg.paths.data_dir)
 
-    return VideoMaeScorePredictionRankEvalCfg(
+    return VideoMaeScorePredictionPairwiseEvalCfg(
         model_uri=_build_model_uri(cfg),
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
@@ -192,8 +192,8 @@ EVALUATION_TARGETS: dict[tuple[str, str], Callable[[DictConfig], None]] = {
     ): lambda cfg: run_video_mae_score_prediction_binary_eval(
         _build_video_mae_score_prediction_binary_eval_config(cfg)
     ),
-    ("score_prediction_rank", "video_mae"): lambda cfg: run_video_mae_score_prediction_rank_eval(
-        _build_video_mae_score_prediction_rank_eval_config(cfg)
+    ("score_prediction_pairwise", "video_mae"): lambda cfg: run_video_mae_score_prediction_pairwise_eval(
+        _build_video_mae_score_prediction_pairwise_eval_config(cfg)
     ),
 }
 

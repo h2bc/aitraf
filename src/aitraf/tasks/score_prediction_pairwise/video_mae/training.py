@@ -1,4 +1,4 @@
-"""VideoMAE training pipeline for pairwise ranking."""
+"""VideoMAE training pipeline for pairwise comparison."""
 
 from __future__ import annotations
 
@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 from mlflow.data import from_pandas
-from torch import nn
 from transformers import (
     AutoConfig,
     AutoModelForVideoClassification,
@@ -22,21 +21,18 @@ from transformers import (
     VideoMAEImageProcessor,
 )
 
-from aitraf.datasets.score_prediction_rank import (
-    ScorePredictionRankDataset,
-    ScorePredictionRankSubset,
-)
 from aitraf.logging import logger
 from aitraf.metrics import build_pairwise_metrics
-from aitraf.models import PairwiseRanker
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.video_mae import process_pair_sample
 from aitraf.processing.utils import build_collate
+from ..dataset import ScorePredictionPairwiseDataset, ScorePredictionPairwiseSubset
+from .model import ScorePredictionPairwiseModel
 
 
 @dataclass
-class VideoMaeScorePredictionRankTrainCfg:
-    """Configuration for VideoMAE pairwise ranking training."""
+class VideoMaeScorePredictionPairwiseTrainCfg:
+    """Configuration for VideoMAE pairwise comparison training."""
 
     task_name: str
     model_name: str
@@ -68,29 +64,29 @@ class VideoMaeScorePredictionRankTrainCfg:
         self.model_cache_dir.mkdir(parents=True, exist_ok=True)
 
 
-def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
-    """Train the VideoMAE pairwise ranker and log artifacts to MLflow."""
+def run_training(config: VideoMaeScorePredictionPairwiseTrainCfg) -> str:
+    """Train the VideoMAE pairwise comparator and log artifacts to MLflow."""
 
     load_dotenv()
 
-    train_dataset = ScorePredictionRankDataset(
+    train_dataset = ScorePredictionPairwiseDataset(
         manifests_dir=config.manifests_dir,
         split="train",
     )
 
     if config.max_train_samples is not None:
         max_count = min(config.max_train_samples, len(train_dataset))
-        train_dataset = ScorePredictionRankSubset(train_dataset, range(max_count))
+        train_dataset = ScorePredictionPairwiseSubset(train_dataset, range(max_count))
 
-    val_dataset = ScorePredictionRankDataset(
+    val_dataset = ScorePredictionPairwiseDataset(
         manifests_dir=config.manifests_dir,
         split="val",
     )
 
     if len(train_dataset) == 0:
-        raise RuntimeError("No training pairs found for score_prediction_rank.")
+        raise RuntimeError("No training pairs found for score_prediction_pairwise.")
     if len(val_dataset) == 0:
-        raise RuntimeError("No validation pairs found for score_prediction_rank.")
+        raise RuntimeError("No validation pairs found for score_prediction_pairwise.")
 
     processor = VideoMAEImageProcessor.from_pretrained(
         config.backbone, cache_dir=str(config.model_cache_dir)
@@ -119,10 +115,7 @@ def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
         for param in scorer.base_model.parameters():
             param.requires_grad = False
 
-    model = PairwiseRanker(
-        scorer=scorer,
-        loss_fn=nn.BCEWithLogitsLoss(),
-    ).to(config.device)
+    model = ScorePredictionPairwiseModel(scorer=scorer).to(config.device)
 
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),
@@ -205,4 +198,4 @@ def run_training(config: VideoMaeScorePredictionRankTrainCfg) -> str:
         return model_info.model_uri
 
 
-__all__ = ["VideoMaeScorePredictionRankTrainCfg", "run_training"]
+__all__ = ["VideoMaeScorePredictionPairwiseTrainCfg", "run_training"]

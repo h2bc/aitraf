@@ -1,4 +1,4 @@
-name: score_prediction_rank
+name: score_prediction_pairwise
 pairwise_labels_path: ${paths.data_dir}/pairwise_labels.jsonl
 source_manifests_dir: ${paths.manifests_dir}/score_prediction
 manifests_dir: ${paths.manifests_dir}/${.name}

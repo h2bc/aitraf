@@ -1,4 +1,4 @@
-"""Dataset for score-prediction rank experiments."""
+"""Dataset for score prediction pairwise experiments."""
 
 from __future__ import annotations
 
@@ -9,13 +9,13 @@ from typing import Any, Sequence
 from torch.utils.data import Dataset, Subset
 
 
-class ScorePredictionRankSubset(Subset):
+class ScorePredictionPairwiseSubset(Subset):
     def __init__(
-        self, dataset: ScorePredictionRankDataset, indices: Sequence[int]
+        self, dataset: ScorePredictionPairwiseDataset, indices: Sequence[int]
     ) -> None:
-        if not isinstance(dataset, ScorePredictionRankDataset):
+        if not isinstance(dataset, ScorePredictionPairwiseDataset):
             raise TypeError(
-                "ScorePredictionRankSubset requires a ScorePredictionRankDataset base."
+                "ScorePredictionPairwiseSubset requires a ScorePredictionPairwiseDataset base."
             )
         super().__init__(dataset, indices)
 
@@ -24,7 +24,7 @@ class ScorePredictionRankSubset(Subset):
         return [base_rows[idx] for idx in self.indices]
 
 
-class ScorePredictionRankDataset(Dataset):
+class ScorePredictionPairwiseDataset(Dataset):
     """Dataset backed directly by pairwise manifest rows."""
 
     def __init__(
@@ -53,4 +53,5 @@ class ScorePredictionRankDataset(Dataset):
     def manifest_rows(self) -> list[dict[str, Any]]:
         return list(self.records)
 
-__all__ = ["ScorePredictionRankDataset", "ScorePredictionRankSubset"]
+
+__all__ = ["ScorePredictionPairwiseDataset", "ScorePredictionPairwiseSubset"]

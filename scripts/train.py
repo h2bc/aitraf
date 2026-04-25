@@ -29,9 +29,9 @@ from aitraf.tasks.score_prediction_binary.video_mae import (
     VideoMaeScorePredictionBinaryTrainCfg,
     run_training as run_video_mae_score_prediction_binary_train,
 )
-from aitraf.tasks.score_prediction_rank.video_mae import (
-    VideoMaeScorePredictionRankTrainCfg,
-    run_training as run_video_mae_score_prediction_rank_train,
+from aitraf.tasks.score_prediction_pairwise.video_mae import (
+    VideoMaeScorePredictionPairwiseTrainCfg,
+    run_training as run_video_mae_score_prediction_pairwise_train,
 )
 
 
@@ -173,12 +173,12 @@ def _build_video_mae_score_prediction_binary_training_config(
     )
 
 
-def _build_video_mae_score_prediction_rank_training_config(
+def _build_video_mae_score_prediction_pairwise_training_config(
     cfg: DictConfig,
-) -> VideoMaeScorePredictionRankTrainCfg:
+) -> VideoMaeScorePredictionPairwiseTrainCfg:
     data_dir = Path(cfg.paths.data_dir)
 
-    return VideoMaeScorePredictionRankTrainCfg(
+    return VideoMaeScorePredictionPairwiseTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
@@ -227,10 +227,10 @@ TRAINING_TARGETS: dict[tuple[str, str], Callable[[DictConfig], str]] = {
         _build_video_mae_score_prediction_binary_training_config(cfg)
     ),
     (
-        "score_prediction_rank",
+        "score_prediction_pairwise",
         "video_mae",
-    ): lambda cfg: run_video_mae_score_prediction_rank_train(
-        _build_video_mae_score_prediction_rank_training_config(cfg)
+    ): lambda cfg: run_video_mae_score_prediction_pairwise_train(
+        _build_video_mae_score_prediction_pairwise_training_config(cfg)
     ),
 }
 

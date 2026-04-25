@@ -1,4 +1,4 @@
-"""Task-owned data preparation for pairwise score ranking."""
+"""Task-owned data preparation for pairwise score prediction."""
 
 from __future__ import annotations
 

@@ -1,6 +1,5 @@
 """Model factories and backbones."""
 
-from .pairwise import PairwiseRanker
 from .pose_tcn import (
     TCNBackbone,
     TCNClassificationHead,
@@ -10,7 +9,6 @@ from .pose_tcn import (
 )
 
 __all__ = [
-    "PairwiseRanker",
     "TCNBackbone",
     "TCNClassificationHead",
     "TCNClassifier",

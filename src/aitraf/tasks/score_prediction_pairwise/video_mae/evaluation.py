@@ -1,4 +1,4 @@
-"""VideoMAE evaluation pipeline for pairwise ranking."""
+"""VideoMAE evaluation pipeline for pairwise comparison."""
 
 from __future__ import annotations
 
@@ -14,18 +14,18 @@ from mlflow import transformers as mlflow_transformers
 from mlflow.data import from_pandas
 from transformers import EvalPrediction, Trainer, TrainingArguments
 
-from aitraf.datasets.score_prediction_rank import ScorePredictionRankDataset
 from aitraf.logging import logger
 from aitraf.metrics import build_pairwise_metrics
-from aitraf.models import PairwiseRanker
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.video_mae import process_pair_sample
 from aitraf.processing.utils import build_collate
+from ..dataset import ScorePredictionPairwiseDataset
+from .model import ScorePredictionPairwiseModel
 
 
 @dataclass
-class VideoMaeScorePredictionRankEvalCfg:
-    """Configuration for evaluating VideoMAE pairwise ranking."""
+class VideoMaeScorePredictionPairwiseEvalCfg:
+    """Configuration for evaluating VideoMAE pairwise comparison."""
 
     model_uri: str
     manifests_dir: Path | str
@@ -48,18 +48,18 @@ class VideoMaeScorePredictionRankEvalCfg:
         self.output_dir = Path(self.output_dir)
 
 
-def run_evaluation(config: VideoMaeScorePredictionRankEvalCfg) -> None:
-    """Evaluate a fine-tuned VideoMAE pairwise ranker."""
+def run_evaluation(config: VideoMaeScorePredictionPairwiseEvalCfg) -> None:
+    """Evaluate a fine-tuned VideoMAE pairwise comparator."""
 
     load_dotenv()
 
-    dataset = ScorePredictionRankDataset(
+    dataset = ScorePredictionPairwiseDataset(
         manifests_dir=config.manifests_dir,
         split="test",
     )
 
     if len(dataset) == 0:
-        raise RuntimeError("No test pairs found for score_prediction_rank.")
+        raise RuntimeError("No test pairs found for score_prediction_pairwise.")
 
     _, label2id, _ = load_target_label_mappings(config.vocab_path, "pair_label")
 
@@ -71,7 +71,7 @@ def run_evaluation(config: VideoMaeScorePredictionRankEvalCfg) -> None:
         f"VideoMAE evaluation running on device: {next(scorer.parameters()).device}"
     )
     processor = components["image_processor"]
-    model = PairwiseRanker(scorer=scorer).to(config.device)
+    model = ScorePredictionPairwiseModel(scorer=scorer).to(config.device)
 
     compute_metrics = build_pairwise_metrics()
 
@@ -135,4 +135,4 @@ def run_evaluation(config: VideoMaeScorePredictionRankEvalCfg) -> None:
         mlflow.log_metrics(dummy_metrics)
 
 
-__all__ = ["VideoMaeScorePredictionRankEvalCfg", "run_evaluation"]
+__all__ = ["VideoMaeScorePredictionPairwiseEvalCfg", "run_evaluation"]

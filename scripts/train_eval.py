@@ -40,11 +40,11 @@ from aitraf.tasks.score_prediction_binary.video_mae import (
     run_evaluation as run_video_mae_score_prediction_binary_eval,
     run_training as run_video_mae_score_prediction_binary_train,
 )
-from aitraf.tasks.score_prediction_rank.video_mae import (
-    VideoMaeScorePredictionRankEvalCfg,
-    VideoMaeScorePredictionRankTrainCfg,
-    run_evaluation as run_video_mae_score_prediction_rank_eval,
-    run_training as run_video_mae_score_prediction_rank_train,
+from aitraf.tasks.score_prediction_pairwise.video_mae import (
+    VideoMaeScorePredictionPairwiseEvalCfg,
+    VideoMaeScorePredictionPairwiseTrainCfg,
+    run_evaluation as run_video_mae_score_prediction_pairwise_eval,
+    run_training as run_video_mae_score_prediction_pairwise_train,
 )
 
 
@@ -292,12 +292,12 @@ def _build_video_mae_score_prediction_binary_eval_config(
     )
 
 
-def _build_video_mae_score_prediction_rank_training_config(
+def _build_video_mae_score_prediction_pairwise_training_config(
     cfg: DictConfig,
-) -> VideoMaeScorePredictionRankTrainCfg:
+) -> VideoMaeScorePredictionPairwiseTrainCfg:
     data_dir = Path(cfg.paths.data_dir)
 
-    return VideoMaeScorePredictionRankTrainCfg(
+    return VideoMaeScorePredictionPairwiseTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
@@ -320,12 +320,12 @@ def _build_video_mae_score_prediction_rank_training_config(
     )
 
 
-def _build_video_mae_score_prediction_rank_eval_config(
+def _build_video_mae_score_prediction_pairwise_eval_config(
     cfg: DictConfig, model_uri: str
-) -> VideoMaeScorePredictionRankEvalCfg:
+) -> VideoMaeScorePredictionPairwiseEvalCfg:
     data_dir = Path(cfg.paths.data_dir)
 
-    return VideoMaeScorePredictionRankEvalCfg(
+    return VideoMaeScorePredictionPairwiseEvalCfg(
         model_uri=model_uri,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
@@ -388,12 +388,12 @@ TRAIN_EVAL_TARGETS: dict[
             _build_video_mae_score_prediction_binary_eval_config(cfg, model_uri)
         ),
     ),
-    ("score_prediction_rank", "video_mae"): (
-        lambda cfg: run_video_mae_score_prediction_rank_train(
-            _build_video_mae_score_prediction_rank_training_config(cfg)
+    ("score_prediction_pairwise", "video_mae"): (
+        lambda cfg: run_video_mae_score_prediction_pairwise_train(
+            _build_video_mae_score_prediction_pairwise_training_config(cfg)
         ),
-        lambda cfg, model_uri: run_video_mae_score_prediction_rank_eval(
-            _build_video_mae_score_prediction_rank_eval_config(cfg, model_uri)
+        lambda cfg, model_uri: run_video_mae_score_prediction_pairwise_eval(
+            _build_video_mae_score_prediction_pairwise_eval_config(cfg, model_uri)
         ),
     ),
 }
