@@ -1,3 +1,5 @@
 """Task-level APIs for ordinal score prediction."""
 
-__all__ = []
+from . import video_mae
+
+__all__ = ["video_mae"]

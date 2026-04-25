@@ -19,13 +19,28 @@ from .regression import (
     get_top_k_worst_errors,
 )
 from .pairwise import build_pairwise_metrics
+from .ordinal import (
+    build_ordinal_eval_metrics,
+    build_ordinal_training_metrics,
+    compute_constant_median_pred_ids,
+    compute_ordinal_pred_ids,
+    compute_ordinal_probabilities,
+    compute_prior_probabilities,
+    get_top_k_worst_ordinal_errors,
+)
 
 __all__ = [
     "build_classification_metrics",
+    "build_ordinal_eval_metrics",
+    "build_ordinal_training_metrics",
     "build_pairwise_metrics",
     "build_regression_metrics",
     "compute_dummy_classification_pred_ids",
     "compute_dummy_regression_preds",
+    "compute_constant_median_pred_ids",
+    "compute_ordinal_pred_ids",
+    "compute_ordinal_probabilities",
+    "compute_prior_probabilities",
     "get_predicted_vs_actual_scatter_figure",
     "get_residual_vs_predicted_scatter_figure",
     "get_residual_distribution_figure",
@@ -36,4 +51,5 @@ __all__ = [
     "get_per_class_f1_figure",
     "get_target_distribution_figure",
     "get_top_k_worst_misses",
+    "get_top_k_worst_ordinal_errors",
 ]

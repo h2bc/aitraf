@@ -30,6 +30,7 @@ dependencies = [
     "kornia>=0.8.2",
     "lightning>=2.6.0",
     "pip>=25.3",
+    "dlordinal>=2.6.0",
 ]
 
 [dependency-groups]
