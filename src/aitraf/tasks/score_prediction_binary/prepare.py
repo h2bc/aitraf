@@ -44,7 +44,7 @@ MANIFEST_DTYPES = {
 }
 QUALITY_LABELS = {
     1: "bad",
-    4: "good",
+    3: "good",
 }
 
 
