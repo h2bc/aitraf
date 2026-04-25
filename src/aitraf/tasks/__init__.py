@@ -3,6 +3,7 @@
 from . import (
     score_prediction,
     score_prediction_binary,
+    score_prediction_ordinal,
     score_prediction_pairwise,
     trick_classifier,
 )
@@ -10,6 +11,7 @@ from . import (
 __all__ = [
     "score_prediction",
     "score_prediction_binary",
+    "score_prediction_ordinal",
     "score_prediction_pairwise",
     "trick_classifier",
 ]
