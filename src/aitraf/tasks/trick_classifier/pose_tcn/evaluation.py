@@ -30,6 +30,8 @@ from aitraf.metrics import (
     get_per_class_f1_figure,
     get_target_distribution_figure,
     get_top_k_worst_misses,
+    metrics_to_df,
+    params_to_df,
 )
 from aitraf.models.pose_tcn import TCNClassifier
 from aitraf.processing import load_target_label_mappings
@@ -178,6 +180,8 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
 
     with mlflow.start_run(run_name=config.run_name):
         mlflow.log_params(source_train_params)
+        params_df = params_to_df(source_train_params)
+        mlflow.log_table(params_df, "params_table.json")
         mlflow.log_input(
             from_pandas(pd.DataFrame(train_dataset.manifest_rows()), name="train"),
             context="train",
@@ -188,6 +192,8 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
         )
 
         mlflow.log_metrics(all_metrics)
+        metrics_df = metrics_to_df(metrics_report)
+        mlflow.log_table(metrics_df, "metrics_table.json")
 
         dist_fig = get_target_distribution_figure(
             test_pred_ids,

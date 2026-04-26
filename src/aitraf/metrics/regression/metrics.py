@@ -4,7 +4,7 @@ from typing import Callable, Sequence
 
 from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error
 
-from ..pipeline import EvalMetric
+from ..metrics import EvalMetric
 
 mae = EvalMetric(
     name="mae",

@@ -4,7 +4,7 @@ from functools import partial
 
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score
 
-from ..pipeline import EvalMetric
+from ..metrics import EvalMetric
 
 accuracy = EvalMetric(
     name="accuracy",

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
+import pandas as pd
 from mlflow.tracking import MlflowClient
 
 
@@ -24,4 +27,14 @@ def build_training_params(
     }
 
 
-__all__ = ["build_training_params"]
+def params_to_df(params: Mapping[str, str]) -> pd.DataFrame:
+    return pd.DataFrame(
+        [{"param": key, "value": value} for key, value in params.items()],
+        columns=["param", "value"],
+    )
+
+
+__all__ = [
+    "build_training_params",
+    "params_to_df",
+]

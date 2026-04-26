@@ -28,6 +28,8 @@ from aitraf.metrics import (
     get_per_class_f1_figure,
     get_target_distribution_figure,
     get_top_k_worst_misses,
+    metrics_to_df,
+    params_to_df,
 )
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.video_mae import process_sample
@@ -127,6 +129,8 @@ def run_evaluation(config: VideoMaeTrickClassificationEvalCfg):
 
     with mlflow.start_run(run_name=config.run_name):
         mlflow.log_params(source_train_params)
+        params_df = params_to_df(source_train_params)
+        mlflow.log_table(params_df, "params_table.json")
         mlflow.log_input(from_huggingface(train_dataset, name="train"), context="train")
         mlflow.log_input(from_huggingface(test_dataset, name="test"), context="test")
 
@@ -179,6 +183,8 @@ def run_evaluation(config: VideoMaeTrickClassificationEvalCfg):
         all_metrics = flatten_metrics_report(metrics_report)
 
         mlflow.log_metrics(all_metrics)
+        metrics_df = metrics_to_df(metrics_report)
+        mlflow.log_table(metrics_df, "metrics_table.json")
 
         dist_fig = get_target_distribution_figure(
             test_video_mae_pred_ids,

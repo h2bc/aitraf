@@ -10,7 +10,7 @@ from dlordinal.metrics import amae as amae_score
 from dlordinal.metrics import mmae as mmae_score
 from sklearn.metrics import cohen_kappa_score, mean_absolute_error
 
-from aitraf.metrics.pipeline import EvalMetric
+from aitraf.metrics.metrics import EvalMetric
 
 amae = EvalMetric(name="amae", callback=amae_score)
 mae = EvalMetric(name="mae", callback=mean_absolute_error)

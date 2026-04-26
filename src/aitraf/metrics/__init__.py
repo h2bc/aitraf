@@ -23,8 +23,8 @@ from .regression import (
     r2,
     rmse,
 )
-from .params import build_training_params
-from .pipeline import (
+from .params import build_training_params, params_to_df
+from .metrics import (
     EvalMetric,
     EvalMetrics,
     EvalModel,
@@ -38,6 +38,7 @@ from .pipeline import (
     calc_metrics_for_models,
     calc_metrics_for_set,
     flatten_metrics_report,
+    metrics_to_df,
 )
 
 __all__ = [
@@ -67,6 +68,8 @@ __all__ = [
     "compute_pred_confidences",
     "compute_pred_ids",
     "flatten_metrics_report",
+    "metrics_to_df",
+    "params_to_df",
     "get_confusion_matrix_figure",
     "get_per_class_f1_figure",
     "get_target_distribution_figure",
