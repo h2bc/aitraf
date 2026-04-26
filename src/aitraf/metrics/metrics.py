@@ -1,4 +1,4 @@
-"""Immutable metrics pipeline helpers."""
+"""Immutable metrics pipeline and reporting helpers."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+import pandas as pd
 
 MetricCallback = Callable[[Sequence[Any], Sequence[Any]], float]
 
@@ -156,6 +157,21 @@ def flatten_metrics_report(metrics: EvalModelsMetrics) -> dict[str, float]:
     }
 
 
+def metrics_to_df(metrics_report: EvalModelsMetrics) -> pd.DataFrame:
+    rows = [
+        {
+            "model": model_metrics.name,
+            "split": set_metrics.name,
+            "metric": metric_name,
+            "value": metric_value,
+        }
+        for model_metrics in metrics_report.models
+        for set_metrics in model_metrics.sets
+        for metric_name, metric_value in set_metrics.metrics
+    ]
+    return pd.DataFrame(rows, columns=["model", "split", "metric", "value"])
+
+
 __all__ = [
     "EvalMetric",
     "EvalMetrics",
@@ -170,4 +186,5 @@ __all__ = [
     "calc_metrics_for_models",
     "calc_metrics_for_set",
     "flatten_metrics_report",
+    "metrics_to_df",
 ]
