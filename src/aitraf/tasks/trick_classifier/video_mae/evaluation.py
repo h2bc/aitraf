@@ -15,12 +15,18 @@ from transformers import (
 )
 
 from aitraf.metrics import (
-    build_classification_metrics,
-    get_confusion_matrix_figure,
-    get_target_distribution_figure,
-    get_per_class_f1_figure,
-    compute_pred_ids,
+    EvalModel,
+    EvalSet,
+    build_training_params,
+    calc_metrics_for_models,
+    accuracy,
+    f1_macro,
     compute_dummy_classification_pred_ids,
+    compute_pred_ids,
+    flatten_metrics_report,
+    get_confusion_matrix_figure,
+    get_per_class_f1_figure,
+    get_target_distribution_figure,
     get_top_k_worst_misses,
 )
 from aitraf.processing import load_target_label_mappings
@@ -62,10 +68,14 @@ def run_evaluation(config: VideoMaeTrickClassificationEvalCfg):
 
     dataset = load_dataset(
         "json",
-        data_files={"test": str(config.manifests_dir / "test.jsonl")},
+        data_files={
+            "train": str(config.manifests_dir / "train.jsonl"),
+            "test": str(config.manifests_dir / "test.jsonl"),
+        },
     )
 
-    eval_dataset = dataset["test"]
+    train_dataset = dataset["train"]
+    test_dataset = dataset["test"]
 
     label_names, label2id, id2label = load_target_label_mappings(
         config.vocab_path, "trick"
@@ -79,8 +89,6 @@ def run_evaluation(config: VideoMaeTrickClassificationEvalCfg):
         f"VideoMAE evaluation running on device: {next(model.parameters()).device}"
     )
     processor = components["image_processor"]
-
-    compute_metrics = build_classification_metrics()
 
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),
@@ -106,47 +114,102 @@ def run_evaluation(config: VideoMaeTrickClassificationEvalCfg):
     trainer = Trainer(
         model=model,
         args=training_args,
-        eval_dataset=eval_dataset,
+        eval_dataset=test_dataset,
         data_collator=data_collator,
     )
+
+    source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
+    source_train_params = build_training_params(source_train_run_id) | {
+        "sampling_dist": config.sampling_dist
+    }
 
     mlflow.set_experiment(config.experiment_name)
 
     with mlflow.start_run(run_name=config.run_name):
-        mlflow.log_input(from_huggingface(eval_dataset, name="test"), context="test")
+        mlflow.log_params(source_train_params)
+        mlflow.log_input(from_huggingface(train_dataset, name="train"), context="train")
+        mlflow.log_input(from_huggingface(test_dataset, name="test"), context="test")
 
-        pred_logits, label_ids, _ = trainer.predict(eval_dataset)
+        train_pred_logits, train_label_ids, _ = trainer.predict(train_dataset)
+        train_video_mae_pred_ids = compute_pred_ids(train_pred_logits)
+        train_dummy_pred_ids = compute_dummy_classification_pred_ids(train_label_ids)
 
-        pred_ids = compute_pred_ids(pred_logits)
-        metrics = compute_metrics(pred_ids, label_ids)
+        test_pred_logits, test_label_ids, _ = trainer.predict(test_dataset)
+        test_video_mae_pred_ids = compute_pred_ids(test_pred_logits)
+        test_dummy_pred_ids = compute_dummy_classification_pred_ids(test_label_ids)
+        metrics_report = calc_metrics_for_models(
+            eval_models=[
+                EvalModel(
+                    name="video_mae",
+                    sets=[
+                        EvalSet(
+                            name="train",
+                            predictions=train_video_mae_pred_ids,
+                            labels=train_label_ids,
+                        ),
+                        EvalSet(
+                            name="test",
+                            predictions=test_video_mae_pred_ids,
+                            labels=test_label_ids,
+                        ),
+                    ],
+                ),
+                EvalModel(
+                    name="dummy",
+                    sets=[
+                        EvalSet(
+                            name="train",
+                            predictions=train_dummy_pred_ids,
+                            labels=train_label_ids,
+                        ),
+                        EvalSet(
+                            name="test",
+                            predictions=test_dummy_pred_ids,
+                            labels=test_label_ids,
+                        ),
+                    ],
+                ),
+            ],
+            eval_metrics=(
+                accuracy,
+                f1_macro,
+            ),
+        )
 
-        mlflow.log_metrics(metrics)
+        all_metrics = flatten_metrics_report(metrics_report)
 
-        dummy_pred_ids = compute_dummy_classification_pred_ids(label_ids)
-        dummy_metrics = compute_metrics(dummy_pred_ids, label_ids)
-
-        dummy_metrics_prefixed = {f"dummy_{k}": v for k, v in dummy_metrics.items()}
-
-        mlflow.log_metrics(dummy_metrics_prefixed)
+        mlflow.log_metrics(all_metrics)
 
         dist_fig = get_target_distribution_figure(
-            pred_ids, label_ids, label_names, id2label
+            test_video_mae_pred_ids,
+            test_label_ids,
+            label_names,
+            id2label,
         )
 
         mlflow.log_figure(dist_fig, "predicted_vs_actual_target_counts.png")
 
-        cm_fig = get_confusion_matrix_figure(pred_ids, label_ids, label_names)
+        cm_fig = get_confusion_matrix_figure(
+            test_video_mae_pred_ids,
+            test_label_ids,
+            label_names,
+        )
         mlflow.log_figure(cm_fig, "confusion_matrix.png")
 
-        f1_fig = get_per_class_f1_figure(pred_ids, label_ids, label_names)
+        f1_fig = get_per_class_f1_figure(
+            test_video_mae_pred_ids,
+            test_label_ids,
+            label_names,
+        )
         mlflow.log_figure(f1_fig, "per_class_f1.png")
 
         worst_misses = get_top_k_worst_misses(
-            pred_logits,
-            label_ids,
-            eval_dataset.to_pandas(),
+            test_pred_logits,
+            test_label_ids,
+            test_dataset.to_pandas(),
             id2label,
             top_k=config.top_k_worst,
         )
 
-        mlflow.log_table(worst_misses, "worst_misses.json")
+        if not worst_misses.empty:
+            mlflow.log_table(worst_misses, "worst_misses.json")

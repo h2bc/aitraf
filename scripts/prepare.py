@@ -15,8 +15,11 @@ from aitraf.tasks.score_prediction.prepare import (
 from aitraf.tasks.score_prediction_binary.prepare import (
     run_prepare as run_score_prediction_binary_prepare,
 )
-from aitraf.tasks.score_prediction_rank.prepare import (
-    run_prepare as run_score_prediction_rank_prepare,
+from aitraf.tasks.score_prediction_pairwise.prepare import (
+    run_prepare as run_score_prediction_pairwise_prepare,
+)
+from aitraf.tasks.score_prediction_ordinal.prepare import (
+    run_prepare as run_score_prediction_ordinal_prepare,
 )
 from aitraf.tasks.trick_classifier.prepare import (
     run_prepare as run_trick_classification_prepare,
@@ -30,7 +33,8 @@ PREPARE_TARGETS: dict[str, PrepareTarget] = {
     "trick_classification": run_trick_classification_prepare,
     "score_prediction": run_score_prediction_prepare,
     "score_prediction_binary": run_score_prediction_binary_prepare,
-    "score_prediction_rank": run_score_prediction_rank_prepare,
+    "score_prediction_ordinal": run_score_prediction_ordinal_prepare,
+    "score_prediction_pairwise": run_score_prediction_pairwise_prepare,
 }
 
 

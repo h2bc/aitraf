@@ -89,27 +89,26 @@ def download_labels(config: LabelDownloadConfig) -> Path:
 
 
 def _flatten_labels_annotation(annotation: dict[str, Any]) -> dict[str, Any]:
-    task = annotation.get("task") or {}
-    completed_by = annotation.get("completed_by") or {}
-    flat: dict[str, Any] = dict(task.get("data") or {})
+    task = annotation["task"]
+    completed_by = annotation["completed_by"]
+    flat: dict[str, Any] = dict(task["data"])
     flat.update(
-        annotation_id=annotation.get("id"),
-        annotator=completed_by.get("id"),
-        id=task.get("id"),
-        created_at=annotation.get("created_at"),
-        updated_at=annotation.get("updated_at"),
-        lead_time=annotation.get("lead_time"),
+        annotation_id=annotation["id"],
+        annotator=completed_by["id"],
+        id=task["id"],
+        created_at=annotation["created_at"],
+        updated_at=annotation["updated_at"],
+        lead_time=annotation["lead_time"],
     )
 
-    for item in annotation.get("result", []):
-        if not isinstance(item, dict):
+    for item in annotation["result"]:
+        name = item["from_name"]
+        value = item["value"]
+        if name == "execution_score":
+            flat["execution_score"] = value["rating"]
             continue
-        name = item.get("from_name")
-        value = item.get("value")
-        if not name or not isinstance(value, dict):
-            continue
-        payload = next(iter(value.values()), None)
-        flat[str(name)] = payload[0] if isinstance(payload, list) and payload else payload
+        payload = next(iter(value.values()))
+        flat[name] = payload[0] if isinstance(payload, list) else payload
 
     return flat
 

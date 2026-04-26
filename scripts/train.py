@@ -29,9 +29,13 @@ from aitraf.tasks.score_prediction_binary.video_mae import (
     VideoMaeScorePredictionBinaryTrainCfg,
     run_training as run_video_mae_score_prediction_binary_train,
 )
-from aitraf.tasks.score_prediction_rank.video_mae import (
-    VideoMaeScorePredictionRankTrainCfg,
-    run_training as run_video_mae_score_prediction_rank_train,
+from aitraf.tasks.score_prediction_pairwise.video_mae import (
+    VideoMaeScorePredictionPairwiseTrainCfg,
+    run_training as run_video_mae_score_prediction_pairwise_train,
+)
+from aitraf.tasks.score_prediction_ordinal.video_mae import (
+    VideoMaeScorePredictionOrdinalTrainCfg,
+    run_training as run_video_mae_score_prediction_ordinal_train,
 )
 
 
@@ -173,12 +177,12 @@ def _build_video_mae_score_prediction_binary_training_config(
     )
 
 
-def _build_video_mae_score_prediction_rank_training_config(
+def _build_video_mae_score_prediction_pairwise_training_config(
     cfg: DictConfig,
-) -> VideoMaeScorePredictionRankTrainCfg:
+) -> VideoMaeScorePredictionPairwiseTrainCfg:
     data_dir = Path(cfg.paths.data_dir)
 
-    return VideoMaeScorePredictionRankTrainCfg(
+    return VideoMaeScorePredictionPairwiseTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
@@ -198,6 +202,34 @@ def _build_video_mae_score_prediction_rank_training_config(
         freeze_backbone=cfg.model.freeze_backbone,
         early_stopping_patience=cfg.model.early_stopping_patience,
         max_train_samples=cfg.max_samples,
+    )
+
+
+def _build_video_mae_score_prediction_ordinal_training_config(
+    cfg: DictConfig,
+) -> VideoMaeScorePredictionOrdinalTrainCfg:
+    data_dir = Path(cfg.paths.data_dir)
+
+    return VideoMaeScorePredictionOrdinalTrainCfg(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
+        backbone=cfg.model.backbone,
+        manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.task.vocab_path,
+        clips_dir=data_dir / "clips",
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.sampling_dist,
+        device=cfg.model.device,
+        output_dir=cfg.output_dir,
+        epochs=cfg.model.epochs,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.run_name,
+        freeze_backbone=cfg.model.freeze_backbone,
+        model_cache_dir=cfg.model.model_cache_dir,
+        max_train_samples=cfg.max_samples,
+        early_stopping_patience=cfg.model.early_stopping_patience,
     )
 
 
@@ -227,10 +259,16 @@ TRAINING_TARGETS: dict[tuple[str, str], Callable[[DictConfig], str]] = {
         _build_video_mae_score_prediction_binary_training_config(cfg)
     ),
     (
-        "score_prediction_rank",
+        "score_prediction_pairwise",
         "video_mae",
-    ): lambda cfg: run_video_mae_score_prediction_rank_train(
-        _build_video_mae_score_prediction_rank_training_config(cfg)
+    ): lambda cfg: run_video_mae_score_prediction_pairwise_train(
+        _build_video_mae_score_prediction_pairwise_training_config(cfg)
+    ),
+    (
+        "score_prediction_ordinal",
+        "video_mae",
+    ): lambda cfg: run_video_mae_score_prediction_ordinal_train(
+        _build_video_mae_score_prediction_ordinal_training_config(cfg)
     ),
 }
 

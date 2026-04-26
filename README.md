@@ -30,9 +30,11 @@ The dataset is customly filmed from a single fixed angle with multiple people. I
 - **trick_classification**  
   Predicts the discrete trick label for each clip. Train/val/test splits are stratified by the target to preserve class balance. Available labels: `ao-soul`, `bs-royale`, `fs-royale`, `fs-savanah`, `mizou`, `soul`, `top-soul`.
 - **score_prediction**  
-  Predicts the execution score for each clip. Scores are collected as 1–4 ★★★★ and converted to a 0–1 percentage for training. We plan to extend this to pairwise ranking with separated goals (component scores vs a single overall score).
+  Predicts the execution score for each clip. Scores are collected as 1–4 ★★★★ and converted to a 0–1 percentage for training.
 - **score_prediction_binary**
   Predicts a binary quality label for each clip using only 1-star (`bad`) and 4-star (`good`) examples.
+- **score_prediction_pairwise**
+  Predicts the preferred clip from same-trick comparison pairs.
 
 
 ## Models
@@ -65,7 +67,7 @@ Run commands via [Task](https://taskfile.dev)
 
 - Downloads annotation files from a configurable S3 prefix and merges them into `data/labels.jsonl`.
 
-#### Create pairwise ranking tasks
+#### Create pairwise comparison tasks
 
 - Builds same-trick comparison pairs, writing one JSON file per pair with the `{"data": {"trick": ..., "left": ..., "right": ...}}` format.
 

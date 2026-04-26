@@ -17,9 +17,15 @@ from torch.utils.data import DataLoader
 
 from aitraf.datasets.pose_tcn import PoseTCNDataset
 from aitraf.metrics import (
-    build_classification_metrics,
-    compute_pred_ids,
+    EvalModel,
+    EvalSet,
+    build_training_params,
+    calc_metrics_for_models,
+    accuracy,
+    f1_macro,
     compute_dummy_classification_pred_ids,
+    compute_pred_ids,
+    flatten_metrics_report,
     get_confusion_matrix_figure,
     get_per_class_f1_figure,
     get_target_distribution_figure,
@@ -59,7 +65,12 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
         config.vocab_path, "trick"
     )
 
-    dataset = PoseTCNDataset(
+    train_dataset = PoseTCNDataset(
+        manifests_dir=config.manifests_dir,
+        poses_dir=config.poses_dir,
+        split="train",
+    )
+    test_dataset = PoseTCNDataset(
         manifests_dir=config.manifests_dir,
         poses_dir=config.poses_dir,
         split="test",
@@ -75,8 +86,15 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
 
     collate_fn = build_collate(process_fn)
 
-    dataloader = DataLoader(
-        dataset,
+    train_dataloader = DataLoader(
+        train_dataset,
+        batch_size=config.batch_size,
+        num_workers=config.num_workers,
+        shuffle=False,
+        collate_fn=collate_fn,
+    )
+    test_dataloader = DataLoader(
+        test_dataset,
         batch_size=config.batch_size,
         num_workers=config.num_workers,
         shuffle=False,
@@ -88,55 +106,107 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
     model = model.to(config.device)
     model.eval()
 
-    compute_metrics = build_classification_metrics()
+    def predict_ids_and_labels(
+        dataloader: DataLoader,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        logits_list: list[np.ndarray] = []
+        label_ids_list: list[np.ndarray] = []
 
-    logits_list: list[np.ndarray] = []
-    label_ids_list: list[np.ndarray] = []
+        with torch.no_grad():
+            for batch in dataloader:
+                inputs = batch["inputs"].to(config.device)
+                batch_labels = batch["labels"].to(config.device)
+                batch_logits = model(inputs)
+                logits_list.append(batch_logits.cpu().numpy())
+                label_ids_list.append(batch_labels.cpu().numpy())
 
-    with torch.no_grad():
-        for batch in dataloader:
-            inputs = batch["inputs"].to(config.device)
-            batch_labels = batch["labels"].to(config.device)
-            batch_logits = model(inputs)
-            logits_list.append(batch_logits.cpu().numpy())
-            label_ids_list.append(batch_labels.cpu().numpy())
+        logits = np.concatenate(logits_list, axis=0)
+        label_ids = np.concatenate(label_ids_list, axis=0)
+        pred_ids = compute_pred_ids(logits)
+        return logits, pred_ids, label_ids
 
-    logits = np.concatenate(logits_list, axis=0)
-    label_ids = np.concatenate(label_ids_list, axis=0)
-    pred_ids = compute_pred_ids(logits)
+    _, train_pred_ids, train_label_ids = predict_ids_and_labels(train_dataloader)
+    test_logits, test_pred_ids, test_label_ids = predict_ids_and_labels(test_dataloader)
 
-    metrics = compute_metrics(pred_ids, label_ids)
-    dummy_metrics = compute_metrics(
-        compute_dummy_classification_pred_ids(label_ids), label_ids
+    metrics_report = calc_metrics_for_models(
+        eval_models=[
+            EvalModel(
+                name="pose_tcn",
+                sets=[
+                    EvalSet(
+                        name="train",
+                        predictions=train_pred_ids,
+                        labels=train_label_ids,
+                    ),
+                    EvalSet(
+                        name="test",
+                        predictions=test_pred_ids,
+                        labels=test_label_ids,
+                    ),
+                ],
+            ),
+            EvalModel(
+                name="dummy",
+                sets=[
+                    EvalSet(
+                        name="train",
+                        predictions=compute_dummy_classification_pred_ids(train_label_ids),
+                        labels=train_label_ids,
+                    ),
+                    EvalSet(
+                        name="test",
+                        predictions=compute_dummy_classification_pred_ids(test_label_ids),
+                        labels=test_label_ids,
+                    ),
+                ],
+            ),
+        ],
+        eval_metrics=(
+            accuracy,
+            f1_macro,
+        ),
     )
-    dummy_metrics = {f"dummy_{k}": v for k, v in dummy_metrics.items()}
+
+    all_metrics = flatten_metrics_report(metrics_report)
+
+    source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
+    source_train_params = build_training_params(source_train_run_id) | {
+        "sampling_dist": config.sampling_dist
+    }
 
     mlflow.set_experiment(config.experiment_name)
 
     with mlflow.start_run(run_name=config.run_name):
+        mlflow.log_params(source_train_params)
         mlflow.log_input(
-            from_pandas(pd.DataFrame(dataset.manifest_rows()), name="test"),
+            from_pandas(pd.DataFrame(train_dataset.manifest_rows()), name="train"),
+            context="train",
+        )
+        mlflow.log_input(
+            from_pandas(pd.DataFrame(test_dataset.manifest_rows()), name="test"),
             context="test",
         )
 
-        mlflow.log_metrics(metrics)
-        mlflow.log_metrics(dummy_metrics)
+        mlflow.log_metrics(all_metrics)
 
         dist_fig = get_target_distribution_figure(
-            pred_ids, label_ids, label_names, id2label
+            test_pred_ids,
+            test_label_ids,
+            label_names,
+            id2label,
         )
         mlflow.log_figure(dist_fig, "predicted_vs_actual_target_counts.png")
 
-        cm_fig = get_confusion_matrix_figure(pred_ids, label_ids, label_names)
+        cm_fig = get_confusion_matrix_figure(test_pred_ids, test_label_ids, label_names)
         mlflow.log_figure(cm_fig, "confusion_matrix.png")
 
-        f1_fig = get_per_class_f1_figure(pred_ids, label_ids, label_names)
+        f1_fig = get_per_class_f1_figure(test_pred_ids, test_label_ids, label_names)
         mlflow.log_figure(f1_fig, "per_class_f1.png")
 
         worst_misses = get_top_k_worst_misses(
-            logits,
-            label_ids,
-            pd.DataFrame(dataset.manifest_rows()),
+            test_logits,
+            test_label_ids,
+            pd.DataFrame(test_dataset.manifest_rows()),
             id2label,
             top_k=config.top_k_worst,
         )

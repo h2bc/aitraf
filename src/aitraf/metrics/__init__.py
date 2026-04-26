@@ -1,7 +1,9 @@
 """Metrics helpers grouped by classification/regression."""
 
 from .classification import (
-    build_classification_metrics,
+    accuracy,
+    balanced_accuracy,
+    f1_macro,
     compute_dummy_classification_pred_ids,
     compute_pred_confidences,
     compute_pred_ids,
@@ -17,13 +19,45 @@ from .regression import (
     get_residual_vs_predicted_scatter_figure,
     get_residual_distribution_figure,
     get_top_k_worst_errors,
+    mae,
+    r2,
+    rmse,
 )
-from .pairwise import build_pairwise_metrics
+from .params import build_training_params
+from .pipeline import (
+    EvalMetric,
+    EvalMetrics,
+    EvalModel,
+    EvalModels,
+    EvalModelMetrics,
+    EvalModelsMetrics,
+    EvalSet,
+    EvalSetMetrics,
+    calc_metrics,
+    calc_metrics_for_model,
+    calc_metrics_for_models,
+    calc_metrics_for_set,
+    flatten_metrics_report,
+)
 
 __all__ = [
-    "build_classification_metrics",
-    "build_pairwise_metrics",
+    "accuracy",
+    "balanced_accuracy",
+    "f1_macro",
+    "build_training_params",
     "build_regression_metrics",
+    "EvalMetric",
+    "EvalMetrics",
+    "EvalModel",
+    "EvalModels",
+    "EvalModelMetrics",
+    "EvalModelsMetrics",
+    "EvalSet",
+    "EvalSetMetrics",
+    "calc_metrics",
+    "calc_metrics_for_model",
+    "calc_metrics_for_models",
+    "calc_metrics_for_set",
     "compute_dummy_classification_pred_ids",
     "compute_dummy_regression_preds",
     "get_predicted_vs_actual_scatter_figure",
@@ -32,8 +66,12 @@ __all__ = [
     "get_top_k_worst_errors",
     "compute_pred_confidences",
     "compute_pred_ids",
+    "flatten_metrics_report",
     "get_confusion_matrix_figure",
     "get_per_class_f1_figure",
     "get_target_distribution_figure",
     "get_top_k_worst_misses",
+    "mae",
+    "r2",
+    "rmse",
 ]

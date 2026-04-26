@@ -1,7 +1,6 @@
 """Raw source schemas shared by ingestion/downloading steps."""
 
-from typing import ClassVar, Dict, Callable, Any
-import json
+from typing import Any, Callable, ClassVar, Dict
 
 
 class LabelsSchema:
@@ -9,7 +8,7 @@ class LabelsSchema:
         "annotation_id": "string",
         "annotator": "string",
         "id": "string",
-        "execution_score": "Int64",
+        "execution_score": "string",
         "lead_time": "Float64",
         "created_at": "string",
         "updated_at": "string",
@@ -17,13 +16,10 @@ class LabelsSchema:
         "person": "string",
         "trick": "string",
         "video": "string",
-        "execution_explanation": "string",
     }
 
     processors: ClassVar[Dict[str, Callable[[Any], Any]]] = {
-        "execution_score": lambda x: (
-            json.loads(x)[0]["rating"] if isinstance(x, str) else x
-        )
+        "execution_score": lambda value: str(int(value))
     }
 
     video_col: ClassVar[str] = "video"

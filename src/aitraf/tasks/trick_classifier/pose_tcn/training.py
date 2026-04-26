@@ -16,7 +16,7 @@ from pytorch_lightning.loggers import MLFlowLogger
 from torch.utils.data import DataLoader, Subset
 
 from aitraf.datasets.pose_tcn import PoseTCNDataset
-from aitraf.metrics import build_classification_metrics
+from aitraf.metrics import calc_metrics, accuracy, f1_macro
 from aitraf.models.pose_tcn import TCNClassifier
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.pose_tcn import process_sample
@@ -116,7 +116,14 @@ def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
         feature_dim=feature_dim,
         num_classes=num_classes,
         learning_rate=config.learning_rate,
-        metrics_fn=build_classification_metrics(),
+        metrics_fn=lambda predictions, labels: calc_metrics(
+            predictions,
+            labels,
+            (
+                accuracy,
+                f1_macro,
+            ),
+        ),
         hidden_dim=config.hidden_dim,
         num_layers=config.num_layers,
         kernel_size=config.kernel_size,

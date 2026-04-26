@@ -33,7 +33,6 @@ MANIFEST_COLUMNS = (
     "key_foot",
     "person",
     "execution_score",
-    "execution_explanation",
 )
 MANIFEST_DTYPES = {
     "video_id": "string",
@@ -42,9 +41,8 @@ MANIFEST_DTYPES = {
     "key_foot": "string",
     "person": "string",
     "execution_score": "Float64",
-    "execution_explanation": "string",
 }
-MANIFEST_PROCESSORS = {"execution_score": lambda x: x / 4}
+MANIFEST_PROCESSORS = {"execution_score": lambda x: float(x) / 4}
 
 
 def run_prepare(task_cfg: DictConfig, prepare_cfg: DictConfig) -> None:
@@ -98,7 +96,6 @@ def _build_manifest_df(labels_df: pd.DataFrame) -> pd.DataFrame:
         "key_foot",
         "person",
         "execution_score",
-        "execution_explanation",
     ):
         if col in labels_df.columns:
             manifest_df[col] = labels_df[col]

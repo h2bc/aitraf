@@ -17,12 +17,19 @@ from torch.utils.data import DataLoader
 
 from aitraf.datasets.pose_tcn import PoseTCNDataset
 from aitraf.metrics import (
-    build_regression_metrics,
+    EvalModel,
+    EvalSet,
+    build_training_params,
+    calc_metrics_for_models,
     compute_dummy_regression_preds,
+    flatten_metrics_report,
     get_predicted_vs_actual_scatter_figure,
     get_residual_vs_predicted_scatter_figure,
     get_residual_distribution_figure,
     get_top_k_worst_errors,
+    mae,
+    r2,
+    rmse,
 )
 from aitraf.models.pose_tcn import TCNRegressor
 from aitraf.processing.models.pose_tcn import process_sample
@@ -52,7 +59,12 @@ class PoseTcnScorePredictionEvalCfg:
 
 def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
 
-    dataset = PoseTCNDataset(
+    train_dataset = PoseTCNDataset(
+        manifests_dir=config.manifests_dir,
+        poses_dir=config.poses_dir,
+        split="train",
+    )
+    test_dataset = PoseTCNDataset(
         manifests_dir=config.manifests_dir,
         poses_dir=config.poses_dir,
         split="test",
@@ -67,8 +79,15 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
 
     collate_fn = build_collate(process_fn)
 
-    dataloader = DataLoader(
-        dataset,
+    train_dataloader = DataLoader(
+        train_dataset,
+        batch_size=config.batch_size,
+        num_workers=config.num_workers,
+        shuffle=False,
+        collate_fn=collate_fn,
+    )
+    test_dataloader = DataLoader(
+        test_dataset,
         batch_size=config.batch_size,
         num_workers=config.num_workers,
         shuffle=False,
@@ -80,47 +99,103 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
     model = model.to(config.device)
     model.eval()
 
-    compute_metrics = build_regression_metrics()
+    def predict_values_and_labels(dataloader: DataLoader) -> tuple[np.ndarray, np.ndarray]:
+        preds_list: list[np.ndarray] = []
+        labels_list: list[np.ndarray] = []
 
-    preds_list: list[np.ndarray] = []
-    labels_list: list[np.ndarray] = []
+        with torch.no_grad():
+            for batch in dataloader:
+                inputs = batch["inputs"].to(config.device)
+                labels = batch["labels"].to(config.device).float()
+                preds = model(inputs)
+                preds_list.append(preds.cpu().numpy())
+                labels_list.append(labels.cpu().numpy())
 
-    with torch.no_grad():
-        for batch in dataloader:
-            inputs = batch["inputs"].to(config.device)
-            labels = batch["labels"].to(config.device).float()
-            preds = model(inputs)
-            preds_list.append(preds.cpu().numpy())
-            labels_list.append(labels.cpu().numpy())
+        predictions = np.concatenate(preds_list, axis=0).reshape(-1)
+        labels = np.concatenate(labels_list, axis=0).reshape(-1)
+        return predictions, labels
 
-    predictions = np.concatenate(preds_list, axis=0)
-    labels = np.concatenate(labels_list, axis=0)
+    train_predictions, train_labels = predict_values_and_labels(train_dataloader)
+    test_predictions, test_labels = predict_values_and_labels(test_dataloader)
 
-    metrics = compute_metrics(predictions, labels)
-    dummy_metrics = compute_metrics(compute_dummy_regression_preds(labels), labels)
-    dummy_metrics = {f"dummy_{k}": v for k, v in dummy_metrics.items()}
+    metrics_report = calc_metrics_for_models(
+        eval_models=[
+            EvalModel(
+                name="pose_tcn",
+                sets=[
+                    EvalSet(
+                        name="train",
+                        predictions=train_predictions,
+                        labels=train_labels,
+                    ),
+                    EvalSet(
+                        name="test",
+                        predictions=test_predictions,
+                        labels=test_labels,
+                    ),
+                ],
+            ),
+            EvalModel(
+                name="dummy",
+                sets=[
+                    EvalSet(
+                        name="train",
+                        predictions=compute_dummy_regression_preds(train_labels),
+                        labels=train_labels,
+                    ),
+                    EvalSet(
+                        name="test",
+                        predictions=compute_dummy_regression_preds(test_labels),
+                        labels=test_labels,
+                    ),
+                ],
+            ),
+        ],
+        eval_metrics=(
+            mae,
+            rmse,
+            r2,
+        ),
+    )
+
+    all_metrics = flatten_metrics_report(metrics_report)
+
+    source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
+    source_train_params = build_training_params(source_train_run_id) | {
+        "sampling_dist": config.sampling_dist
+    }
 
     mlflow.set_experiment(config.experiment_name)
 
     with mlflow.start_run(run_name=config.run_name):
+        mlflow.log_params(source_train_params)
         mlflow.log_input(
-            from_pandas(pd.DataFrame(dataset.manifest_rows()), name="test"),
+            from_pandas(pd.DataFrame(train_dataset.manifest_rows()), name="train"),
+            context="train",
+        )
+        mlflow.log_input(
+            from_pandas(pd.DataFrame(test_dataset.manifest_rows()), name="test"),
             context="test",
         )
 
-        mlflow.log_metrics(metrics)
-        mlflow.log_metrics(dummy_metrics)
-        scatter_fig = get_predicted_vs_actual_scatter_figure(predictions, labels)
+        mlflow.log_metrics(all_metrics)
+        scatter_fig = get_predicted_vs_actual_scatter_figure(
+            test_predictions, test_labels
+        )
         mlflow.log_figure(scatter_fig, "predicted_vs_actual.png")
-        residual_fig = get_residual_vs_predicted_scatter_figure(predictions, labels)
+        residual_fig = get_residual_vs_predicted_scatter_figure(
+            test_predictions, test_labels
+        )
         mlflow.log_figure(residual_fig, "residuals_vs_predicted.png")
-        residual_dist_fig = get_residual_distribution_figure(predictions, labels)
+        residual_dist_fig = get_residual_distribution_figure(
+            test_predictions, test_labels
+        )
         mlflow.log_figure(residual_dist_fig, "residual_distribution.png")
 
         worst_misses = get_top_k_worst_errors(
-            predictions,
-            labels,
-            pd.DataFrame(dataset.manifest_rows()),
+            test_predictions,
+            test_labels,
+            pd.DataFrame(test_dataset.manifest_rows()),
             top_k=config.top_k_worst,
         )
 
