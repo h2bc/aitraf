@@ -7,7 +7,6 @@ from functools import partial
 from pathlib import Path
 
 import mlflow
-import numpy as np
 from datasets import load_dataset
 from dotenv import load_dotenv
 from mlflow import transformers as mlflow_transformers
@@ -16,18 +15,26 @@ from transformers import Trainer, TrainingArguments
 
 from aitraf.logging import logger
 from aitraf.metrics import (
-    build_ordinal_eval_metrics,
-    compute_constant_median_pred_ids,
-    compute_ordinal_pred_ids,
-    compute_ordinal_probabilities,
-    compute_prior_probabilities,
+    EvalModel,
+    EvalSet,
+    build_training_params,
+    calc_metrics_for_models,
+    compute_pred_ids,
+    flatten_metrics_report,
     get_confusion_matrix_figure,
     get_target_distribution_figure,
-    get_top_k_worst_ordinal_errors,
 )
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.video_mae import process_sample
 from aitraf.processing.utils import build_collate
+from ..metrics import (
+    amae,
+    compute_constant_median_pred_ids,
+    get_top_k_worst_ordinal_errors,
+    mae,
+    mmae,
+    qwk,
+)
 
 
 @dataclass
@@ -69,7 +76,7 @@ def run_evaluation(config: VideoMaeScorePredictionOrdinalEvalCfg) -> None:
     )
 
     train_dataset = dataset["train"]
-    eval_dataset = dataset["test"]
+    test_dataset = dataset["test"]
 
     label_names, label2id, id2label = load_target_label_mappings(
         config.vocab_path, "execution_score"
@@ -108,56 +115,98 @@ def run_evaluation(config: VideoMaeScorePredictionOrdinalEvalCfg) -> None:
     trainer = Trainer(
         model=model,
         args=training_args,
-        eval_dataset=eval_dataset,
+        eval_dataset=test_dataset,
         data_collator=data_collator,
     )
-
-    compute_metrics = build_ordinal_eval_metrics()
+    source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
+    source_train_params = build_training_params(source_train_run_id) | {
+        "sampling_dist": config.sampling_dist
+    }
 
     mlflow.set_experiment(config.experiment_name)
 
     with mlflow.start_run(run_name=config.run_name):
-        mlflow.log_input(from_huggingface(eval_dataset, name="test"), context="test")
+        mlflow.log_params(source_train_params)
+        mlflow.log_input(from_huggingface(train_dataset, name="train"), context="train")
+        mlflow.log_input(from_huggingface(test_dataset, name="test"), context="test")
 
-        pred_logits, label_ids, _ = trainer.predict(eval_dataset)
-        pred_ids = compute_ordinal_pred_ids(pred_logits)
-        pred_probs = compute_ordinal_probabilities(pred_logits)
-        label_ids = np.asarray(label_ids, dtype=int).reshape(-1)
+        train_pred_logits, train_label_ids, _ = trainer.predict(train_dataset)
+        train_video_mae_pred_ids = compute_pred_ids(train_pred_logits)
 
-        metrics = compute_metrics(pred_ids, label_ids, pred_probs)
-        mlflow.log_metrics(metrics)
+        test_pred_logits, test_label_ids, _ = trainer.predict(test_dataset)
+        test_video_mae_pred_ids = compute_pred_ids(test_pred_logits)
 
-        train_label_ids = np.asarray(
-            [label2id[str(row["execution_score"])] for row in train_dataset],
-            dtype=int,
-        )
-        dummy_pred_ids = compute_constant_median_pred_ids(
+        train_dummy_pred_ids = compute_constant_median_pred_ids(
             train_label_ids,
-            count=len(label_ids),
+            count=len(train_label_ids),
         )
-        dummy_prior_probs = compute_prior_probabilities(
+        test_dummy_pred_ids = compute_constant_median_pred_ids(
             train_label_ids,
-            num_classes=len(label_names),
+            count=len(test_label_ids),
         )
-        dummy_pred_probs = np.tile(dummy_prior_probs, (len(label_ids), 1))
-        dummy_metrics = compute_metrics(dummy_pred_ids, label_ids, dummy_pred_probs)
-        mlflow.log_metrics({f"dummy_{k}": v for k, v in dummy_metrics.items()})
+        metrics_report = calc_metrics_for_models(
+            eval_models=[
+                EvalModel(
+                    name="video_mae",
+                    sets=[
+                        EvalSet(
+                            name="train",
+                            predictions=train_video_mae_pred_ids,
+                            labels=train_label_ids,
+                        ),
+                        EvalSet(
+                            name="test",
+                            predictions=test_video_mae_pred_ids,
+                            labels=test_label_ids,
+                        ),
+                    ],
+                ),
+                EvalModel(
+                    name="dummy",
+                    sets=[
+                        EvalSet(
+                            name="train",
+                            predictions=train_dummy_pred_ids,
+                            labels=train_label_ids,
+                        ),
+                        EvalSet(
+                            name="test",
+                            predictions=test_dummy_pred_ids,
+                            labels=test_label_ids,
+                        ),
+                    ],
+                ),
+            ],
+            eval_metrics=(
+                amae,
+                mae,
+                mmae,
+                qwk,
+            ),
+        )
+        all_metrics = flatten_metrics_report(metrics_report)
+
+        mlflow.log_metrics(all_metrics)
 
         dist_fig = get_target_distribution_figure(
-            pred_ids,
-            label_ids,
+            test_video_mae_pred_ids,
+            test_label_ids,
             label_names,
             id2label,
         )
         mlflow.log_figure(dist_fig, "predicted_vs_actual_target_counts.png")
 
-        cm_fig = get_confusion_matrix_figure(pred_ids, label_ids, label_names)
+        cm_fig = get_confusion_matrix_figure(
+            test_video_mae_pred_ids,
+            test_label_ids,
+            label_names,
+        )
         mlflow.log_figure(cm_fig, "confusion_matrix.png")
 
         worst_misses = get_top_k_worst_ordinal_errors(
-            pred_ids,
-            label_ids,
-            eval_dataset.to_pandas(),
+            test_video_mae_pred_ids,
+            test_label_ids,
+            test_dataset.to_pandas(),
             id2label,
             top_k=config.top_k_worst,
         )

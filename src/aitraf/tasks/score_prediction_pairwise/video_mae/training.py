@@ -22,11 +22,12 @@ from transformers import (
 )
 
 from aitraf.logging import logger
-from aitraf.metrics import build_pairwise_metrics
+from aitraf.metrics import accuracy, calc_metrics
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.video_mae import process_pair_sample
 from aitraf.processing.utils import build_collate
 from ..dataset import ScorePredictionPairwiseDataset, ScorePredictionPairwiseSubset
+from ..metrics import compute_pairwise_pred_labels
 from .model import ScorePredictionPairwiseModel
 
 
@@ -145,12 +146,14 @@ def run_training(config: VideoMaeScorePredictionPairwiseTrainCfg) -> str:
     )
 
     data_collator = build_collate(process_fn)
-    compute_metrics = build_pairwise_metrics()
-
     def trainer_compute_metrics(prediction: EvalPrediction) -> dict[str, float]:
         pair_logits, labels = prediction
-        pred_labels = (np.asarray(pair_logits).squeeze(-1) >= 0).astype(int)
-        return compute_metrics(pred_labels, np.asarray(labels))
+        pred_labels = compute_pairwise_pred_labels(pair_logits)
+        return calc_metrics(
+            pred_labels,
+            np.asarray(labels).reshape(-1).astype(int),
+            (accuracy,),
+        )
 
     trainer = Trainer(
         model=model,

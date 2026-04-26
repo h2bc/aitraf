@@ -21,7 +21,12 @@ from transformers import (
 )
 
 from aitraf.logging import logger
-from aitraf.metrics import build_classification_metrics, compute_pred_ids
+from aitraf.metrics import (
+    calc_metrics,
+    accuracy,
+    f1_macro,
+    compute_pred_ids,
+)
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.video_mae import process_sample
 from aitraf.processing.utils import build_collate
@@ -108,12 +113,17 @@ def run_training(config: VideoMaeScorePredictionBinaryTrainCfg) -> str:
         for param in model.base_model.parameters():
             param.requires_grad = False
 
-    compute_metrics = build_classification_metrics()
-
     def trainer_compute_metrics(prediction: EvalPrediction) -> dict[str, float]:
         pred_logits, actual_ids = prediction
         pred_ids = compute_pred_ids(pred_logits)
-        return compute_metrics(pred_ids, actual_ids)
+        return calc_metrics(
+            pred_ids,
+            actual_ids,
+            (
+                accuracy,
+                f1_macro,
+            ),
+        )
 
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),

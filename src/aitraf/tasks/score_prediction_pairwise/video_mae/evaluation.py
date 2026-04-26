@@ -12,14 +12,23 @@ import pandas as pd
 from dotenv import load_dotenv
 from mlflow import transformers as mlflow_transformers
 from mlflow.data import from_pandas
-from transformers import EvalPrediction, Trainer, TrainingArguments
+from transformers import Trainer, TrainingArguments
 
 from aitraf.logging import logger
-from aitraf.metrics import build_pairwise_metrics
+from aitraf.metrics import (
+    EvalModel,
+    EvalSet,
+    accuracy,
+    build_training_params,
+    calc_metrics_for_models,
+    compute_dummy_classification_pred_ids,
+    flatten_metrics_report,
+)
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.video_mae import process_pair_sample
 from aitraf.processing.utils import build_collate
 from ..dataset import ScorePredictionPairwiseDataset
+from ..metrics import compute_pairwise_pred_labels
 from .model import ScorePredictionPairwiseModel
 
 
@@ -53,12 +62,18 @@ def run_evaluation(config: VideoMaeScorePredictionPairwiseEvalCfg) -> None:
 
     load_dotenv()
 
-    dataset = ScorePredictionPairwiseDataset(
+    train_dataset = ScorePredictionPairwiseDataset(
+        manifests_dir=config.manifests_dir,
+        split="train",
+    )
+    test_dataset = ScorePredictionPairwiseDataset(
         manifests_dir=config.manifests_dir,
         split="test",
     )
 
-    if len(dataset) == 0:
+    if len(train_dataset) == 0:
+        raise RuntimeError("No train pairs found for score_prediction_pairwise.")
+    if len(test_dataset) == 0:
         raise RuntimeError("No test pairs found for score_prediction_pairwise.")
 
     _, label2id, _ = load_target_label_mappings(config.vocab_path, "pair_label")
@@ -72,8 +87,6 @@ def run_evaluation(config: VideoMaeScorePredictionPairwiseEvalCfg) -> None:
     )
     processor = components["image_processor"]
     model = ScorePredictionPairwiseModel(scorer=scorer).to(config.device)
-
-    compute_metrics = build_pairwise_metrics()
 
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),
@@ -95,44 +108,81 @@ def run_evaluation(config: VideoMaeScorePredictionPairwiseEvalCfg) -> None:
 
     data_collator = build_collate(process_fn)
 
-    def trainer_compute_metrics(prediction: EvalPrediction) -> dict[str, float]:
-        pair_logits, labels = prediction
-        pred_labels = (np.asarray(pair_logits).squeeze(-1) >= 0).astype(int)
-        return compute_metrics(pred_labels, np.asarray(labels))
-
     trainer = Trainer(
         model=model,
         args=training_args,
-        eval_dataset=dataset,
+        eval_dataset=test_dataset,
         data_collator=data_collator,
-        compute_metrics=trainer_compute_metrics,
     )
+
+    source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
+    source_train_params = build_training_params(source_train_run_id) | {
+        "sampling_dist": config.sampling_dist
+    }
 
     mlflow.set_experiment(config.experiment_name)
 
     with mlflow.start_run(run_name=config.run_name):
+        mlflow.log_params(source_train_params)
         mlflow.log_input(
-            from_pandas(pd.DataFrame(dataset.manifest_rows()), name="test"),
+            from_pandas(pd.DataFrame(train_dataset.manifest_rows()), name="train"),
+            context="train",
+        )
+        mlflow.log_input(
+            from_pandas(pd.DataFrame(test_dataset.manifest_rows()), name="test"),
             context="test",
         )
 
-        metrics = trainer.evaluate()
-        _, label_ids, _ = trainer.predict(dataset)
-        label_ids = np.asarray(label_ids).astype(int).reshape(-1)
-        majority_label = int(np.bincount(label_ids).argmax())
-        dummy_pred_labels = np.full_like(label_ids, fill_value=majority_label)
-        dummy_metrics = {
-            f"dummy_{key}": value
-            for key, value in compute_metrics(dummy_pred_labels, label_ids).items()
-        }
-        tracked_metrics = {
-            key: float(value)
-            for key, value in metrics.items()
-            if key in {"eval_loss", "eval_accuracy"}
-            and isinstance(value, (int, float))
-        }
-        mlflow.log_metrics(tracked_metrics)
-        mlflow.log_metrics(dummy_metrics)
+        train_pair_logits, train_label_ids, _ = trainer.predict(train_dataset)
+        train_labels = np.asarray(train_label_ids).reshape(-1).astype(int)
+        train_video_mae_pred_labels = compute_pairwise_pred_labels(train_pair_logits)
+
+        test_pair_logits, test_label_ids, _ = trainer.predict(test_dataset)
+        test_labels = np.asarray(test_label_ids).reshape(-1).astype(int)
+        test_video_mae_pred_labels = compute_pairwise_pred_labels(test_pair_logits)
+
+        metrics_report = calc_metrics_for_models(
+            eval_models=[
+                EvalModel(
+                    name="video_mae",
+                    sets=[
+                        EvalSet(
+                            name="train",
+                            predictions=train_video_mae_pred_labels,
+                            labels=train_labels,
+                        ),
+                        EvalSet(
+                            name="test",
+                            predictions=test_video_mae_pred_labels,
+                            labels=test_labels,
+                        ),
+                    ],
+                ),
+                EvalModel(
+                    name="dummy",
+                    sets=[
+                        EvalSet(
+                            name="train",
+                            predictions=compute_dummy_classification_pred_ids(
+                                train_labels
+                            ),
+                            labels=train_labels,
+                        ),
+                        EvalSet(
+                            name="test",
+                            predictions=compute_dummy_classification_pred_ids(
+                                test_labels
+                            ),
+                            labels=test_labels,
+                        ),
+                    ],
+                ),
+            ],
+            eval_metrics=(accuracy,),
+        )
+        all_metrics = flatten_metrics_report(metrics_report)
+
+        mlflow.log_metrics(all_metrics)
 
 
 __all__ = ["VideoMaeScorePredictionPairwiseEvalCfg", "run_evaluation"]

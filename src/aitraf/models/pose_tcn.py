@@ -161,6 +161,8 @@ class TCNClassifier(pl.LightningModule):
             dropout=dropout,
         )
         self.metrics_fn = metrics_fn
+        self._val_pred_batches: list[torch.Tensor] = []
+        self._val_label_batches: list[torch.Tensor] = []
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         features = self.backbone(x)
@@ -172,17 +174,31 @@ class TCNClassifier(pl.LightningModule):
         self.log("train_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
         return loss
 
+    def on_validation_epoch_start(self):
+        self._val_pred_batches = []
+        self._val_label_batches = []
+
     def validation_step(self, batch, batch_idx):
         logits = self(batch["inputs"])
         loss = F.cross_entropy(logits, batch["labels"])
         self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
-        preds = logits.argmax(dim=-1).detach().cpu().numpy()
-        labels = batch["labels"].detach().cpu().numpy()
+        preds = logits.argmax(dim=-1).detach().cpu()
+        labels = batch["labels"].detach().cpu()
+        self._val_pred_batches.append(preds)
+        self._val_label_batches.append(labels)
+
+    def on_validation_epoch_end(self):
+        if not self._val_pred_batches:
+            return
+
+        preds = torch.cat(self._val_pred_batches, dim=0).numpy()
+        labels = torch.cat(self._val_label_batches, dim=0).numpy()
         metrics = self.metrics_fn(preds, labels)
+
         for name, value in metrics.items():
             self.log(
                 f"val_{name}",
-                value,
+                float(value),
                 prog_bar=False,
                 on_step=False,
                 on_epoch=True,

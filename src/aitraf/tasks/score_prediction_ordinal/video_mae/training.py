@@ -22,12 +22,13 @@ from transformers import (
 
 from aitraf.logging import logger
 from aitraf.metrics import (
-    build_ordinal_training_metrics,
-    compute_ordinal_pred_ids,
+    calc_metrics,
+    compute_pred_ids,
 )
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.video_mae import process_sample
 from aitraf.processing.utils import build_collate
+from ..metrics import amae, mae
 from .model import ScorePredictionOrdinalModel
 
 
@@ -119,12 +120,10 @@ def run_training(config: VideoMaeScorePredictionOrdinalTrainCfg) -> str:
         num_classes=len(labels),
     ).to(config.device)
 
-    compute_metrics = build_ordinal_training_metrics()
-
     def trainer_compute_metrics(prediction: EvalPrediction) -> dict[str, float]:
         pred_logits, actual_ids = prediction
-        pred_ids = compute_ordinal_pred_ids(pred_logits)
-        return compute_metrics(pred_ids, actual_ids)
+        pred_ids = compute_pred_ids(pred_logits)
+        return calc_metrics(pred_ids, actual_ids, (amae, mae))
 
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),

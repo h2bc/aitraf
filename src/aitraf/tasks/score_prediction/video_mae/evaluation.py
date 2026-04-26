@@ -15,12 +15,19 @@ from mlflow import transformers as mlflow_transformers
 from transformers import TrainingArguments, Trainer
 
 from aitraf.metrics import (
-    build_regression_metrics,
+    EvalModel,
+    EvalSet,
+    build_training_params,
+    calc_metrics_for_models,
     compute_dummy_regression_preds,
+    flatten_metrics_report,
     get_predicted_vs_actual_scatter_figure,
     get_residual_distribution_figure,
     get_residual_vs_predicted_scatter_figure,
     get_top_k_worst_errors,
+    mae,
+    r2,
+    rmse,
 )
 from aitraf.processing.models.video_mae import process_sample
 from aitraf.processing.utils import build_collate
@@ -57,10 +64,14 @@ def run_evaluation(config: VideoMaeScorePredictionEvalCfg) -> None:
 
     dataset = load_dataset(
         "json",
-        data_files={"test": str(config.manifests_dir / "test.jsonl")},
+        data_files={
+            "train": str(config.manifests_dir / "train.jsonl"),
+            "test": str(config.manifests_dir / "test.jsonl"),
+        },
     )
 
-    eval_dataset = dataset["test"]
+    train_dataset = dataset["train"]
+    test_dataset = dataset["test"]
 
     components = mlflow_transformers.load_model(
         config.model_uri, return_type="components"
@@ -70,8 +81,6 @@ def run_evaluation(config: VideoMaeScorePredictionEvalCfg) -> None:
         f"VideoMAE evaluation running on device: {next(model.parameters()).device}"
     )
     processor = components["image_processor"]
-
-    compute_metrics = build_regression_metrics()
 
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),
@@ -97,44 +106,90 @@ def run_evaluation(config: VideoMaeScorePredictionEvalCfg) -> None:
     trainer = Trainer(
         model=model,
         args=training_args,
-        eval_dataset=eval_dataset,
+        eval_dataset=test_dataset,
         data_collator=data_collator,
     )
+
+    source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
+    source_train_params = build_training_params(source_train_run_id) | {
+        "sampling_dist": config.sampling_dist
+    }
 
     mlflow.set_experiment(config.experiment_name)
 
     with mlflow.start_run(run_name=config.run_name):
-        mlflow.log_input(from_huggingface(eval_dataset, name="test"), context="test")
+        mlflow.log_params(source_train_params)
+        mlflow.log_input(from_huggingface(train_dataset, name="train"), context="train")
+        mlflow.log_input(from_huggingface(test_dataset, name="test"), context="test")
 
-        pred_logits, label_values, _ = trainer.predict(eval_dataset)
+        train_pred_logits, train_label_values, _ = trainer.predict(train_dataset)
+        train_predictions = np.asarray(train_pred_logits).reshape(-1)
+        train_labels = np.asarray(train_label_values).reshape(-1)
 
-        predictions = np.asarray(pred_logits).squeeze()
-        labels = np.asarray(label_values).squeeze()
+        test_pred_logits, test_label_values, _ = trainer.predict(test_dataset)
+        test_predictions = np.asarray(test_pred_logits).reshape(-1)
+        test_labels = np.asarray(test_label_values).reshape(-1)
 
-        metrics = compute_metrics(predictions, labels)
-        dummy_metrics = compute_metrics(
-            compute_dummy_regression_preds(labels), labels
+        metrics_report = calc_metrics_for_models(
+            eval_models=[
+                EvalModel(
+                    name="video_mae",
+                    sets=[
+                        EvalSet(
+                            name="train",
+                            predictions=train_predictions,
+                            labels=train_labels,
+                        ),
+                        EvalSet(
+                            name="test",
+                            predictions=test_predictions,
+                            labels=test_labels,
+                        ),
+                    ],
+                ),
+                EvalModel(
+                    name="dummy",
+                    sets=[
+                        EvalSet(
+                            name="train",
+                            predictions=compute_dummy_regression_preds(train_labels),
+                            labels=train_labels,
+                        ),
+                        EvalSet(
+                            name="test",
+                            predictions=compute_dummy_regression_preds(test_labels),
+                            labels=test_labels,
+                        ),
+                    ],
+                ),
+            ],
+            eval_metrics=(
+                mae,
+                rmse,
+                r2,
+            ),
         )
-        dummy_metrics = {f"dummy_{k}": v for k, v in dummy_metrics.items()}
+        all_metrics = flatten_metrics_report(metrics_report)
 
-        mlflow.log_metrics(metrics)
-        mlflow.log_metrics(dummy_metrics)
+        mlflow.log_metrics(all_metrics)
 
-        scatter_fig = get_predicted_vs_actual_scatter_figure(predictions, labels)
+        scatter_fig = get_predicted_vs_actual_scatter_figure(test_predictions, test_labels)
         mlflow.log_figure(scatter_fig, "predicted_vs_actual.png")
 
         residual_fig = get_residual_vs_predicted_scatter_figure(
-            predictions, labels
+            test_predictions, test_labels
         )
         mlflow.log_figure(residual_fig, "residuals_vs_predicted.png")
-        
-        residual_dist_fig = get_residual_distribution_figure(predictions, labels)
+
+        residual_dist_fig = get_residual_distribution_figure(
+            test_predictions, test_labels
+        )
         mlflow.log_figure(residual_dist_fig, "residual_distribution.png")
 
         worst_misses = get_top_k_worst_errors(
-            predictions,
-            labels,
-            eval_dataset.to_pandas(),
+            test_predictions,
+            test_labels,
+            test_dataset.to_pandas(),
             top_k=config.top_k_worst,
         )
 
