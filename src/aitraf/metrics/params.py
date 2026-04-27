@@ -19,13 +19,14 @@ def build_training_params(
     metrics = training_run.data.metrics
 
     return {
-        "num_workers": params["dataloader_num_workers"],
-        "num_frames": params["num_frames"],
-        "metric_for_best_model": params["metric_for_best_model"],
-        "trained_epochs": metrics["epoch"],
-        "max_epochs": params["num_train_epochs"],
-        "batch_size": params["per_device_train_batch_size"],
-        "image_size": params["image_size"],
+        "num_workers": params.get("dataloader_num_workers"),
+        "backbone": params.get("_name_or_path"),
+        "num_frames": params.get("num_frames"),
+        "metric_for_best_model": params.get("metric_for_best_model"),
+        "trained_epochs": metrics.get("epoch"),
+        "max_epochs": params.get("num_train_epochs"),
+        "batch_size": params.get("per_device_train_batch_size"),
+        "image_size": params.get("image_size"),
     }
 
 
