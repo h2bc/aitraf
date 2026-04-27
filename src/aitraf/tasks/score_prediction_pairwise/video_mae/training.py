@@ -101,6 +101,7 @@ def run_training(config: VideoMaeScorePredictionPairwiseTrainCfg) -> str:
         trust_remote_code=True,
         num_labels=1,
         problem_type="regression",
+        num_frames=config.sample_frames,
     )
 
     scorer = AutoModelForVideoClassification.from_pretrained(
@@ -108,6 +109,7 @@ def run_training(config: VideoMaeScorePredictionPairwiseTrainCfg) -> str:
         config=model_config,
         cache_dir=str(config.model_cache_dir),
         trust_remote_code=True,
+        ignore_mismatched_sizes=True,
     ).to(config.device)
 
     logger.info(f"VideoMAE trainer using device: {next(scorer.parameters()).device}")

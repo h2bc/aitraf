@@ -137,21 +137,6 @@ def run_evaluation(config: VideoMaeScorePredictionEvalCfg) -> None:
         metrics_report = calc_metrics_for_models(
             eval_models=[
                 EvalModel(
-                    name="video_mae",
-                    sets=[
-                        EvalSet(
-                            name="train",
-                            predictions=train_predictions,
-                            labels=train_labels,
-                        ),
-                        EvalSet(
-                            name="test",
-                            predictions=test_predictions,
-                            labels=test_labels,
-                        ),
-                    ],
-                ),
-                EvalModel(
                     name="dummy",
                     sets=[
                         EvalSet(
@@ -162,6 +147,21 @@ def run_evaluation(config: VideoMaeScorePredictionEvalCfg) -> None:
                         EvalSet(
                             name="test",
                             predictions=compute_dummy_regression_preds(test_labels),
+                            labels=test_labels,
+                        ),
+                    ],
+                ),
+                EvalModel(
+                    name="video_mae",
+                    sets=[
+                        EvalSet(
+                            name="train",
+                            predictions=train_predictions,
+                            labels=train_labels,
+                        ),
+                        EvalSet(
+                            name="test",
+                            predictions=test_predictions,
                             labels=test_labels,
                         ),
                     ],

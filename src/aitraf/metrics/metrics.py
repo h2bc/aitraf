@@ -158,18 +158,27 @@ def flatten_metrics_report(metrics: EvalModelsMetrics) -> dict[str, float]:
 
 
 def metrics_to_df(metrics_report: EvalModelsMetrics) -> pd.DataFrame:
-    rows = [
+    metric_columns = tuple(
+        dict.fromkeys(
+            f"{set_metrics.name}_{metric_name}"
+            for model_metrics in metrics_report.models
+            for set_metrics in model_metrics.sets
+            for metric_name, _ in set_metrics.metrics
+        )
+    )
+    columns = ("model", *metric_columns)
+    rows = tuple(
         {
             "model": model_metrics.name,
-            "split": set_metrics.name,
-            "metric": metric_name,
-            "value": metric_value,
+            **{
+                f"{set_metrics.name}_{metric_name}": metric_value
+                for set_metrics in model_metrics.sets
+                for metric_name, metric_value in set_metrics.metrics
+            },
         }
         for model_metrics in metrics_report.models
-        for set_metrics in model_metrics.sets
-        for metric_name, metric_value in set_metrics.metrics
-    ]
-    return pd.DataFrame(rows, columns=["model", "split", "metric", "value"])
+    )
+    return pd.DataFrame(rows, columns=columns)
 
 
 __all__ = [

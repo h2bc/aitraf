@@ -133,21 +133,6 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
     metrics_report = calc_metrics_for_models(
         eval_models=[
             EvalModel(
-                name="pose_tcn",
-                sets=[
-                    EvalSet(
-                        name="train",
-                        predictions=train_pred_ids,
-                        labels=train_label_ids,
-                    ),
-                    EvalSet(
-                        name="test",
-                        predictions=test_pred_ids,
-                        labels=test_label_ids,
-                    ),
-                ],
-            ),
-            EvalModel(
                 name="dummy",
                 sets=[
                     EvalSet(
@@ -158,6 +143,21 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
                     EvalSet(
                         name="test",
                         predictions=compute_dummy_classification_pred_ids(test_label_ids),
+                        labels=test_label_ids,
+                    ),
+                ],
+            ),
+            EvalModel(
+                name="pose_tcn",
+                sets=[
+                    EvalSet(
+                        name="train",
+                        predictions=train_pred_ids,
+                        labels=train_label_ids,
+                    ),
+                    EvalSet(
+                        name="test",
+                        predictions=test_pred_ids,
                         labels=test_label_ids,
                     ),
                 ],

@@ -98,6 +98,7 @@ def run_training(config: VideoMaeScorePredictionOrdinalTrainCfg) -> str:
         label2id=label2id,
         id2label=id2label,
         num_labels=len(labels),
+        num_frames=config.sample_frames,
     )
 
     classifier = AutoModelForVideoClassification.from_pretrained(
@@ -105,6 +106,7 @@ def run_training(config: VideoMaeScorePredictionOrdinalTrainCfg) -> str:
         config=model_config,
         cache_dir=str(config.model_cache_dir),
         trust_remote_code=True,
+        ignore_mismatched_sizes=True,
     ).to(config.device)
 
     logger.info(

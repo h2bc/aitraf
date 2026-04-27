@@ -10,6 +10,7 @@
 - Keep responses concise. No filler, no storytelling.
 - Prefer simplicity. Implement the most basic working version first. Add complexity only if asked.
 - Prefer list comprehensions & higher-order functions over long/complex loops.
+- Prefer immutable code
 - Code must be modular, simple, clean, and easy to extend.
 - Minimal comments. Only when something isn’t obvious from code.
 - If unsure → ask instead of hallucinating.

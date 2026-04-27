@@ -123,21 +123,6 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
     metrics_report = calc_metrics_for_models(
         eval_models=[
             EvalModel(
-                name="pose_tcn",
-                sets=[
-                    EvalSet(
-                        name="train",
-                        predictions=train_predictions,
-                        labels=train_labels,
-                    ),
-                    EvalSet(
-                        name="test",
-                        predictions=test_predictions,
-                        labels=test_labels,
-                    ),
-                ],
-            ),
-            EvalModel(
                 name="dummy",
                 sets=[
                     EvalSet(
@@ -148,6 +133,21 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
                     EvalSet(
                         name="test",
                         predictions=compute_dummy_regression_preds(test_labels),
+                        labels=test_labels,
+                    ),
+                ],
+            ),
+            EvalModel(
+                name="pose_tcn",
+                sets=[
+                    EvalSet(
+                        name="train",
+                        predictions=train_predictions,
+                        labels=train_labels,
+                    ),
+                    EvalSet(
+                        name="test",
+                        predictions=test_predictions,
                         labels=test_labels,
                     ),
                 ],
