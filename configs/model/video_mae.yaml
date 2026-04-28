@@ -8,4 +8,4 @@ sample_frames: 16
 sampling_dist: gaussian_stochastic
 batch_size: 4
 num_workers: 4
-early_stopping_patience: 2
+early_stopping_patience: 3
