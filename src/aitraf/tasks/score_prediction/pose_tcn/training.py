@@ -170,7 +170,10 @@ def run_training(config: PoseTcnScorePredictionTrainCfg) -> str:
 
         mlflow.log_artifact(best_checkpoint, artifact_path="checkpoints")
 
-        exported_model = TCNRegressor.load_from_checkpoint(best_checkpoint).cpu().eval()
+        exported_model = TCNRegressor.load_from_checkpoint(
+            best_checkpoint,
+            metrics_fn=build_regression_metrics(),
+        ).cpu().eval()
         sample_input = first_batch["inputs"][:1].cpu().numpy().astype("float32")
 
         model_info = mlflow.pytorch.log_model(

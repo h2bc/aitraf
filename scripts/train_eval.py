@@ -61,6 +61,8 @@ def _build_pose_tcn_training_config(
     cfg: DictConfig,
 ) -> PoseTcnTrickClassificationTrainCfg:
     return PoseTcnTrickClassificationTrainCfg(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
         poses_dir=cfg.model.poses_dir,

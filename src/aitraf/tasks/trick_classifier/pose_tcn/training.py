@@ -185,9 +185,17 @@ def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
 
         mlflow.log_artifact(best_checkpoint, artifact_path="checkpoints")
 
-        exported_model = (
-            TCNClassifier.load_from_checkpoint(best_checkpoint).cpu().eval()
-        )
+        exported_model = TCNClassifier.load_from_checkpoint(
+            best_checkpoint,
+            metrics_fn=lambda predictions, labels: calc_metrics(
+                predictions,
+                labels,
+                (
+                    accuracy,
+                    f1_macro,
+                ),
+            ),
+        ).cpu().eval()
 
         sample_input = first_batch["inputs"][:1].cpu().numpy().astype("float32")
 
