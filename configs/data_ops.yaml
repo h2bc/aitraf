@@ -9,7 +9,7 @@ download_labels:
   output_path: ${paths.data_dir}/labels.jsonl
 
 download_clips:
-  enabled: false
+  enabled: true
   force: false
   labels_path: ${download_labels.output_path}
   output_dir: ${paths.data_dir}/clips

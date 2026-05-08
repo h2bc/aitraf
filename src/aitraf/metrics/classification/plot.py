@@ -89,9 +89,9 @@ def get_top_k_worst_misses(
     labels,
     examples_df: pd.DataFrame,
     id2label: dict[str, str],
-    top_k: int = 5,
+    top_k: int | None = None,
 ) -> pd.DataFrame:
-    """Return metadata describing the highest-confidence misclassifications."""
+    """Return metadata describing misclassifications, optionally capped at top_k."""
 
     df = examples_df.copy()
     df["pred_id"] = compute_pred_ids(pred_logits)
@@ -100,7 +100,10 @@ def get_top_k_worst_misses(
     df["actual_id"] = labels
 
     misses = df[df["pred_id"] != df["actual_id"]].copy()
-    misses = misses.sort_values("pred_confidence", ascending=False).head(top_k)
+    misses = misses.sort_values("pred_confidence", ascending=False)
+
+    if top_k is not None:
+        misses = misses.head(top_k)
 
     return misses
 

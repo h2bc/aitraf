@@ -43,6 +43,7 @@ def run(cfg: DictConfig) -> None:
     load_dotenv()
     setup_logging()
 
+    prepare_cfg = cfg.create_manifests
     prepare_fn = PREPARE_TARGETS.get(str(cfg.task.name))
     if prepare_fn is None:
         available = ", ".join(sorted(PREPARE_TARGETS))
@@ -51,8 +52,11 @@ def run(cfg: DictConfig) -> None:
             f"Available tasks: {available or 'none'}."
         )
 
-    heading(f"Prepare Task: {cfg.task.name}")
-    prepare_fn(cfg.task, cfg)
+    if prepare_cfg.enabled:
+        heading(f"Create Manifests: {cfg.task.name}")
+        prepare_fn(cfg.task, prepare_cfg)
+    else:
+        heading("Skip manifest creation (disabled)")
 
 
 if __name__ == "__main__":

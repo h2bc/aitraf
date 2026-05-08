@@ -6,6 +6,7 @@ defaults:
 
 
 experiment_name: aitraf_${task.name}
-run_name: train_${model.name}
+name: ${model.name}
+run_name: train_${name}
 output_dir: ${paths.runs_dir}/${run_name}
 max_samples: null

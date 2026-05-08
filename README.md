@@ -98,11 +98,12 @@ Run commands via [Task](https://taskfile.dev)
 
 ### Prepare script
 
-`task prepare` runs `scripts/prepare.py`, which dispatches to the selected task's own preparation module.
+`task prepare` runs `scripts/prepare.py`, a one-step pipeline that dispatches manifest creation to the selected task's own preparation module. Enable/disable the step and set `force`/split options in `configs/prepare.yaml` or via cmd args.
 
 - Builds train/val/test JSONL manifests under `data/manifests/<task>/`.
 - Emits a task-local `vocab.json` under `data/manifests/<task>/` when the task defines one.
 - Use `task prepare -- task=score_prediction` to prepare one task.
+- Use overrides like `task prepare -- task=score_prediction create_manifests.force=false`.
 
 
 ## Project Integrations

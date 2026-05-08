@@ -209,16 +209,16 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
         f1_fig = get_per_class_f1_figure(test_pred_ids, test_label_ids, label_names)
         mlflow.log_figure(f1_fig, "per_class_f1.png")
 
-        worst_misses = get_top_k_worst_misses(
+        test_examples_df = pd.DataFrame(test_dataset.manifest_rows())
+        all_misses = get_top_k_worst_misses(
             test_logits,
             test_label_ids,
-            pd.DataFrame(test_dataset.manifest_rows()),
+            test_examples_df,
             id2label,
-            top_k=config.top_k_worst,
         )
 
-        if not worst_misses.empty:
-            mlflow.log_table(worst_misses, "worst_misses.json")
+        if not all_misses.empty:
+            mlflow.log_table(all_misses, "all_misses.json")
 
 
 __all__ = ["PoseTcnTrickClassificationEvalCfg", "run_evaluation"]

@@ -6,7 +6,8 @@ defaults:
 
 
 experiment_name: aitraf_${task.name}
-run_name: eval_${model.name}
+name: ${model.name}
+run_name: eval_${name}
 output_dir: ${paths.runs_dir}/${run_name}
 model_id: ???
 top_k_worst: 5

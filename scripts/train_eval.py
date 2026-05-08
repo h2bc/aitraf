@@ -110,6 +110,8 @@ def _build_video_mae_training_config(
     data_dir = Path(cfg.paths.data_dir)
 
     return VideoMaeTrickClassificationTrainCfg(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,

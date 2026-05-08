@@ -3,7 +3,9 @@ defaults:
   - task: ???
   - _self_
 
-force: true
-val_ratio: 0.1
-test_ratio: 0.1
-split_seed: 42
+create_manifests:
+  enabled: true
+  force: true
+  val_ratio: 0.1
+  test_ratio: 0.1
+  split_seed: 42

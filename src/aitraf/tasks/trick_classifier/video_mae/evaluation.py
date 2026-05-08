@@ -209,13 +209,14 @@ def run_evaluation(config: VideoMaeTrickClassificationEvalCfg):
         )
         mlflow.log_figure(f1_fig, "per_class_f1.png")
 
-        worst_misses = get_top_k_worst_misses(
+        test_examples_df = test_dataset.to_pandas()
+        
+        all_misses = get_top_k_worst_misses(
             test_pred_logits,
             test_label_ids,
-            test_dataset.to_pandas(),
+            test_examples_df,
             id2label,
-            top_k=config.top_k_worst,
         )
 
-        if not worst_misses.empty:
-            mlflow.log_table(worst_misses, "worst_misses.json")
+        if not all_misses.empty:
+            mlflow.log_table(all_misses, "all_misses.json")
