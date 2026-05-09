@@ -10,4 +10,4 @@ name: ${model.name}
 run_name: eval_${name}
 output_dir: ${paths.runs_dir}/${run_name}
 model_id: ???
-top_k_worst: 5
+top_k_worst: null

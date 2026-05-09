@@ -12,4 +12,4 @@ eval_run_name: eval_${name}
 train_output_dir: ${paths.runs_dir}/${train_run_name}
 eval_output_dir: ${paths.runs_dir}/${eval_run_name}
 max_samples: null
-top_k_worst: 5
+top_k_worst: null

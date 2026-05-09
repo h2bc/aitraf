@@ -23,7 +23,6 @@ from .regression import (
     r2,
     rmse,
 )
-from .params import build_training_params, params_to_df
 from .metrics import (
     EvalMetric,
     EvalMetrics,
@@ -45,7 +44,6 @@ __all__ = [
     "accuracy",
     "balanced_accuracy",
     "f1_macro",
-    "build_training_params",
     "build_regression_metrics",
     "EvalMetric",
     "EvalMetrics",
@@ -69,7 +67,6 @@ __all__ = [
     "compute_pred_ids",
     "flatten_metrics_report",
     "metrics_to_df",
-    "params_to_df",
     "get_confusion_matrix_figure",
     "get_per_class_f1_figure",
     "get_target_distribution_figure",

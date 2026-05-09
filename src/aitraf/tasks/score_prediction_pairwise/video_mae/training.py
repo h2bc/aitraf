@@ -174,6 +174,7 @@ def run_training(config: VideoMaeScorePredictionPairwiseTrainCfg) -> str:
     mlflow.set_experiment(config.experiment_name)
 
     with mlflow.start_run(run_name=config.run_name):
+        mlflow.log_param("frozen", config.freeze_backbone)
         mlflow.log_input(
             from_pandas(pd.DataFrame(train_dataset.manifest_rows()), name="train"),
             context="training",

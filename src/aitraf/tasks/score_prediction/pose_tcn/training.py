@@ -147,6 +147,17 @@ def run_training(config: PoseTcnScorePredictionTrainCfg) -> str:
             enable_progress_bar=True,
         )
 
+        mlflow.log_params(
+            {
+                "num_workers": config.num_workers,
+                "sample_frames": config.sample_frames,
+                "metric_for_best_model": checkpoint_callback.monitor,
+                "max_epochs": config.max_epochs,
+                "batch_size": config.batch_size,
+                "sampling_dist": config.sampling_dist,
+            }
+        )
+
         mlflow.log_input(
             from_pandas(
                 pd.DataFrame(train_loader.dataset.manifest_rows()), name="train"

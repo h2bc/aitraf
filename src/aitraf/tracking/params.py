@@ -11,6 +11,7 @@ from mlflow.tracking import MlflowClient
 
 def build_training_params(
     run_id: str,
+    param_map: Mapping[str, str],
 ) -> dict[str, Any]:
     """Return the selected evaluation params from a training run."""
 
@@ -19,14 +20,11 @@ def build_training_params(
     metrics = training_run.data.metrics
 
     return {
-        "num_workers": params.get("dataloader_num_workers"),
-        "backbone": params.get("_name_or_path"),
-        "num_frames": params.get("num_frames"),
-        "metric_for_best_model": params.get("metric_for_best_model"),
+        **{
+            output_name: params.get(source_name)
+            for output_name, source_name in param_map.items()
+        },
         "trained_epochs": metrics.get("epoch"),
-        "max_epochs": params.get("num_train_epochs"),
-        "batch_size": params.get("per_device_train_batch_size"),
-        "image_size": params.get("image_size"),
     }
 
 

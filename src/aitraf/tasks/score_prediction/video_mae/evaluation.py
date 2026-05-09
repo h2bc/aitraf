@@ -17,7 +17,6 @@ from transformers import TrainingArguments, Trainer
 from aitraf.metrics import (
     EvalModel,
     EvalSet,
-    build_training_params,
     calc_metrics_for_models,
     compute_dummy_regression_preds,
     flatten_metrics_report,
@@ -27,13 +26,14 @@ from aitraf.metrics import (
     get_top_k_worst_errors,
     mae,
     metrics_to_df,
-    params_to_df,
     r2,
     rmse,
 )
+from aitraf.tracking import build_training_params, params_to_df
 from aitraf.processing.models.video_mae import process_sample
 from aitraf.processing.utils import build_collate
 from aitraf.logging import logger
+from aitraf.tracking.models.video_mae import TRAINING_PARAM_MAP
 
 
 @dataclass
@@ -113,7 +113,7 @@ def run_evaluation(config: VideoMaeScorePredictionEvalCfg) -> None:
     )
 
     source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
-    source_train_params = build_training_params(source_train_run_id) | {
+    source_train_params = build_training_params(source_train_run_id, TRAINING_PARAM_MAP) | {
         "sampling_dist": config.sampling_dist
     }
 

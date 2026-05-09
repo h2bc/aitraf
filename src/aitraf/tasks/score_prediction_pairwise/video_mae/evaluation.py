@@ -19,16 +19,16 @@ from aitraf.metrics import (
     EvalModel,
     EvalSet,
     accuracy,
-    build_training_params,
     calc_metrics_for_models,
     compute_dummy_classification_pred_ids,
     flatten_metrics_report,
     metrics_to_df,
-    params_to_df,
 )
+from aitraf.tracking import build_training_params, params_to_df
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.video_mae import process_pair_sample
 from aitraf.processing.utils import build_collate
+from aitraf.tracking.models.video_mae import TRAINING_PARAM_MAP
 from ..dataset import ScorePredictionPairwiseDataset
 from ..metrics import compute_pairwise_pred_labels
 from .model import ScorePredictionPairwiseModel
@@ -118,7 +118,7 @@ def run_evaluation(config: VideoMaeScorePredictionPairwiseEvalCfg) -> None:
     )
 
     source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
-    source_train_params = build_training_params(source_train_run_id) | {
+    source_train_params = build_training_params(source_train_run_id, TRAINING_PARAM_MAP) | {
         "sampling_dist": config.sampling_dist
     }
 

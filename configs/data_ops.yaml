@@ -22,7 +22,7 @@ download_pairwise_labels:
   output_path: ${paths.data_dir}/pairwise_labels.jsonl
 
 pose_and_bbox_extraction:
-  enabled: false
+  enabled: true
   force: false
   limit: null
   clips_dir: ${download_clips.output_dir}

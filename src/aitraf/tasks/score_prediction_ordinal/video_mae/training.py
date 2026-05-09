@@ -173,6 +173,7 @@ def run_training(config: VideoMaeScorePredictionOrdinalTrainCfg) -> str:
     mlflow.set_experiment(config.experiment_name)
 
     with mlflow.start_run(run_name=config.run_name):
+        mlflow.log_param("frozen", config.freeze_backbone)
         mlflow.log_input(
             from_huggingface(dataset["train"], name="train"), context="training"
         )
