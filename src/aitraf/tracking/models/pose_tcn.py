@@ -6,7 +6,7 @@ TRAINING_PARAM_MAP = {
     "metric_for_best_model": "metric_for_best_model",
     "max_epochs": "max_epochs",
     "batch_size": "batch_size",
-    "sampling_dist": "sampling_dist",
+    "train_sampling_dist": "train_sampling_dist",
     "feature_dim": "feature_dim",
     "hidden_dim": "hidden_dim",
     "num_layers": "num_layers",

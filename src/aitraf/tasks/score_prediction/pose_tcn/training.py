@@ -154,7 +154,7 @@ def run_training(config: PoseTcnScorePredictionTrainCfg) -> str:
                 "metric_for_best_model": checkpoint_callback.monitor,
                 "max_epochs": config.max_epochs,
                 "batch_size": config.batch_size,
-                "sampling_dist": config.sampling_dist,
+                "train_sampling_dist": config.sampling_dist,
             }
         )
 
@@ -181,10 +181,14 @@ def run_training(config: PoseTcnScorePredictionTrainCfg) -> str:
 
         mlflow.log_artifact(best_checkpoint, artifact_path="checkpoints")
 
-        exported_model = TCNRegressor.load_from_checkpoint(
-            best_checkpoint,
-            metrics_fn=build_regression_metrics(),
-        ).cpu().eval()
+        exported_model = (
+            TCNRegressor.load_from_checkpoint(
+                best_checkpoint,
+                metrics_fn=build_regression_metrics(),
+            )
+            .cpu()
+            .eval()
+        )
         sample_input = first_batch["inputs"][:1].cpu().numpy().astype("float32")
 
         model_info = mlflow.pytorch.log_model(

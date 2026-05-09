@@ -5,7 +5,8 @@ freeze_backbone: False
 device: cuda
 epochs: 30
 sample_frames: 16
-sampling_dist: gaussian_stochastic
+train_sampling_dist: gaussian
+eval_sampling_dist: center
 batch_size: 4
 num_workers: 4
 early_stopping_patience: 5

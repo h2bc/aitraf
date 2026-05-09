@@ -8,7 +8,7 @@ TRAINING_PARAM_MAP = {
     "max_epochs": "num_train_epochs",
     "batch_size": "per_device_train_batch_size",
     "image_size": "image_size",
-    "sampling_dist": "sampling_dist",
+    "train_sampling_dist": "train_sampling_dist",
     "frozen": "frozen",
 }
 

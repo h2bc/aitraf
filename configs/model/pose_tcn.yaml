@@ -1,7 +1,8 @@
 name: pose_tcn
 poses_dir: ${paths.poses_dir}
 sample_frames: 64
-sampling_dist: gaussian_stochastic
+train_sampling_dist: gaussian
+eval_sampling_dist: center
 accelerator: gpu
 batch_size: 64
 num_workers: 8

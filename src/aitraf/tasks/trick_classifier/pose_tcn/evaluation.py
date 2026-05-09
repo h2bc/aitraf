@@ -137,12 +137,16 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
                 sets=[
                     EvalSet(
                         name="train",
-                        predictions=compute_dummy_classification_pred_ids(train_label_ids),
+                        predictions=compute_dummy_classification_pred_ids(
+                            train_label_ids
+                        ),
                         labels=train_label_ids,
                     ),
                     EvalSet(
                         name="test",
-                        predictions=compute_dummy_classification_pred_ids(test_label_ids),
+                        predictions=compute_dummy_classification_pred_ids(
+                            test_label_ids
+                        ),
                         labels=test_label_ids,
                     ),
                 ],
@@ -172,9 +176,9 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
     all_metrics = flatten_metrics_report(metrics_report)
 
     source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
-    source_train_params = build_training_params(source_train_run_id, TRAINING_PARAM_MAP) | {
-        "sampling_dist": config.sampling_dist
-    }
+    source_train_params = build_training_params(
+        source_train_run_id, TRAINING_PARAM_MAP
+    ) | {"eval_sampling_dist": config.sampling_dist}
 
     mlflow.set_experiment(config.experiment_name)
 

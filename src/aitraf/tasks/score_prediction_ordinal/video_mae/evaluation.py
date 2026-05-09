@@ -121,9 +121,9 @@ def run_evaluation(config: VideoMaeScorePredictionOrdinalEvalCfg) -> None:
         data_collator=data_collator,
     )
     source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
-    source_train_params = build_training_params(source_train_run_id, TRAINING_PARAM_MAP) | {
-        "sampling_dist": config.sampling_dist
-    }
+    source_train_params = build_training_params(
+        source_train_run_id, TRAINING_PARAM_MAP
+    ) | {"eval_sampling_dist": config.sampling_dist}
 
     mlflow.set_experiment(config.experiment_name)
 

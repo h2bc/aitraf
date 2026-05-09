@@ -148,6 +148,7 @@ def run_training(config: VideoMaeScorePredictionPairwiseTrainCfg) -> str:
     )
 
     data_collator = build_collate(process_fn)
+
     def trainer_compute_metrics(prediction: EvalPrediction) -> dict[str, float]:
         pair_logits, labels = prediction
         pred_labels = compute_pairwise_pred_labels(pair_logits)
@@ -175,6 +176,7 @@ def run_training(config: VideoMaeScorePredictionPairwiseTrainCfg) -> str:
 
     with mlflow.start_run(run_name=config.run_name):
         mlflow.log_param("frozen", config.freeze_backbone)
+        mlflow.log_param("train_sampling_dist", config.sampling_dist)
         mlflow.log_input(
             from_pandas(pd.DataFrame(train_dataset.manifest_rows()), name="train"),
             context="training",

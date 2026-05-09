@@ -174,6 +174,7 @@ def run_training(config: VideoMaeScorePredictionBinaryTrainCfg) -> str:
 
     with mlflow.start_run(run_name=config.run_name):
         mlflow.log_param("frozen", config.freeze_backbone)
+        mlflow.log_param("train_sampling_dist", config.sampling_dist)
         mlflow.log_input(
             from_huggingface(dataset["train"], name="train"), context="training"
         )

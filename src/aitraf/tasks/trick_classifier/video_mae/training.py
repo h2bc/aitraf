@@ -80,9 +80,7 @@ def run_training(config: VideoMaeTrickClassificationTrainCfg) -> str:
             range(min(config.max_train_samples, len(dataset["train"])))
         )
 
-    labels, label2id, id2label = load_target_label_mappings(
-        config.vocab_path, "trick"
-    )
+    labels, label2id, id2label = load_target_label_mappings(config.vocab_path, "trick")
 
     processor = VideoMAEImageProcessor.from_pretrained(
         config.backbone, cache_dir=str(config.model_cache_dir)
@@ -173,6 +171,7 @@ def run_training(config: VideoMaeTrickClassificationTrainCfg) -> str:
 
     with mlflow.start_run(run_name=config.run_name):
         mlflow.log_param("frozen", config.freeze_backbone)
+        mlflow.log_param("train_sampling_dist", config.sampling_dist)
         mlflow.log_input(
             from_huggingface(dataset["train"], name="train"), context="training"
         )

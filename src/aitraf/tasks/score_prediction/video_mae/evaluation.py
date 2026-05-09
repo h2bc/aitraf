@@ -113,9 +113,9 @@ def run_evaluation(config: VideoMaeScorePredictionEvalCfg) -> None:
     )
 
     source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
-    source_train_params = build_training_params(source_train_run_id, TRAINING_PARAM_MAP) | {
-        "sampling_dist": config.sampling_dist
-    }
+    source_train_params = build_training_params(
+        source_train_run_id, TRAINING_PARAM_MAP
+    ) | {"eval_sampling_dist": config.sampling_dist}
 
     mlflow.set_experiment(config.experiment_name)
 
@@ -179,7 +179,9 @@ def run_evaluation(config: VideoMaeScorePredictionEvalCfg) -> None:
         metrics_df = metrics_to_df(metrics_report)
         mlflow.log_table(metrics_df, "metrics_table.json")
 
-        scatter_fig = get_predicted_vs_actual_scatter_figure(test_predictions, test_labels)
+        scatter_fig = get_predicted_vs_actual_scatter_figure(
+            test_predictions, test_labels
+        )
         mlflow.log_figure(scatter_fig, "predicted_vs_actual.png")
 
         residual_fig = get_residual_vs_predicted_scatter_figure(

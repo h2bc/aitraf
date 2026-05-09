@@ -43,14 +43,16 @@ def sample_frame_indices(
             f"Sequence{context} has only {total_frames} frames (<{num_frames})."
         )
 
-    if sampling_dist == "gaussian_stochastic":
-        indices = _gaussian_center_indices(total_frames, num_frames)
+    if sampling_dist == "gaussian":
+        indices = _gaussian_indices(total_frames, num_frames)
+    elif sampling_dist == "center":
+        indices = _center_indices(total_frames, num_frames)
     elif sampling_dist == "uniform":
         indices = torch.linspace(0, total_frames - 1, steps=num_frames).long().tolist()
     else:
         raise ValueError(
             f"Unsupported sampling_dist '{sampling_dist}'. "
-            "Expected 'uniform' or 'gaussian_stochastic'."
+            "Expected 'gaussian', 'center', or 'uniform'."
         )
 
     return indices
@@ -72,7 +74,7 @@ def build_collate(
     return _collate
 
 
-def _gaussian_center_indices(total_frames: int, num_frames: int) -> List[int]:
+def _gaussian_indices(total_frames: int, num_frames: int) -> List[int]:
     """Sample indices with higher probability near the sequence center."""
 
     if num_frames == 1:
@@ -85,6 +87,13 @@ def _gaussian_center_indices(total_frames: int, num_frames: int) -> List[int]:
     indices, _ = torch.sort(indices)
 
     return indices.long().tolist()
+
+
+def _center_indices(total_frames: int, num_frames: int) -> List[int]:
+    """Return the deterministic centered frame window."""
+
+    start = (total_frames - num_frames) // 2
+    return list(range(start, start + num_frames))
 
 
 __all__ = ["build_collate", "load_target_label_mappings", "sample_frame_indices"]

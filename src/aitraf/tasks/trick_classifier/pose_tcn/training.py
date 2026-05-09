@@ -58,9 +58,7 @@ class PoseTcnTrickClassificationTrainCfg:
 
 def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
     """Train the Pose TCN classifier and log artifacts to MLflow."""
-    labels, label2id, _ = load_target_label_mappings(
-        config.vocab_path, "trick"
-    )
+    labels, label2id, _ = load_target_label_mappings(config.vocab_path, "trick")
 
     process_fn = partial(
         process_sample,
@@ -169,7 +167,7 @@ def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
                 "metric_for_best_model": checkpoint_callback.monitor,
                 "max_epochs": config.max_epochs,
                 "batch_size": config.batch_size,
-                "sampling_dist": config.sampling_dist,
+                "train_sampling_dist": config.sampling_dist,
             }
         )
 
@@ -196,17 +194,21 @@ def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
 
         mlflow.log_artifact(best_checkpoint, artifact_path="checkpoints")
 
-        exported_model = TCNClassifier.load_from_checkpoint(
-            best_checkpoint,
-            metrics_fn=lambda predictions, labels: calc_metrics(
-                predictions,
-                labels,
-                (
-                    accuracy,
-                    f1_macro,
+        exported_model = (
+            TCNClassifier.load_from_checkpoint(
+                best_checkpoint,
+                metrics_fn=lambda predictions, labels: calc_metrics(
+                    predictions,
+                    labels,
+                    (
+                        accuracy,
+                        f1_macro,
+                    ),
                 ),
-            ),
-        ).cpu().eval()
+            )
+            .cpu()
+            .eval()
+        )
 
         sample_input = first_batch["inputs"][:1].cpu().numpy().astype("float32")
 

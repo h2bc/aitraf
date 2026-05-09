@@ -54,9 +54,6 @@ from aitraf.tasks.score_prediction_ordinal.video_mae import (
 )
 
 
-
-
-
 def _build_pose_tcn_training_config(
     cfg: DictConfig,
 ) -> PoseTcnTrickClassificationTrainCfg:
@@ -69,7 +66,7 @@ def _build_pose_tcn_training_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.train_sampling_dist,
         learning_rate=cfg.model.learning_rate,
         hidden_dim=cfg.model.hidden_dim,
         num_layers=cfg.model.num_layers,
@@ -98,7 +95,7 @@ def _build_pose_tcn_eval_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.eval_sampling_dist,
         device=device,
         experiment_name=cfg.experiment_name,
         run_name=cfg.eval_run_name,
@@ -121,7 +118,7 @@ def _build_video_mae_training_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.train_sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.train_output_dir,
         epochs=cfg.model.epochs,
@@ -148,7 +145,7 @@ def _build_video_mae_eval_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.eval_sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.eval_output_dir,
         run_name=cfg.eval_run_name,
@@ -168,7 +165,7 @@ def _build_pose_tcn_score_prediction_training_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.train_sampling_dist,
         learning_rate=cfg.model.learning_rate,
         hidden_dim=cfg.model.hidden_dim,
         num_layers=cfg.model.num_layers,
@@ -196,7 +193,7 @@ def _build_pose_tcn_score_prediction_eval_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.eval_sampling_dist,
         device=device,
         experiment_name=cfg.experiment_name,
         run_name=cfg.eval_run_name,
@@ -218,7 +215,7 @@ def _build_video_mae_score_prediction_training_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.train_sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.train_output_dir,
         epochs=cfg.model.epochs,
@@ -243,7 +240,7 @@ def _build_video_mae_score_prediction_eval_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.eval_sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.eval_output_dir,
         run_name=cfg.eval_run_name,
@@ -267,7 +264,7 @@ def _build_video_mae_score_prediction_binary_training_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.train_sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.train_output_dir,
         epochs=cfg.model.epochs,
@@ -293,7 +290,7 @@ def _build_video_mae_score_prediction_binary_eval_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.eval_sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.eval_output_dir,
         run_name=cfg.eval_run_name,
@@ -317,7 +314,7 @@ def _build_video_mae_score_prediction_pairwise_training_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.train_sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.train_output_dir,
         model_cache_dir=cfg.model.model_cache_dir,
@@ -343,7 +340,7 @@ def _build_video_mae_score_prediction_pairwise_eval_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.eval_sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.eval_output_dir,
         run_name=cfg.eval_run_name,
@@ -367,7 +364,7 @@ def _build_video_mae_score_prediction_ordinal_training_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.train_sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.train_output_dir,
         epochs=cfg.model.epochs,
@@ -393,15 +390,13 @@ def _build_video_mae_score_prediction_ordinal_eval_config(
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
-        sampling_dist=cfg.model.sampling_dist,
+        sampling_dist=cfg.model.eval_sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.eval_output_dir,
         run_name=cfg.eval_run_name,
         experiment_name=cfg.experiment_name,
         top_k_worst=cfg.top_k_worst,
     )
-
-
 
 
 TRAIN_EVAL_TARGETS: dict[

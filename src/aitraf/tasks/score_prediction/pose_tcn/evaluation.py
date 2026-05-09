@@ -60,7 +60,6 @@ class PoseTcnScorePredictionEvalCfg:
 
 
 def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
-
     train_dataset = PoseTCNDataset(
         manifests_dir=config.manifests_dir,
         poses_dir=config.poses_dir,
@@ -101,7 +100,9 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
     model = model.to(config.device)
     model.eval()
 
-    def predict_values_and_labels(dataloader: DataLoader) -> tuple[np.ndarray, np.ndarray]:
+    def predict_values_and_labels(
+        dataloader: DataLoader,
+    ) -> tuple[np.ndarray, np.ndarray]:
         preds_list: list[np.ndarray] = []
         labels_list: list[np.ndarray] = []
 
@@ -163,9 +164,9 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
     all_metrics = flatten_metrics_report(metrics_report)
 
     source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
-    source_train_params = build_training_params(source_train_run_id, TRAINING_PARAM_MAP) | {
-        "sampling_dist": config.sampling_dist
-    }
+    source_train_params = build_training_params(
+        source_train_run_id, TRAINING_PARAM_MAP
+    ) | {"eval_sampling_dist": config.sampling_dist}
 
     mlflow.set_experiment(config.experiment_name)
 
