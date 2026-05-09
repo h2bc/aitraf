@@ -75,6 +75,25 @@ def parse_s3_uri(uri: str) -> tuple[str, str]:
     return parsed.netloc, key
 
 
+def presign_s3_uri(
+    uri: str,
+    *,
+    expires_in: int = 7 * 24 * 60 * 60,
+    s3_client=None,
+) -> str:
+    bucket, key = parse_s3_uri(uri)
+    client = s3_client
+
+    if client is None:
+        client = build_s3_client(load_s3_settings(require_bucket=False))
+
+    return client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": bucket, "Key": key},
+        ExpiresIn=expires_in,
+    )
+
+
 def iter_keys(s3_client, *, bucket: str, prefix: str) -> Iterator[str]:
     paginator = s3_client.get_paginator("list_objects_v2")
     for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
@@ -103,4 +122,5 @@ __all__ = [
     "load_s3_settings",
     "object_exists",
     "parse_s3_uri",
+    "presign_s3_uri",
 ]

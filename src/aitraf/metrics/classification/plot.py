@@ -8,6 +8,7 @@ import pandas as pd
 from matplotlib.figure import Figure
 from sklearn.metrics import ConfusionMatrixDisplay, f1_score
 
+from aitraf.utils.s3_utils import build_s3_client, load_s3_settings, presign_s3_uri
 from .compute import compute_pred_confidences, compute_pred_ids
 
 matplotlib.use("Agg")
@@ -104,6 +105,12 @@ def get_top_k_worst_misses(
 
     if top_k is not None:
         misses = misses.head(top_k)
+
+    if "s3_path" in misses.columns and not misses.empty:
+        s3_client = build_s3_client(load_s3_settings(require_bucket=False))
+        misses["presigned_url"] = misses["s3_path"].map(
+            lambda uri: presign_s3_uri(str(uri), s3_client=s3_client)
+        )
 
     return misses
 
