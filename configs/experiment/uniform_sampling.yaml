@@ -1,0 +1,6 @@
+# @package _global_
+
+name: ${model.name}_uniform
+model:
+  train_sampling_dist: uniform
+  eval_sampling_dist: uniform

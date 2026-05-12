@@ -48,6 +48,7 @@ def get_top_k_worst_ordinal_errors(
     df["actual_score"] = df["actual_id"].map(lambda idx: id2label[str(idx)])
     df["ordinal_error"] = df["pred_id"] - df["actual_id"]
     df["abs_ordinal_error"] = df["ordinal_error"].abs()
+    df = df[df["abs_ordinal_error"] > 0].copy()
 
     return df.sort_values("abs_ordinal_error", ascending=False).head(top_k)
 

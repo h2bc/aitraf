@@ -21,6 +21,7 @@ from aitraf.metrics import (
     compute_pred_ids,
     flatten_metrics_report,
     get_confusion_matrix_figure,
+    get_miss_sampling_figures,
     get_target_distribution_figure,
     metrics_to_df,
 )
@@ -218,7 +219,14 @@ def run_evaluation(config: VideoMaeScorePredictionOrdinalEvalCfg) -> None:
         )
 
         if not worst_misses.empty:
-            mlflow.log_table(worst_misses, "worst_misses.json")
+            mlflow.log_table(worst_misses, "misses_summary.json")
+            for artifact_file, figure in get_miss_sampling_figures(
+                worst_misses,
+                clips_dir=config.clips_dir,
+                num_frames=config.sample_frames,
+                sampling_dist=config.sampling_dist,
+            ):
+                mlflow.log_figure(figure, artifact_file)
 
 
 __all__ = ["VideoMaeScorePredictionOrdinalEvalCfg", "run_evaluation"]

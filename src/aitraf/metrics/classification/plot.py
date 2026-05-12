@@ -1,6 +1,7 @@
 """Classification plotting and error-analysis helpers."""
 
-from typing import List
+from pathlib import Path
+from typing import Iterator, List
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -8,6 +9,7 @@ import pandas as pd
 from matplotlib.figure import Figure
 from sklearn.metrics import ConfusionMatrixDisplay, f1_score
 
+from aitraf.processing.models.video_mae import load_sampled_video_frames
 from aitraf.utils.s3_utils import build_s3_client, load_s3_settings, presign_s3_uri
 from .compute import compute_pred_confidences, compute_pred_ids
 
@@ -115,9 +117,75 @@ def get_top_k_worst_misses(
     return misses
 
 
+def get_miss_sampling_figures(
+    misses: pd.DataFrame,
+    *,
+    clips_dir: Path | str,
+    num_frames: int,
+    sampling_dist: str,
+    max_cols: int = 4,
+) -> Iterator[tuple[str, Figure]]:
+    """Yield one sampled-frame contact sheet figure per miss."""
+
+    for _, miss in misses.iterrows():
+        frames, frame_indices = load_sampled_video_frames(
+            video_id=str(miss["video_id"]),
+            local_clips_dir=clips_dir,
+            num_frames=num_frames,
+            sampling_dist=sampling_dist,
+        )
+        miss = miss.copy()
+        miss["frame_indices"] = frame_indices
+
+        artifact_file = f"misses/{Path(str(miss['video_id'])).stem}/sampling.png"
+        figure = get_miss_sampling_figure(
+            miss,
+            frames,
+            max_cols=max_cols,
+        )
+        try:
+            yield artifact_file, figure
+        finally:
+            plt.close(figure)
+
+
+def get_miss_sampling_figure(
+    miss: pd.Series,
+    frames: list,
+    *,
+    max_cols: int,
+) -> Figure:
+    cols = min(max_cols, len(frames))
+    rows = (len(frames) + cols - 1) // cols
+    figure, axes = plt.subplots(
+        rows,
+        cols,
+        figsize=(cols * 3.0, rows * 2.4),
+        squeeze=False,
+    )
+
+    for ax in axes.ravel():
+        ax.axis("off")
+
+    for ax, frame, frame_idx in zip(axes.ravel(), frames, miss["frame_indices"]):
+        ax.imshow(frame.cpu().numpy())
+        ax.set_title(f"frame {frame_idx}", fontsize=10)
+
+    figure.suptitle(
+        f"{miss['video_id']} | actual_id={miss['actual_id']} | "
+        f"pred_id={miss['pred_id']}",
+        fontsize=12,
+        y=1.02,
+    )
+    figure.tight_layout()
+    return figure
+
+
 __all__ = [
     "get_confusion_matrix_figure",
     "get_per_class_f1_figure",
+    "get_miss_sampling_figure",
+    "get_miss_sampling_figures",
     "get_target_distribution_figure",
     "get_top_k_worst_misses",
 ]

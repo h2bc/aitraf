@@ -74,6 +74,23 @@ def _process_video(
     num_frames: int,
     sampling_dist: str,
 ) -> torch.Tensor:
+    frames, _ = load_sampled_video_frames(
+        video_id=video_id,
+        local_clips_dir=local_clips_dir,
+        num_frames=num_frames,
+        sampling_dist=sampling_dist,
+    )
+    processed_ts = processor(frames, return_tensors="pt")
+    return processed_ts["pixel_values"][0]
+
+
+def load_sampled_video_frames(
+    *,
+    video_id: str,
+    local_clips_dir: str | Path,
+    num_frames: int,
+    sampling_dist: str,
+) -> tuple[List[torch.Tensor], list[int]]:
     clip_path = Path(local_clips_dir) / video_id
     decoder = VideoDecoder(str(clip_path), dimension_order="NHWC")
     frame_indices = sample_frame_indices(
@@ -84,8 +101,7 @@ def _process_video(
     )
     frames = [decoder[int(idx)] for idx in frame_indices]
     frames = _rotate_frames(frames, get_video_rotation_deg(clip_path))
-    processed_ts = processor(frames, return_tensors="pt")
-    return processed_ts["pixel_values"][0]
+    return frames, frame_indices
 
 
 def _rotate_frames(frames: List[torch.Tensor], rotation_deg: int) -> List[torch.Tensor]:
@@ -105,4 +121,8 @@ def _rotate_frames(frames: List[torch.Tensor], rotation_deg: int) -> List[torch.
     return list(x.permute(0, 2, 3, 1))  # (B, C, H, W) -> B, (H, W, C)
 
 
-__all__ = ["process_pair_sample", "process_sample"]
+__all__ = [
+    "load_sampled_video_frames",
+    "process_pair_sample",
+    "process_sample",
+]
