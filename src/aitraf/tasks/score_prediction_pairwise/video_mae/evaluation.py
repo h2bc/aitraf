@@ -26,12 +26,12 @@ from aitraf.metrics import (
 )
 from aitraf.tracking import build_training_params, params_to_df
 from aitraf.processing import load_target_label_mappings
-from aitraf.processing.models.video_mae import process_pair_sample
 from aitraf.processing.utils import build_collate
 from aitraf.tracking.models.video_mae import TRAINING_PARAM_MAP
 from ..dataset import ScorePredictionPairwiseDataset
 from ..metrics import compute_pairwise_pred_labels
 from .model import ScorePredictionPairwiseModel
+from .processing import process_pair_sample
 
 
 @dataclass

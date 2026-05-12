@@ -1,0 +1,219 @@
+"""VideoMAE temporal-fusion training for trick classification."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from functools import partial
+from pathlib import Path
+
+import mlflow
+import mlflow.pytorch
+from datasets import load_dataset
+from dotenv import load_dotenv
+from mlflow.data import from_huggingface
+from torch import nn
+from transformers import (
+    AutoConfig,
+    AutoModel,
+    EarlyStoppingCallback,
+    EvalPrediction,
+    Trainer,
+    TrainingArguments,
+    VideoMAEImageProcessor,
+)
+
+from aitraf.logging import logger
+from aitraf.metrics import accuracy, calc_metrics, compute_pred_ids, f1_macro
+from aitraf.processing import load_target_label_mappings
+from aitraf.processing.models.video_mae_temporal_fusion import (
+    VideoMaeTemporalFusionClassifier,
+    process_temporal_fusion_sample,
+)
+from aitraf.processing.utils import build_collate
+
+
+@dataclass
+class VideoMaeTemporalFusionTrickClassificationTrainCfg:
+    task_name: str
+    model_name: str
+    backbone: str
+    manifests_dir: Path | str
+    vocab_path: Path | str
+    clips_dir: Path | str
+    batch_size: int
+    num_workers: int
+    sample_frames: int
+    num_clips: int
+    sampling_dist: str
+    device: str
+    output_dir: Path | str
+    epochs: int
+    experiment_name: str
+    run_name: str
+    freeze_backbone: bool
+    model_cache_dir: Path | str
+    max_train_samples: int | None
+    early_stopping_patience: int
+    fusion_layers: int
+    fusion_heads: int
+    fusion_dropout: float
+
+    def __post_init__(self) -> None:
+        self.manifests_dir = Path(self.manifests_dir)
+        self.vocab_path = Path(self.vocab_path)
+        self.clips_dir = Path(self.clips_dir)
+        self.output_dir = Path(self.output_dir)
+        self.model_cache_dir = Path(self.model_cache_dir)
+        self.model_cache_dir.mkdir(parents=True, exist_ok=True)
+
+
+def run_training(config: VideoMaeTemporalFusionTrickClassificationTrainCfg) -> str:
+    load_dotenv()
+
+    dataset = load_dataset(
+        "json",
+        data_files={
+            "train": str(config.manifests_dir / "train.jsonl"),
+            "validation": str(config.manifests_dir / "val.jsonl"),
+        },
+    )
+    if config.max_train_samples is not None:
+        dataset["train"] = dataset["train"].select(
+            range(min(config.max_train_samples, len(dataset["train"])))
+        )
+
+    labels, label2id, _ = load_target_label_mappings(config.vocab_path, "trick")
+    processor = VideoMAEImageProcessor.from_pretrained(
+        config.backbone, cache_dir=str(config.model_cache_dir)
+    )
+    model = _build_model(config, num_labels=len(labels)).to(config.device)
+    logger.info(
+        f"VideoMAE temporal-fusion trainer using device: {next(model.parameters()).device}"
+    )
+
+    process_fn = partial(
+        process_temporal_fusion_sample,
+        processor=processor,
+        local_clips_dir=config.clips_dir,
+        num_frames=config.sample_frames,
+        num_clips=config.num_clips,
+        sampling_dist=config.sampling_dist,
+        label_key="trick",
+        label_transform=lambda label: label2id[str(label)],
+    )
+    data_collator = build_collate(process_fn)
+
+    def trainer_compute_metrics(prediction: EvalPrediction) -> dict[str, float]:
+        pred_logits, actual_ids = prediction
+        return calc_metrics(
+            compute_pred_ids(pred_logits),
+            actual_ids,
+            (accuracy, f1_macro),
+        )
+
+    training_args = TrainingArguments(
+        output_dir=str(config.output_dir),
+        dataloader_num_workers=config.num_workers,
+        per_device_train_batch_size=config.batch_size,
+        per_device_eval_batch_size=config.batch_size,
+        num_train_epochs=config.epochs,
+        logging_strategy="epoch",
+        eval_strategy="epoch",
+        save_strategy="epoch",
+        load_best_model_at_end=True,
+        metric_for_best_model="accuracy",
+        greater_is_better=True,
+        remove_unused_columns=False,
+        report_to=["mlflow"],
+        run_name=config.run_name,
+    )
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=dataset["train"],
+        eval_dataset=dataset["validation"],
+        data_collator=data_collator,
+        compute_metrics=trainer_compute_metrics,
+        callbacks=[
+            EarlyStoppingCallback(
+                early_stopping_patience=config.early_stopping_patience
+            )
+        ],
+    )
+
+    mlflow.set_experiment(config.experiment_name)
+    with mlflow.start_run(run_name=config.run_name):
+        mlflow.log_params(_training_params(config))
+        mlflow.log_input(
+            from_huggingface(dataset["train"], name="train"), context="training"
+        )
+        mlflow.log_input(
+            from_huggingface(dataset["validation"], name="validation"),
+            context="validation",
+        )
+        trainer.train()
+
+        sample_clip = process_fn(dataset["train"][0])
+        model_info = mlflow.pytorch.log_model(
+            pytorch_model=model,
+            name=f"{config.task_name}_{config.model_name}",
+            input_example={
+                "pixel_values": sample_clip["pixel_values"].unsqueeze(0).numpy()
+            },
+        )
+        return model_info.model_uri
+
+
+def _build_model(
+    config: VideoMaeTemporalFusionTrickClassificationTrainCfg,
+    *,
+    num_labels: int,
+) -> VideoMaeTemporalFusionClassifier:
+    backbone_config = AutoConfig.from_pretrained(
+        config.backbone,
+        cache_dir=str(config.model_cache_dir),
+        trust_remote_code=True,
+        num_frames=config.sample_frames,
+    )
+    encoder = AutoModel.from_pretrained(
+        config.backbone,
+        config=backbone_config,
+        cache_dir=str(config.model_cache_dir),
+        trust_remote_code=True,
+    )
+    if config.freeze_backbone:
+        for param in encoder.parameters():
+            param.requires_grad = False
+
+    return VideoMaeTemporalFusionClassifier(
+        encoder=encoder,
+        hidden_size=int(backbone_config.hidden_size),
+        num_labels=num_labels,
+        num_clips=config.num_clips,
+        fusion_layers=config.fusion_layers,
+        fusion_heads=config.fusion_heads,
+        fusion_dropout=config.fusion_dropout,
+        loss_fn=nn.CrossEntropyLoss(),
+    )
+
+
+def _training_params(
+    config: VideoMaeTemporalFusionTrickClassificationTrainCfg,
+) -> dict[str, object]:
+    return {
+        "backbone": config.backbone,
+        "frozen": config.freeze_backbone,
+        "train_sampling_dist": config.sampling_dist,
+        "num_frames": config.sample_frames,
+        "num_clips": config.num_clips,
+        "fusion_layers": config.fusion_layers,
+        "fusion_heads": config.fusion_heads,
+        "fusion_dropout": config.fusion_dropout,
+        "batch_size": config.batch_size,
+        "num_workers": config.num_workers,
+        "max_epochs": config.epochs,
+        "metric_for_best_model": "accuracy",
+    }
+
+
+__all__ = ["VideoMaeTemporalFusionTrickClassificationTrainCfg", "run_training"]

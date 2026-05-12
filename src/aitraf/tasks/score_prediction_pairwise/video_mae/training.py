@@ -24,11 +24,11 @@ from transformers import (
 from aitraf.logging import logger
 from aitraf.metrics import accuracy, calc_metrics
 from aitraf.processing import load_target_label_mappings
-from aitraf.processing.models.video_mae import process_pair_sample
 from aitraf.processing.utils import build_collate
 from ..dataset import ScorePredictionPairwiseDataset, ScorePredictionPairwiseSubset
 from ..metrics import compute_pairwise_pred_labels
 from .model import ScorePredictionPairwiseModel
+from .processing import process_pair_sample
 
 
 @dataclass
