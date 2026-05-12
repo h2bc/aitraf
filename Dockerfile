@@ -7,28 +7,16 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
-    UV_PROJECT_ENVIRONMENT=/app/.venv \
-    UV_PYTHON=/usr/bin/python3 \
-    UV_PYTHON_DOWNLOADS=never \
-    HF_HOME=/cache/huggingface \
-    MPLCONFIGDIR=/tmp/matplotlib \
-    PATH=/app/.venv/bin:/usr/local/bin:${PATH}
+    UV_PROJECT_ENVIRONMENT=/workspace/.venv \
+    PATH=/workspace/.venv/bin:/usr/local/bin:${PATH}
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /uvx /usr/local/bin/
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        ca-certificates \
-        ffmpeg \
-        git \
-        libgl1 \
-        libglib2.0-0 \
-        python3 \
-        python3-venv \
-        tini \
+    && apt-get install -y --no-install-recommends ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR /workspace
 
 COPY pyproject.toml uv.lock README.md ./
 
@@ -43,8 +31,3 @@ COPY .env.example ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-editable
-
-RUN mkdir -p /app/data /app/models /app/runs "${HF_HOME}"
-
-ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["python", "scripts/train.py"]
