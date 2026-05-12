@@ -9,9 +9,21 @@ from hydra import main
 from omegaconf import DictConfig
 
 from aitraf.logging import logger, setup_logging
+from aitraf.tasks.score_prediction_binary.video_mae_temporal_fusion import (
+    VideoMaeTemporalFusionScorePredictionBinaryTrainCfg,
+    run_training as run_video_mae_temporal_fusion_score_prediction_binary_train,
+)
+from aitraf.tasks.score_prediction_ordinal.video_mae_temporal_fusion import (
+    VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg,
+    run_training as run_video_mae_temporal_fusion_score_prediction_ordinal_train,
+)
 from aitraf.tasks.trick_classifier.pose_tcn import (
     PoseTcnTrickClassificationTrainCfg,
     run_training as run_pose_tcn_trick_classification_train,
+)
+from aitraf.tasks.trick_classifier.video_mae_temporal_fusion import (
+    VideoMaeTemporalFusionTrickClassificationTrainCfg,
+    run_training as run_video_mae_temporal_fusion_trick_classification_train,
 )
 from aitraf.tasks.trick_classifier.video_mae import (
     VideoMaeTrickClassificationTrainCfg,
@@ -37,7 +49,6 @@ from aitraf.tasks.score_prediction_ordinal.video_mae import (
     VideoMaeScorePredictionOrdinalTrainCfg,
     run_training as run_video_mae_score_prediction_ordinal_train,
 )
-
 
 def _build_video_mae_training_config(
     cfg: DictConfig,
@@ -233,6 +244,40 @@ def _build_video_mae_score_prediction_ordinal_training_config(
     )
 
 
+def _build_video_mae_temporal_fusion_training_config(
+    cfg: DictConfig,
+    *,
+    config_cls,
+):
+    data_dir = Path(cfg.paths.data_dir)
+
+    return config_cls(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
+        backbone=cfg.model.backbone,
+        manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.task.vocab_path,
+        clips_dir=data_dir / "clips",
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        num_clips=cfg.model.num_clips,
+        sampling_dist=cfg.model.train_sampling_dist,
+        device=cfg.model.device,
+        output_dir=cfg.output_dir,
+        epochs=cfg.model.epochs,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.run_name,
+        freeze_backbone=cfg.model.freeze_backbone,
+        model_cache_dir=cfg.model.model_cache_dir,
+        max_train_samples=cfg.max_samples,
+        early_stopping_patience=cfg.model.early_stopping_patience,
+        fusion_layers=cfg.model.fusion_layers,
+        fusion_heads=cfg.model.fusion_heads,
+        fusion_dropout=cfg.model.fusion_dropout,
+    )
+
+
 TRAINING_TARGETS: dict[tuple[str, str], Callable[[DictConfig], str]] = {
     (
         "trick_classification",
@@ -269,6 +314,33 @@ TRAINING_TARGETS: dict[tuple[str, str], Callable[[DictConfig], str]] = {
         "video_mae",
     ): lambda cfg: run_video_mae_score_prediction_ordinal_train(
         _build_video_mae_score_prediction_ordinal_training_config(cfg)
+    ),
+    (
+        "trick_classification",
+        "video_mae_temporal_fusion",
+    ): lambda cfg: run_video_mae_temporal_fusion_trick_classification_train(
+        _build_video_mae_temporal_fusion_training_config(
+            cfg,
+            config_cls=VideoMaeTemporalFusionTrickClassificationTrainCfg,
+        )
+    ),
+    (
+        "score_prediction_binary",
+        "video_mae_temporal_fusion",
+    ): lambda cfg: run_video_mae_temporal_fusion_score_prediction_binary_train(
+        _build_video_mae_temporal_fusion_training_config(
+            cfg,
+            config_cls=VideoMaeTemporalFusionScorePredictionBinaryTrainCfg,
+        )
+    ),
+    (
+        "score_prediction_ordinal",
+        "video_mae_temporal_fusion",
+    ): lambda cfg: run_video_mae_temporal_fusion_score_prediction_ordinal_train(
+        _build_video_mae_temporal_fusion_training_config(
+            cfg,
+            config_cls=VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg,
+        )
     ),
 }
 

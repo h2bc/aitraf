@@ -1,0 +1,16 @@
+name: video_mae_temporal_fusion
+backbone: MCG-NJU/videomae-base
+model_cache_dir: ${paths.models_dir}/${.name}_cache
+freeze_backbone: true
+device: cuda
+epochs: 1
+sample_frames: 16
+num_clips: 2
+train_sampling_dist: gaussian
+eval_sampling_dist: center
+fusion_layers: 2
+fusion_heads: 8
+fusion_dropout: 0.2
+batch_size: 1
+num_workers: 1
+early_stopping_patience: 4

@@ -9,7 +9,7 @@ import pandas as pd
 from matplotlib.figure import Figure
 from sklearn.metrics import ConfusionMatrixDisplay, f1_score
 
-from aitraf.processing.models.video_mae import load_sampled_video_frames
+from aitraf.processing.video import load_sampled_video_frames
 from aitraf.utils.s3_utils import build_s3_client, load_s3_settings, presign_s3_uri
 from .compute import compute_pred_confidences, compute_pred_ids
 
