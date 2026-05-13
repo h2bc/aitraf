@@ -53,15 +53,13 @@ from aitraf.tasks.score_prediction_ordinal.video_mae import (
 def _build_video_mae_training_config(
     cfg: DictConfig,
 ) -> VideoMaeTrickClassificationTrainCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeTrickClassificationTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -136,14 +134,12 @@ def _build_pose_tcn_score_prediction_training_config(
 def _build_video_mae_score_prediction_training_config(
     cfg: DictConfig,
 ) -> VideoMaeScorePredictionTrainCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeScorePredictionTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -163,15 +159,13 @@ def _build_video_mae_score_prediction_training_config(
 def _build_video_mae_score_prediction_binary_training_config(
     cfg: DictConfig,
 ) -> VideoMaeScorePredictionBinaryTrainCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeScorePredictionBinaryTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -191,15 +185,13 @@ def _build_video_mae_score_prediction_binary_training_config(
 def _build_video_mae_score_prediction_pairwise_training_config(
     cfg: DictConfig,
 ) -> VideoMaeScorePredictionPairwiseTrainCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeScorePredictionPairwiseTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -219,15 +211,13 @@ def _build_video_mae_score_prediction_pairwise_training_config(
 def _build_video_mae_score_prediction_ordinal_training_config(
     cfg: DictConfig,
 ) -> VideoMaeScorePredictionOrdinalTrainCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeScorePredictionOrdinalTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -249,15 +239,13 @@ def _build_video_mae_temporal_fusion_training_config(
     *,
     config_cls,
 ):
-    data_dir = Path(cfg.paths.data_dir)
-
     return config_cls(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,

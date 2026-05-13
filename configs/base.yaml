@@ -1,10 +1,15 @@
 paths:
   project_root: ${hydra:runtime.cwd}
-  storage_path: ${oc.env:AITRAF_STORAGE_PATH,${paths.project_root}}
-  data_dir: ${paths.storage_path}/data
-  manifests_dir: ${paths.data_dir}/manifests
-  poses_dir: ${paths.data_dir}/poses
-  boxes_dir: ${paths.data_dir}/boxes
+  repo_data_dir: ${paths.project_root}/data
+  data_dir: ${paths.repo_data_dir}
+  storage_path: ${oc.env:AITRAF_STORAGE_PATH,${paths.project_root}/storage}
+  storage_data_dir: ${paths.storage_path}/data
+  labels_path: ${paths.repo_data_dir}/labels.jsonl
+  pairwise_labels_path: ${paths.repo_data_dir}/pairwise_labels.jsonl
+  manifests_dir: ${paths.repo_data_dir}/manifests
+  clips_dir: ${paths.storage_data_dir}/clips
+  poses_dir: ${paths.storage_data_dir}/poses
+  boxes_dir: ${paths.storage_data_dir}/boxes
   models_dir: ${paths.storage_path}/models
   runs_dir: ${paths.storage_path}/runs
 

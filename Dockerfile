@@ -8,7 +8,7 @@ ENV UV_PROJECT_ENVIRONMENT=/workspace/.venv \
 COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /uvx /usr/local/bin/
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl ffmpeg tmux \
+    && apt-get install -y --no-install-recommends ca-certificates curl ffmpeg git tmux \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -1sLf "https://dl.cloudsmith.io/public/task/task/setup.deb.sh" | bash \
@@ -26,6 +26,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY src ./src
 COPY scripts ./scripts
 COPY configs ./configs
+COPY data ./data
 COPY Taskfile.yml ./
 COPY .env.example ./
 

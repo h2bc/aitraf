@@ -202,10 +202,6 @@ pyrightconfig.json
 
 /runs
 /models
-/data/*
-!/data/labels.jsonl
-!/data/pairwise_labels.jsonl
-!/data/manifests/
-!/data/manifests/**
+/storage
 /notebooks/runs
 /notebooks/data

@@ -7,12 +7,12 @@ label_ops:
     enabled: true
     force: true
     prefix: labels
-    output_path: ${paths.data_dir}/labels.jsonl
+    output_path: ${paths.labels_path}
   create_pairs:
     enabled: true
     force: false
     labels_path: ${label_ops.download_labels.output_path}
-    output_dir: ${paths.data_dir}/pairs
+    output_dir: ${paths.storage_data_dir}/pairs
     k_per_video: 3
     seed: 42
   upload_pairs:

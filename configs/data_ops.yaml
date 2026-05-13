@@ -6,20 +6,20 @@ download_labels:
   enabled: true
   force: true
   prefix: labels
-  output_path: ${paths.data_dir}/labels.jsonl
+  output_path: ${paths.labels_path}
 
 download_clips:
   enabled: true
   force: false
   labels_path: ${download_labels.output_path}
-  output_dir: ${paths.data_dir}/clips
+  output_dir: ${paths.clips_dir}
 
 download_pairwise_labels:
   enabled: false
   force: true
   prefix: ranks
-  output_dir: ${paths.data_dir}/pairwise_labels
-  output_path: ${paths.data_dir}/pairwise_labels.jsonl
+  output_dir: ${paths.storage_data_dir}/pairwise_labels
+  output_path: ${paths.pairwise_labels_path}
 
 pose_and_bbox_extraction:
   enabled: true

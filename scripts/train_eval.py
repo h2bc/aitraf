@@ -124,15 +124,13 @@ def _build_pose_tcn_eval_config(
 def _build_video_mae_training_config(
     cfg: DictConfig,
 ) -> VideoMaeTrickClassificationTrainCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeTrickClassificationTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -152,14 +150,12 @@ def _build_video_mae_training_config(
 def _build_video_mae_eval_config(
     cfg: DictConfig, model_uri: str
 ) -> VideoMaeTrickClassificationEvalCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeTrickClassificationEvalCfg(
         backbone=cfg.model.backbone,
         model_uri=model_uri,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -222,14 +218,12 @@ def _build_pose_tcn_score_prediction_eval_config(
 def _build_video_mae_score_prediction_training_config(
     cfg: DictConfig,
 ) -> VideoMaeScorePredictionTrainCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeScorePredictionTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -249,12 +243,10 @@ def _build_video_mae_score_prediction_training_config(
 def _build_video_mae_score_prediction_eval_config(
     cfg: DictConfig, model_uri: str
 ) -> VideoMaeScorePredictionEvalCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeScorePredictionEvalCfg(
         model_uri=model_uri,
         manifests_dir=cfg.task.manifests_dir,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -270,15 +262,13 @@ def _build_video_mae_score_prediction_eval_config(
 def _build_video_mae_score_prediction_binary_training_config(
     cfg: DictConfig,
 ) -> VideoMaeScorePredictionBinaryTrainCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeScorePredictionBinaryTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -298,13 +288,11 @@ def _build_video_mae_score_prediction_binary_training_config(
 def _build_video_mae_score_prediction_binary_eval_config(
     cfg: DictConfig, model_uri: str
 ) -> VideoMaeScorePredictionBinaryEvalCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeScorePredictionBinaryEvalCfg(
         model_uri=model_uri,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -320,15 +308,13 @@ def _build_video_mae_score_prediction_binary_eval_config(
 def _build_video_mae_score_prediction_pairwise_training_config(
     cfg: DictConfig,
 ) -> VideoMaeScorePredictionPairwiseTrainCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeScorePredictionPairwiseTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -348,13 +334,11 @@ def _build_video_mae_score_prediction_pairwise_training_config(
 def _build_video_mae_score_prediction_pairwise_eval_config(
     cfg: DictConfig, model_uri: str
 ) -> VideoMaeScorePredictionPairwiseEvalCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeScorePredictionPairwiseEvalCfg(
         model_uri=model_uri,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -370,15 +354,13 @@ def _build_video_mae_score_prediction_pairwise_eval_config(
 def _build_video_mae_score_prediction_ordinal_training_config(
     cfg: DictConfig,
 ) -> VideoMaeScorePredictionOrdinalTrainCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeScorePredictionOrdinalTrainCfg(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -398,13 +380,11 @@ def _build_video_mae_score_prediction_ordinal_training_config(
 def _build_video_mae_score_prediction_ordinal_eval_config(
     cfg: DictConfig, model_uri: str
 ) -> VideoMaeScorePredictionOrdinalEvalCfg:
-    data_dir = Path(cfg.paths.data_dir)
-
     return VideoMaeScorePredictionOrdinalEvalCfg(
         model_uri=model_uri,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -422,15 +402,13 @@ def _build_video_mae_temporal_fusion_training_config(
     *,
     config_cls,
 ):
-    data_dir = Path(cfg.paths.data_dir)
-
     return config_cls(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -457,14 +435,12 @@ def _build_video_mae_temporal_fusion_eval_config(
     *,
     config_cls,
 ):
-    data_dir = Path(cfg.paths.data_dir)
-
     return config_cls(
         model_uri=model_uri,
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=data_dir / "clips",
+        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
