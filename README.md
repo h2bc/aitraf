@@ -5,7 +5,7 @@ Model training and evaluation stack for inline skating trick recognition & perfo
 
 ## Prerequisites
 
-- Nvidia GPU with drivers for CUDA 12.6+
+- Nvidia GPU with drivers for CUDA 12.8+
 - Docker (used by the dev container)
 - Access to project infra: S3 bucket `aitraf` and MLflow (see links below)
 

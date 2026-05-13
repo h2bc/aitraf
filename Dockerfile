@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM nvcr.io/nvidia/cuda:12.6.0-runtime-ubuntu24.04
+FROM nvcr.io/nvidia/cuda:12.8.0-runtime-ubuntu24.04
 
 ENV UV_PROJECT_ENVIRONMENT=/workspace/.venv \
     PATH=/workspace/.venv/bin:/usr/local/bin:${PATH}
