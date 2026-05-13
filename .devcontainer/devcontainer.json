@@ -3,12 +3,13 @@
   "image": "nvcr.io/nvidia/cuda:12.6.0-runtime-ubuntu24.04",
   "runArgs": [
     "--gpus=all",
-    "--shm-size=2g"
+    "--shm-size=8g"
   ],
   "workspaceFolder": "/workspace",
   "mounts": [
     "type=bind,source=${localWorkspaceFolder},target=/workspace",
-    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent.sock,type=bind"
+    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent.sock,type=bind",
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
   ],
   "remoteEnv": {
     "SSH_AUTH_SOCK": "/ssh-agent.sock"
@@ -17,6 +18,7 @@
     "ghcr.io/devcontainers/features/common-utils:2": {
       "username": "ubuntu"
     },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
     "ghcr.io/devcontainers-extra/features/ffmpeg-apt-get:1": {},
     "ghcr.io/devcontainer-community/devcontainer-features/astral.sh-uv:1": {},
     "ghcr.io/eitsupi/devcontainer-features/go-task:1": {}
