@@ -2,22 +2,17 @@
 
 FROM nvcr.io/nvidia/cuda:12.6.0-runtime-ubuntu24.04
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy \
-    UV_PROJECT_ENVIRONMENT=/workspace/.venv \
+ENV UV_PROJECT_ENVIRONMENT=/workspace/.venv \
     PATH=/workspace/.venv/bin:/usr/local/bin:${PATH}
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /uvx /usr/local/bin/
 
-RUN apt-get update \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -1sLf "https://dl.cloudsmith.io/public/task/task/setup.deb.sh" | bash \
-    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get install -y --no-install-recommends task \
     && rm -rf /var/lib/apt/lists/*
 

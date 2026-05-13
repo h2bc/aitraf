@@ -1,11 +1,12 @@
 paths:
   project_root: ${hydra:runtime.cwd}
-  data_dir: ${paths.project_root}/data
+  storage_path: ${oc.env:AITRAF_STORAGE_PATH,${paths.project_root}}
+  data_dir: ${paths.storage_path}/data
   manifests_dir: ${paths.data_dir}/manifests
   poses_dir: ${paths.data_dir}/poses
   boxes_dir: ${paths.data_dir}/boxes
-  models_dir: ${paths.project_root}/models
-  runs_dir: ${paths.project_root}/runs
+  models_dir: ${paths.storage_path}/models
+  runs_dir: ${paths.storage_path}/runs
 
 hydra:
   run:
