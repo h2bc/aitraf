@@ -28,7 +28,7 @@ def load_sampled_video_frames(
         sampling_dist,
         source=clip_path,
     )
-    frames = [decoder[int(idx)] for idx in frame_indices]
+    frames = list(decoder.get_frames_at(frame_indices).data)
     frames = rotate_frames(frames, get_video_rotation_deg(clip_path))
     return frames, frame_indices
 
@@ -61,7 +61,7 @@ def load_segmented_video_frames(
         for idx in range(num_segments)
     ]
     flat_indices = [frame_idx for segment in segment_indices for frame_idx in segment]
-    frames = [decoder[int(idx)] for idx in flat_indices]
+    frames = list(decoder.get_frames_at(flat_indices).data)
     frames = rotate_frames(frames, get_video_rotation_deg(clip_path))
 
     segmented_frames = [
