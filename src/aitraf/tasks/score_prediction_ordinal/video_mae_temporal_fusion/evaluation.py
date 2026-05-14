@@ -109,6 +109,7 @@ def run_evaluation(config: VideoMaeTemporalFusionScorePredictionOrdinalEvalCfg) 
         output_dir=str(config.output_dir),
         per_device_eval_batch_size=config.batch_size,
         dataloader_num_workers=config.num_workers,
+        dataloader_persistent_workers=config.num_workers > 0,
         remove_unused_columns=False,
         report_to=["mlflow"],
         run_name=config.run_name,

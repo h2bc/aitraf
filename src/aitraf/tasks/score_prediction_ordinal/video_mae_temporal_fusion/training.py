@@ -117,6 +117,7 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),
         dataloader_num_workers=config.num_workers,
+        dataloader_persistent_workers=config.num_workers > 0,
         per_device_train_batch_size=config.batch_size,
         per_device_eval_batch_size=config.batch_size,
         num_train_epochs=config.epochs,
