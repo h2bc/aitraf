@@ -254,6 +254,7 @@ def _build_video_mae_temporal_fusion_training_config(
         device=cfg.model.device,
         output_dir=cfg.output_dir,
         epochs=cfg.model.epochs,
+        learning_rate=cfg.model.learning_rate,
         experiment_name=cfg.experiment_name,
         run_name=cfg.run_name,
         freeze_backbone=cfg.model.freeze_backbone,

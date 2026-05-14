@@ -4,6 +4,7 @@ model_cache_dir: ${paths.models_dir}/${.name}_cache
 freeze_backbone: false
 device: cuda
 epochs: 25
+learning_rate: 5e-5
 sample_frames: 16
 num_clips: 6
 train_sampling_dist: uniform

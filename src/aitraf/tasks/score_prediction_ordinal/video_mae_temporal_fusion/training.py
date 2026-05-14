@@ -49,6 +49,7 @@ class VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg:
     device: str
     output_dir: Path | str
     epochs: int
+    learning_rate: float
     experiment_name: str
     run_name: str
     freeze_backbone: bool
@@ -121,6 +122,7 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
         per_device_train_batch_size=config.batch_size,
         per_device_eval_batch_size=config.batch_size,
         num_train_epochs=config.epochs,
+        learning_rate=config.learning_rate,
         logging_strategy="epoch",
         eval_strategy="epoch",
         save_strategy="epoch",
@@ -216,6 +218,7 @@ def _training_params(
         "batch_size": config.batch_size,
         "num_workers": config.num_workers,
         "max_epochs": config.epochs,
+        "learning_rate": config.learning_rate,
         "metric_for_best_model": "amae",
     }
 
