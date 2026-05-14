@@ -127,7 +127,7 @@ def get_miss_sampling_figures(
 ) -> Iterator[tuple[str, Figure]]:
     """Yield one sampled-frame contact sheet figure per miss."""
 
-    for _, miss in misses.iterrows():
+    for rank, (_, miss) in enumerate(misses.iterrows(), start=1):
         frames, frame_indices = load_sampled_video_frames(
             video_id=str(miss["video_id"]),
             local_clips_dir=clips_dir,
@@ -137,7 +137,11 @@ def get_miss_sampling_figures(
         miss = miss.copy()
         miss["frame_indices"] = frame_indices
 
-        artifact_file = f"misses/{Path(str(miss['video_id'])).stem}/sampling.png"
+        video_stem = Path(str(miss["video_id"])).stem
+        artifact_file = (
+            f"misses/{rank:03d}_{video_stem}_"
+            f"actual-{miss['actual_id']}_pred-{miss['pred_id']}.png"
+        )
         figure = get_miss_sampling_figure(
             miss,
             frames,
