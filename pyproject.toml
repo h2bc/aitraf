@@ -24,6 +24,7 @@ dependencies = [
     "python-dotenv",
     "loguru",
     "mlflow",
+    "nvidia-ml-py",
     "ultralytics",
     "av>=16.0.1",
     "imageio>=2.37.2",
