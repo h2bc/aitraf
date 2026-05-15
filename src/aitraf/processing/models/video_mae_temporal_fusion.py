@@ -7,66 +7,83 @@ from typing import Any, Callable
 
 import torch
 from torch import nn
-from transformers import VideoMAEImageProcessor
-
-from aitraf.processing.video import load_segmented_video_frames
 
 
-def process_temporal_fusion_sample(
+def video_feature_cache_subdir(
+    *,
+    backbone: str,
+    num_clips: int,
+    sample_frames: int,
+    sampling_dist: str,
+) -> Path:
+    config_slug = (
+        f"clips_{num_clips}_frames_{sample_frames}_sampling_{sampling_dist}"
+    )
+    return Path(backbone) / config_slug
+
+
+def video_feature_cache_path(
+    *,
+    features_dir: Path | str,
+    video_id: str,
+    backbone: str,
+    num_clips: int,
+    sample_frames: int,
+    sampling_dist: str,
+) -> Path:
+    relative_video = Path(video_id)
+    relative_feature = relative_video.with_suffix(".pt")
+    return (
+        Path(features_dir)
+        / video_feature_cache_subdir(
+            backbone=backbone,
+            num_clips=num_clips,
+            sample_frames=sample_frames,
+            sampling_dist=sampling_dist,
+        )
+        / relative_feature
+    )
+
+
+def process_temporal_fusion_feature_sample(
     manifest_row: dict[str, Any],
-    processor: VideoMAEImageProcessor,
-    local_clips_dir: str | Path,
+    features_dir: str | Path,
+    backbone: str,
     num_frames: int,
     num_clips: int,
     sampling_dist: str,
     label_key: str,
     label_transform: Callable[[Any], Any] = lambda x: x,
 ) -> dict[str, torch.Tensor]:
-    """Load one video as equal temporal clips for a temporal-fusion model."""
+    """Load one cached temporal-fusion feature sequence and label."""
 
+    feature_path = video_feature_cache_path(
+        features_dir=features_dir,
+        video_id=manifest_row["video_id"],
+        backbone=backbone,
+        num_clips=num_clips,
+        sample_frames=num_frames,
+        sampling_dist=sampling_dist,
+    )
+    if not feature_path.exists():
+        raise FileNotFoundError(
+            f"Missing cached VideoMAE features for {manifest_row['video_id']}: "
+            f"{feature_path}. Run data_ops.video_mae_feature_extraction first."
+        )
+
+    payload = torch.load(feature_path, map_location="cpu", weights_only=False)
     return {
-        "pixel_values": process_temporal_fusion_video(
-            video_id=manifest_row["video_id"],
-            processor=processor,
-            local_clips_dir=local_clips_dir,
-            num_frames=num_frames,
-            num_clips=num_clips,
-            sampling_dist=sampling_dist,
-        ),
+        "features": payload["features"].float(),
         "labels": torch.as_tensor(label_transform(manifest_row[label_key])),
     }
 
 
-def process_temporal_fusion_video(
-    *,
-    video_id: str,
-    processor: VideoMAEImageProcessor,
-    local_clips_dir: str | Path,
-    num_frames: int,
-    num_clips: int,
-    sampling_dist: str,
-) -> torch.Tensor:
-    segments, _ = load_segmented_video_frames(
-        video_id=video_id,
-        local_clips_dir=local_clips_dir,
-        num_segments=num_clips,
-        frames_per_segment=num_frames,
-        sampling_dist=sampling_dist,
-    )
-    clip_pixel_values = [
-        processor(frames, return_tensors="pt")["pixel_values"][0]
-        for frames in segments
-    ]
-    return torch.stack(clip_pixel_values)
-
-
 class VideoMaeTemporalFusionClassifier(nn.Module):
-    """Encode temporal clips with VideoMAE, then fuse clip embeddings."""
+    """Decode class queries over cached temporal clip features."""
 
     def __init__(
         self,
         *,
-        encoder: nn.Module,
         hidden_size: int,
         num_labels: int,
         num_clips: int,
@@ -76,13 +93,12 @@ class VideoMaeTemporalFusionClassifier(nn.Module):
         loss_fn: nn.Module,
     ) -> None:
         super().__init__()
-        self.encoder = encoder
         self.clip_norm = nn.LayerNorm(hidden_size)
-        self.cls_token = nn.Parameter(torch.zeros(1, 1, hidden_size))
+        self.query_embeddings = nn.Parameter(torch.zeros(1, num_labels, hidden_size))
         self.position_embeddings = nn.Parameter(
-            torch.zeros(1, num_clips + 1, hidden_size)
+            torch.zeros(1, num_clips, hidden_size)
         )
-        encoder_layer = nn.TransformerEncoderLayer(
+        decoder_layer = nn.TransformerDecoderLayer(
             d_model=hidden_size,
             nhead=fusion_heads,
             dim_feedforward=hidden_size * 4,
@@ -91,36 +107,28 @@ class VideoMaeTemporalFusionClassifier(nn.Module):
             batch_first=True,
             norm_first=True,
         )
-        self.fusion = nn.TransformerEncoder(
-            encoder_layer,
+        self.fusion = nn.TransformerDecoder(
+            decoder_layer,
             num_layers=fusion_layers,
-            enable_nested_tensor=False,
         )
-        self.classifier = nn.Linear(hidden_size, num_labels)
+        self.classifier = nn.Linear(hidden_size, 1)
         self.loss_fn = loss_fn
 
-        nn.init.trunc_normal_(self.cls_token, std=0.02)
+        nn.init.trunc_normal_(self.query_embeddings, std=0.02)
         nn.init.trunc_normal_(self.position_embeddings, std=0.02)
 
     def forward(
         self,
-        pixel_values: torch.Tensor,
+        features: torch.Tensor,
         labels: torch.Tensor | None = None,
     ) -> dict[str, torch.Tensor]:
-        batch_size, num_clips = pixel_values.shape[:2]
-        clip_shape = pixel_values.shape[2:]
-        flat_pixel_values = pixel_values.reshape(batch_size * num_clips, *clip_shape)
+        batch_size, num_clips = features.shape[:2]
+        clip_embeddings = self.clip_norm(features)
 
-        outputs = self.encoder(pixel_values=flat_pixel_values)
-        clip_embeddings = outputs.last_hidden_state.mean(dim=1)
-        clip_embeddings = self.clip_norm(clip_embeddings)
-        clip_embeddings = clip_embeddings.reshape(batch_size, num_clips, -1)
-
-        cls_tokens = self.cls_token.expand(batch_size, -1, -1)
-        tokens = torch.cat([cls_tokens, clip_embeddings], dim=1)
-        tokens = tokens + self.position_embeddings[:, : num_clips + 1]
-        fused_embedding = self.fusion(tokens)[:, 0]
-        logits = self.classifier(fused_embedding)
+        memory = clip_embeddings + self.position_embeddings[:, :num_clips]
+        queries = self.query_embeddings.expand(batch_size, -1, -1)
+        query_embeddings = self.fusion(tgt=queries, memory=memory)
+        logits = self.classifier(query_embeddings).squeeze(-1)
 
         result = {"logits": logits}
         if labels is not None:
@@ -130,6 +138,7 @@ class VideoMaeTemporalFusionClassifier(nn.Module):
 
 __all__ = [
     "VideoMaeTemporalFusionClassifier",
-    "process_temporal_fusion_sample",
-    "process_temporal_fusion_video",
+    "process_temporal_fusion_feature_sample",
+    "video_feature_cache_path",
+    "video_feature_cache_subdir",
 ]

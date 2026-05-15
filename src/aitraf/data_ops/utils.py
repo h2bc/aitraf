@@ -17,6 +17,16 @@ def strip_clips_prefix(path: Path) -> Path:
     return Path(*parts)
 
 
+def list_clip_files(clips_dir: Path) -> list[Path]:
+    """Return all files under a clip directory in a stable order."""
+    if not clips_dir.exists():
+        return []
+    return sorted(
+        [path for path in clips_dir.rglob("*") if path.is_file()],
+        key=lambda path: path.name,
+    )
+
+
 def apply_processors(
     df: pd.DataFrame,
     processors: Mapping[str, Callable[[object], object]],

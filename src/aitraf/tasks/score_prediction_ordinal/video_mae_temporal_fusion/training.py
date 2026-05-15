@@ -12,22 +12,14 @@ from datasets import load_dataset
 from dlordinal.losses import EMDLoss
 from dotenv import load_dotenv
 from mlflow.data import from_huggingface
-from transformers import (
-    AutoConfig,
-    AutoModel,
-    EarlyStoppingCallback,
-    EvalPrediction,
-    Trainer,
-    TrainingArguments,
-    VideoMAEImageProcessor,
-)
+from transformers import EarlyStoppingCallback, EvalPrediction, Trainer, TrainingArguments
 
 from aitraf.logging import logger
 from aitraf.metrics import calc_metrics, compute_pred_ids
 from aitraf.processing import load_target_label_mappings
 from aitraf.processing.models.video_mae_temporal_fusion import (
     VideoMaeTemporalFusionClassifier,
-    process_temporal_fusion_sample,
+    process_temporal_fusion_feature_sample,
 )
 from aitraf.processing.utils import build_collate
 from aitraf.tasks.score_prediction_ordinal.metrics import amae, mae
@@ -40,7 +32,7 @@ class VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg:
     backbone: str
     manifests_dir: Path | str
     vocab_path: Path | str
-    clips_dir: Path | str
+    features_dir: Path | str
     batch_size: int
     num_workers: int
     sample_frames: int
@@ -52,8 +44,6 @@ class VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg:
     learning_rate: float
     experiment_name: str
     run_name: str
-    freeze_backbone: bool
-    model_cache_dir: Path | str
     max_train_samples: int | None
     early_stopping_patience: int
     fusion_layers: int
@@ -63,10 +53,8 @@ class VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg:
     def __post_init__(self) -> None:
         self.manifests_dir = Path(self.manifests_dir)
         self.vocab_path = Path(self.vocab_path)
-        self.clips_dir = Path(self.clips_dir)
+        self.features_dir = Path(self.features_dir)
         self.output_dir = Path(self.output_dir)
-        self.model_cache_dir = Path(self.model_cache_dir)
-        self.model_cache_dir.mkdir(parents=True, exist_ok=True)
 
 
 def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -> str:
@@ -87,23 +75,24 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
     labels, label2id, _ = load_target_label_mappings(
         config.vocab_path, "execution_score"
     )
-    processor = VideoMAEImageProcessor.from_pretrained(
-        config.backbone, cache_dir=str(config.model_cache_dir)
-    )
-    model = _build_model(config, num_labels=len(labels)).to(config.device)
-    logger.info(
-        f"VideoMAE temporal-fusion trainer using device: {next(model.parameters()).device}"
-    )
-
     process_fn = partial(
-        process_temporal_fusion_sample,
-        processor=processor,
-        local_clips_dir=config.clips_dir,
+        process_temporal_fusion_feature_sample,
+        features_dir=config.features_dir,
+        backbone=config.backbone,
         num_frames=config.sample_frames,
         num_clips=config.num_clips,
         sampling_dist=config.sampling_dist,
         label_key="execution_score",
         label_transform=lambda label: label2id[str(label)],
+    )
+    sample_clip = process_fn(dataset["train"][0])
+    model = _build_model(
+        config,
+        num_labels=len(labels),
+        hidden_size=sample_clip["features"].shape[-1],
+    ).to(config.device)
+    logger.info(
+        f"VideoMAE temporal-fusion trainer using device: {next(model.parameters()).device}"
     )
     data_collator = build_collate(process_fn)
 
@@ -159,13 +148,10 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
         )
         trainer.train()
 
-        sample_clip = process_fn(dataset["train"][0])
         model_info = mlflow.pytorch.log_model(
             pytorch_model=model,
             name=f"{config.task_name}_{config.model_name}",
-            input_example={
-                "pixel_values": sample_clip["pixel_values"].unsqueeze(0).numpy()
-            },
+            input_example={"features": sample_clip["features"].unsqueeze(0).numpy()},
         )
         return model_info.model_uri
 
@@ -174,26 +160,10 @@ def _build_model(
     config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg,
     *,
     num_labels: int,
+    hidden_size: int,
 ) -> VideoMaeTemporalFusionClassifier:
-    backbone_config = AutoConfig.from_pretrained(
-        config.backbone,
-        cache_dir=str(config.model_cache_dir),
-        trust_remote_code=True,
-        num_frames=config.sample_frames,
-    )
-    encoder = AutoModel.from_pretrained(
-        config.backbone,
-        config=backbone_config,
-        cache_dir=str(config.model_cache_dir),
-        trust_remote_code=True,
-    )
-    if config.freeze_backbone:
-        for param in encoder.parameters():
-            param.requires_grad = False
-
     return VideoMaeTemporalFusionClassifier(
-        encoder=encoder,
-        hidden_size=int(backbone_config.hidden_size),
+        hidden_size=hidden_size,
         num_labels=num_labels,
         num_clips=config.num_clips,
         fusion_layers=config.fusion_layers,
@@ -208,7 +178,7 @@ def _training_params(
 ) -> dict[str, object]:
     return {
         "backbone": config.backbone,
-        "frozen": config.freeze_backbone,
+        "frozen": True,
         "train_sampling_dist": config.sampling_dist,
         "num_frames": config.sample_frames,
         "num_clips": config.num_clips,

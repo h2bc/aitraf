@@ -211,18 +211,17 @@ def _build_video_mae_temporal_fusion_eval_config(
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
         num_clips=cfg.model.num_clips,
+        features_dir=Path(cfg.model.features_dir),
         sampling_dist=cfg.model.eval_sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.output_dir,
         run_name=cfg.run_name,
         experiment_name=cfg.experiment_name,
         top_k_worst=cfg.top_k_worst,
-        model_cache_dir=cfg.model.model_cache_dir,
     )
 
 

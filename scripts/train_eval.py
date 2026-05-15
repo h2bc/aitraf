@@ -408,11 +408,11 @@ def _build_video_mae_temporal_fusion_training_config(
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=Path(cfg.paths.clips_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
         num_clips=cfg.model.num_clips,
+        features_dir=Path(cfg.model.features_dir),
         sampling_dist=cfg.model.train_sampling_dist,
         device=cfg.model.device,
         output_dir=cfg.train_output_dir,
@@ -420,8 +420,6 @@ def _build_video_mae_temporal_fusion_training_config(
         learning_rate=cfg.model.learning_rate,
         experiment_name=cfg.experiment_name,
         run_name=cfg.train_run_name,
-        freeze_backbone=cfg.model.freeze_backbone,
-        model_cache_dir=cfg.model.model_cache_dir,
         max_train_samples=cfg.max_samples,
         early_stopping_patience=cfg.model.early_stopping_patience,
         fusion_layers=cfg.model.fusion_layers,
@@ -441,7 +439,7 @@ def _build_video_mae_temporal_fusion_eval_config(
         backbone=cfg.model.backbone,
         manifests_dir=cfg.task.manifests_dir,
         vocab_path=cfg.task.vocab_path,
-        clips_dir=Path(cfg.paths.clips_dir),
+        features_dir=Path(cfg.model.features_dir),
         batch_size=cfg.model.batch_size,
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
@@ -452,7 +450,6 @@ def _build_video_mae_temporal_fusion_eval_config(
         run_name=cfg.eval_run_name,
         experiment_name=cfg.experiment_name,
         top_k_worst=cfg.top_k_worst,
-        model_cache_dir=cfg.model.model_cache_dir,
     )
 
 

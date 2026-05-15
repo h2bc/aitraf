@@ -14,6 +14,10 @@ from aitraf.data_ops.pose_and_bbox_extraction import (
     PoseAndBBoxExtractionConfig,
     pose_and_bbox_extraction,
 )
+from aitraf.data_ops.video_mae_feature_extraction import (
+    VideoMaeFeatureExtractionConfig,
+    video_mae_feature_extraction,
+)
 
 
 @main(config_path="../configs", config_name="data_ops", version_base=None)
@@ -65,6 +69,27 @@ def run(cfg: DictConfig) -> None:
         )
     else:
         heading("Skip pose/bbox extraction (disabled)")
+
+    if data_cfg.video_mae_feature_extraction.enabled:
+        heading("VideoMAE Feature Extraction")
+        video_mae_feature_extraction(
+            VideoMaeFeatureExtractionConfig(
+                clips_dir=data_cfg.video_mae_feature_extraction.clips_dir,
+                features_dir=data_cfg.video_mae_feature_extraction.features_dir,
+                backbone=data_cfg.video_mae_feature_extraction.backbone,
+                model_cache_dir=data_cfg.video_mae_feature_extraction.model_cache_dir,
+                device=data_cfg.video_mae_feature_extraction.device,
+                batch_size=data_cfg.video_mae_feature_extraction.batch_size,
+                num_workers=data_cfg.video_mae_feature_extraction.num_workers,
+                num_clips=data_cfg.video_mae_feature_extraction.num_clips,
+                sample_frames=data_cfg.video_mae_feature_extraction.sample_frames,
+                sampling_dist=data_cfg.video_mae_feature_extraction.sampling_dist,
+                force=data_cfg.video_mae_feature_extraction.force,
+                limit=data_cfg.video_mae_feature_extraction.limit,
+            )
+        )
+    else:
+        heading("Skip VideoMAE feature extraction (disabled)")
 
     if data_cfg.download_pairwise_labels.enabled:
         heading("Download Pairwise Labels")

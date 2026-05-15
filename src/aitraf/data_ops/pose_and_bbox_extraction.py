@@ -11,6 +11,7 @@ import numpy as np
 from ultralytics import YOLO
 
 from aitraf.logging import logger
+from aitraf.data_ops.utils import list_clip_files
 from aitraf.utils.video_utils import get_video_rotation_deg
 
 
@@ -42,7 +43,7 @@ class PoseAndBBoxExtractionConfig:
 
 
 def pose_and_bbox_extraction(config: PoseAndBBoxExtractionConfig) -> None:
-    clips = _list_clip_files(config.clips_dir)
+    clips = list_clip_files(config.clips_dir)
 
     if config.limit is not None:
         clips = clips[: int(config.limit)]
@@ -104,16 +105,6 @@ def pose_and_bbox_extraction(config: PoseAndBBoxExtractionConfig) -> None:
         errors,
         len(clips),
     )
-
-
-def _list_clip_files(clips_dir: Path) -> list[Path]:
-    if not clips_dir.exists():
-        return []
-    clips: list[Path] = []
-    for path in clips_dir.rglob("*"):
-        if path.is_file():
-            clips.append(path)
-    return sorted(clips, key=lambda path: path.name)
 
 
 def _prepare_results(results: Iterable) -> tuple[dict, dict]:

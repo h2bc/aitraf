@@ -10,6 +10,7 @@ paths:
   clips_dir: ${paths.storage_data_dir}/clips
   poses_dir: ${paths.storage_data_dir}/poses
   boxes_dir: ${paths.storage_data_dir}/boxes
+  video_mae_features_dir: ${paths.storage_data_dir}/video_mae_features
   models_dir: ${paths.storage_path}/models
   runs_dir: ${paths.storage_path}/runs
 

@@ -34,3 +34,18 @@ pose_and_bbox_extraction:
   conf: 0.5
   batch_size: 128
   max_det: 1
+
+video_mae_feature_extraction:
+  enabled: false
+  force: false
+  limit: null
+  clips_dir: ${download_clips.output_dir}
+  features_dir: ${paths.video_mae_features_dir}
+  backbone: ${oc.env:AITRAF_VIDEO_FEATURE_BACKBONE,MCG-NJU/videomae-base-finetuned-kinetics}
+  model_cache_dir: ${paths.models_dir}/video_mae_feature_cache
+  device: cuda
+  batch_size: 1
+  num_workers: 4
+  num_clips: 6
+  sample_frames: 16
+  sampling_dist: uniform

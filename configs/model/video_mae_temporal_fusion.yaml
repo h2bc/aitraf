@@ -1,10 +1,9 @@
 name: video_mae_temporal_fusion
-backbone: MCG-NJU/videomae-base
-model_cache_dir: ${paths.models_dir}/${.name}_cache
-freeze_backbone: false
+backbone: MCG-NJU/videomae-base-finetuned-kinetics
+features_dir: ${paths.video_mae_features_dir}
 device: cuda
 epochs: 25
-learning_rate: 5e-5
+learning_rate: 1e-4
 sample_frames: 16
 num_clips: 6
 train_sampling_dist: uniform
