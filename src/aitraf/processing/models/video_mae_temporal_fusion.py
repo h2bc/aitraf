@@ -8,6 +8,8 @@ from typing import Any, Callable
 import torch
 from torch import nn
 
+from aitraf.utils.huggingface import hf_model_cache_dir_name
+
 
 def video_feature_cache_subdir(
     *,
@@ -19,7 +21,7 @@ def video_feature_cache_subdir(
     config_slug = (
         f"clips_{num_clips}_frames_{sample_frames}_sampling_{sampling_dist}"
     )
-    return Path(backbone) / config_slug
+    return Path(hf_model_cache_dir_name(backbone)) / config_slug
 
 
 def video_feature_cache_path(
