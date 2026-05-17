@@ -23,7 +23,7 @@ dependencies = [
     "boto3",
     "python-dotenv",
     "loguru",
-    "mlflow",
+    "mlflow[mcp]",
     "nvidia-ml-py",
     "ultralytics",
     "av>=16.0.1",
