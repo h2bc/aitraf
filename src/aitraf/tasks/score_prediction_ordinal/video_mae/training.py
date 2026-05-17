@@ -190,7 +190,7 @@ def run_training(config: VideoMaeScorePredictionOrdinalTrainCfg) -> str:
 
     with mlflow.start_run(run_name=config.run_name):
         mlflow.log_param("frozen", config.freeze_backbone)
-        mlflow.log_param("ordinal_loss", "cross_entropy")
+        mlflow.log_param("loss", "cross_entropy")
         mlflow.log_param("use_class_weights", config.use_class_weights)
         mlflow.log_param("train_sampling_dist", config.sampling_dist)
         mlflow.log_input(

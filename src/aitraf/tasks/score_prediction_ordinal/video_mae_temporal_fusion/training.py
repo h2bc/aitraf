@@ -62,7 +62,7 @@ class VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg:
     fusion_queries: int
     query_init_std: float
     fusion_dropout: float
-    ordinal_loss: str
+    loss: str
     use_class_weights: bool
     best_model_metric: str
     seed: int
@@ -125,7 +125,7 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
         fusion_dropout=config.fusion_dropout,
         query_init_std=config.query_init_std,
         loss_fn=_build_loss(
-            loss_name=config.ordinal_loss,
+            loss_name=config.loss,
             num_labels=len(labels),
             class_weights=class_weights,
         ),
@@ -220,7 +220,7 @@ def _training_params(
         "fusion_queries": config.fusion_queries,
         "query_init_std": config.query_init_std,
         "fusion_dropout": config.fusion_dropout,
-        "ordinal_loss": config.ordinal_loss,
+        "loss": config.loss,
         "use_class_weights": config.use_class_weights,
         "best_model_metric": config.best_model_metric,
         "seed": config.seed,
@@ -245,7 +245,7 @@ def _build_loss(
         return CDWCELoss(num_classes=num_labels, alpha=0.5, weight=class_weights)
 
     raise ValueError(
-        f"Unsupported ordinal_loss '{loss_name}'. Expected 'cross_entropy' or 'cdwce'."
+        f"Unsupported loss '{loss_name}'. Expected 'cross_entropy' or 'cdwce'."
     )
 
 

@@ -4,6 +4,7 @@ sample_frames: 64
 train_sampling_dist: uniform
 eval_sampling_dist: uniform
 accelerator: gpu
+device: cuda
 batch_size: 64
 num_workers: 8
 learning_rate: 1e-3
@@ -13,4 +14,8 @@ kernel_size: 3
 dropout: 0.3
 max_epochs: 30
 early_stopping_patience: 5
+loss: cross_entropy
+use_class_weights: true
+best_model_metric: amae
+seed: 42
   

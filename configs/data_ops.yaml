@@ -4,7 +4,7 @@ defaults:
 
 download_labels:
   enabled: true
-  force: false
+  force: true
   prefix: labels
   output_path: ${paths.labels_path}
 
@@ -41,11 +41,11 @@ video_mae_feature_extraction:
   limit: null
   clips_dir: ${download_clips.output_dir}
   features_dir: ${paths.video_mae_features_dir}
-  backbone: ${oc.env:AITRAF_VIDEO_FEATURE_BACKBONE,MCG-NJU/videomae-base-finetuned-kinetics}
+  backbone: MCG-NJU/videomae-base-finetuned-kinetics
   model_cache_dir: ${paths.models_dir}
   device: cuda
   batch_size: 1
-  num_workers: 4
+  num_workers: 2
   num_clips: 6
   sample_frames: 16
   sampling_dist: uniform

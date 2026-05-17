@@ -2,7 +2,6 @@
 
 import torch
 from torch import nn
-import torch.nn.functional as F
 import pytorch_lightning as pl
 
 
@@ -140,13 +139,14 @@ class TCNClassifier(pl.LightningModule):
         num_classes: int,
         learning_rate: float,
         metrics_fn,
+        loss_fn: nn.Module | None = None,
         hidden_dim: int = 128,
         num_layers: int = 3,
         kernel_size: int = 3,
         dropout: float = 0.1,
     ) -> None:
         super().__init__()
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["loss_fn", "metrics_fn"])
 
         self.backbone = TCNBackbone(
             feature_dim=feature_dim,
@@ -160,6 +160,7 @@ class TCNClassifier(pl.LightningModule):
             num_classes=num_classes,
             dropout=dropout,
         )
+        self.loss_fn = loss_fn or nn.CrossEntropyLoss()
         self.metrics_fn = metrics_fn
         self._val_pred_batches: list[torch.Tensor] = []
         self._val_label_batches: list[torch.Tensor] = []
@@ -170,7 +171,7 @@ class TCNClassifier(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         logits = self(batch["inputs"])
-        loss = F.cross_entropy(logits, batch["labels"])
+        loss = self.loss_fn(logits, batch["labels"])
         self.log("train_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
         return loss
 
@@ -180,7 +181,7 @@ class TCNClassifier(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         logits = self(batch["inputs"])
-        loss = F.cross_entropy(logits, batch["labels"])
+        loss = self.loss_fn(logits, batch["labels"])
         self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
         preds = logits.argmax(dim=-1).detach().cpu()
         labels = batch["labels"].detach().cpu()

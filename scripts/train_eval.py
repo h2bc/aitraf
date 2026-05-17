@@ -58,6 +58,12 @@ from aitraf.tasks.score_prediction_ordinal.video_mae import (
     run_evaluation as run_video_mae_score_prediction_ordinal_eval,
     run_training as run_video_mae_score_prediction_ordinal_train,
 )
+from aitraf.tasks.score_prediction_ordinal.pose_tcn import (
+    PoseTcnScorePredictionOrdinalEvalCfg,
+    PoseTcnScorePredictionOrdinalTrainCfg,
+    run_evaluation as run_pose_tcn_score_prediction_ordinal_eval,
+    run_training as run_pose_tcn_score_prediction_ordinal_train,
+)
 from aitraf.tasks.score_prediction_ordinal.video_mae_temporal_fusion import (
     VideoMaeTemporalFusionScorePredictionOrdinalEvalCfg,
     VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg,
@@ -103,8 +109,6 @@ def _build_pose_tcn_training_config(
 def _build_pose_tcn_eval_config(
     cfg: DictConfig, model_uri: str
 ) -> PoseTcnTrickClassificationEvalCfg:
-    device = "cuda" if cfg.model.accelerator == "gpu" else cfg.model.accelerator
-
     return PoseTcnTrickClassificationEvalCfg(
         model_uri=model_uri,
         manifests_dir=cfg.task.manifests_dir,
@@ -114,7 +118,7 @@ def _build_pose_tcn_eval_config(
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
         sampling_dist=cfg.model.eval_sampling_dist,
-        device=device,
+        device=cfg.model.device,
         experiment_name=cfg.experiment_name,
         run_name=cfg.eval_run_name,
         top_k_worst=cfg.top_k_worst,
@@ -198,8 +202,6 @@ def _build_pose_tcn_score_prediction_training_config(
 def _build_pose_tcn_score_prediction_eval_config(
     cfg: DictConfig, model_uri: str
 ) -> PoseTcnScorePredictionEvalCfg:
-    device = "cuda" if cfg.model.accelerator == "gpu" else cfg.model.accelerator
-
     return PoseTcnScorePredictionEvalCfg(
         model_uri=model_uri,
         manifests_dir=cfg.task.manifests_dir,
@@ -208,7 +210,58 @@ def _build_pose_tcn_score_prediction_eval_config(
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
         sampling_dist=cfg.model.eval_sampling_dist,
-        device=device,
+        device=cfg.model.device,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.eval_run_name,
+        top_k_worst=cfg.top_k_worst,
+    )
+
+
+def _build_pose_tcn_score_prediction_ordinal_training_config(
+    cfg: DictConfig,
+) -> PoseTcnScorePredictionOrdinalTrainCfg:
+    return PoseTcnScorePredictionOrdinalTrainCfg(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
+        manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.task.vocab_path,
+        poses_dir=cfg.model.poses_dir,
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.train_sampling_dist,
+        learning_rate=cfg.model.learning_rate,
+        hidden_dim=cfg.model.hidden_dim,
+        num_layers=cfg.model.num_layers,
+        kernel_size=cfg.model.kernel_size,
+        dropout=cfg.model.dropout,
+        max_epochs=cfg.model.max_epochs,
+        accelerator=cfg.model.accelerator,
+        early_stopping_patience=cfg.model.early_stopping_patience,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.train_run_name,
+        output_dir=cfg.train_output_dir,
+        loss=cfg.model.loss,
+        use_class_weights=cfg.model.use_class_weights,
+        best_model_metric=cfg.model.best_model_metric,
+        seed=cfg.model.seed,
+        max_train_samples=cfg.max_samples,
+    )
+
+
+def _build_pose_tcn_score_prediction_ordinal_eval_config(
+    cfg: DictConfig, model_uri: str
+) -> PoseTcnScorePredictionOrdinalEvalCfg:
+    return PoseTcnScorePredictionOrdinalEvalCfg(
+        model_uri=model_uri,
+        manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.task.vocab_path,
+        poses_dir=cfg.model.poses_dir,
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.eval_sampling_dist,
+        device=cfg.model.device,
         experiment_name=cfg.experiment_name,
         run_name=cfg.eval_run_name,
         top_k_worst=cfg.top_k_worst,
@@ -403,7 +456,7 @@ def _build_video_mae_temporal_fusion_training_config(
     *,
     config_cls,
 ):
-    kwargs = dict(
+    return config_cls(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
@@ -428,13 +481,11 @@ def _build_video_mae_temporal_fusion_training_config(
         fusion_queries=cfg.model.fusion_queries,
         query_init_std=cfg.model.query_init_std,
         fusion_dropout=cfg.model.fusion_dropout,
-        ordinal_loss=cfg.model.ordinal_loss,
+        loss=cfg.model.loss,
         use_class_weights=cfg.model.use_class_weights,
         best_model_metric=cfg.model.best_model_metric,
         seed=cfg.model.seed,
     )
-
-    return config_cls(**kwargs)
 
 
 def _build_video_mae_temporal_fusion_eval_config(
@@ -488,6 +539,14 @@ TRAIN_EVAL_TARGETS: dict[
         ),
         lambda cfg, model_uri: run_pose_tcn_score_prediction_eval(
             _build_pose_tcn_score_prediction_eval_config(cfg, model_uri)
+        ),
+    ),
+    ("score_prediction_ordinal", "pose_tcn"): (
+        lambda cfg: run_pose_tcn_score_prediction_ordinal_train(
+            _build_pose_tcn_score_prediction_ordinal_training_config(cfg)
+        ),
+        lambda cfg, model_uri: run_pose_tcn_score_prediction_ordinal_eval(
+            _build_pose_tcn_score_prediction_ordinal_eval_config(cfg, model_uri)
         ),
     ),
     ("score_prediction", "video_mae"): (

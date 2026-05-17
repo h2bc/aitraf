@@ -17,6 +17,10 @@ from aitraf.tasks.score_prediction_ordinal.video_mae_temporal_fusion import (
     VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg,
     run_training as run_video_mae_temporal_fusion_score_prediction_ordinal_train,
 )
+from aitraf.tasks.score_prediction_ordinal.pose_tcn import (
+    PoseTcnScorePredictionOrdinalTrainCfg,
+    run_training as run_pose_tcn_score_prediction_ordinal_train,
+)
 from aitraf.tasks.trick_classifier.pose_tcn import (
     PoseTcnTrickClassificationTrainCfg,
     run_training as run_pose_tcn_trick_classification_train,
@@ -132,6 +136,38 @@ def _build_pose_tcn_score_prediction_training_config(
     )
 
 
+def _build_pose_tcn_score_prediction_ordinal_training_config(
+    cfg: DictConfig,
+) -> PoseTcnScorePredictionOrdinalTrainCfg:
+    return PoseTcnScorePredictionOrdinalTrainCfg(
+        task_name=cfg.task.name,
+        model_name=cfg.model.name,
+        manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.task.vocab_path,
+        poses_dir=cfg.model.poses_dir,
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.train_sampling_dist,
+        learning_rate=cfg.model.learning_rate,
+        hidden_dim=cfg.model.hidden_dim,
+        num_layers=cfg.model.num_layers,
+        kernel_size=cfg.model.kernel_size,
+        dropout=cfg.model.dropout,
+        max_epochs=cfg.model.max_epochs,
+        accelerator=cfg.model.accelerator,
+        early_stopping_patience=cfg.model.early_stopping_patience,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.run_name,
+        output_dir=cfg.output_dir,
+        loss=cfg.model.loss,
+        use_class_weights=cfg.model.use_class_weights,
+        best_model_metric=cfg.model.best_model_metric,
+        seed=cfg.model.seed,
+        max_train_samples=cfg.max_samples,
+    )
+
+
 def _build_video_mae_score_prediction_training_config(
     cfg: DictConfig,
 ) -> VideoMaeScorePredictionTrainCfg:
@@ -241,7 +277,7 @@ def _build_video_mae_temporal_fusion_training_config(
     *,
     config_cls,
 ):
-    kwargs = dict(
+    return config_cls(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
@@ -266,13 +302,11 @@ def _build_video_mae_temporal_fusion_training_config(
         fusion_queries=cfg.model.fusion_queries,
         query_init_std=cfg.model.query_init_std,
         fusion_dropout=cfg.model.fusion_dropout,
-        ordinal_loss=cfg.model.ordinal_loss,
+        loss=cfg.model.loss,
         use_class_weights=cfg.model.use_class_weights,
         best_model_metric=cfg.model.best_model_metric,
         seed=cfg.model.seed,
     )
-
-    return config_cls(**kwargs)
 
 
 TRAINING_TARGETS: dict[tuple[str, str], Callable[[DictConfig], str]] = {
@@ -290,6 +324,12 @@ TRAINING_TARGETS: dict[tuple[str, str], Callable[[DictConfig], str]] = {
     ),
     ("score_prediction", "pose_tcn"): lambda cfg: run_pose_tcn_score_prediction_train(
         _build_pose_tcn_score_prediction_training_config(cfg)
+    ),
+    (
+        "score_prediction_ordinal",
+        "pose_tcn",
+    ): lambda cfg: run_pose_tcn_score_prediction_ordinal_train(
+        _build_pose_tcn_score_prediction_ordinal_training_config(cfg)
     ),
     ("score_prediction", "video_mae"): lambda cfg: run_video_mae_score_prediction_train(
         _build_video_mae_score_prediction_training_config(cfg)

@@ -18,6 +18,10 @@ from aitraf.tasks.score_prediction_ordinal.video_mae_temporal_fusion import (
     VideoMaeTemporalFusionScorePredictionOrdinalEvalCfg,
     run_evaluation as run_video_mae_temporal_fusion_score_prediction_ordinal_eval,
 )
+from aitraf.tasks.score_prediction_ordinal.pose_tcn import (
+    PoseTcnScorePredictionOrdinalEvalCfg,
+    run_evaluation as run_pose_tcn_score_prediction_ordinal_eval,
+)
 from aitraf.tasks.trick_classifier.pose_tcn import (
     PoseTcnTrickClassificationEvalCfg,
     run_evaluation as run_pose_tcn_trick_classification_eval,
@@ -65,8 +69,6 @@ def _build_model_uri(cfg: DictConfig) -> str:
 
 
 def _build_pose_tcn_eval_config(cfg: DictConfig) -> PoseTcnTrickClassificationEvalCfg:
-    device = "cuda" if cfg.model.accelerator == "gpu" else cfg.model.accelerator
-
     return PoseTcnTrickClassificationEvalCfg(
         model_uri=_build_model_uri(cfg),
         manifests_dir=cfg.task.manifests_dir,
@@ -76,7 +78,7 @@ def _build_pose_tcn_eval_config(cfg: DictConfig) -> PoseTcnTrickClassificationEv
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
         sampling_dist=cfg.model.eval_sampling_dist,
-        device=device,
+        device=cfg.model.device,
         experiment_name=cfg.experiment_name,
         run_name=cfg.run_name,
         top_k_worst=cfg.top_k_worst,
@@ -105,8 +107,6 @@ def _build_video_mae_eval_config(cfg: DictConfig) -> VideoMaeTrickClassification
 def _build_pose_tcn_score_prediction_eval_config(
     cfg: DictConfig,
 ) -> PoseTcnScorePredictionEvalCfg:
-    device = "cuda" if cfg.model.accelerator == "gpu" else cfg.model.accelerator
-
     return PoseTcnScorePredictionEvalCfg(
         model_uri=_build_model_uri(cfg),
         manifests_dir=cfg.task.manifests_dir,
@@ -115,7 +115,26 @@ def _build_pose_tcn_score_prediction_eval_config(
         num_workers=cfg.model.num_workers,
         sample_frames=cfg.model.sample_frames,
         sampling_dist=cfg.model.eval_sampling_dist,
-        device=device,
+        device=cfg.model.device,
+        experiment_name=cfg.experiment_name,
+        run_name=cfg.run_name,
+        top_k_worst=cfg.top_k_worst,
+    )
+
+
+def _build_pose_tcn_score_prediction_ordinal_eval_config(
+    cfg: DictConfig,
+) -> PoseTcnScorePredictionOrdinalEvalCfg:
+    return PoseTcnScorePredictionOrdinalEvalCfg(
+        model_uri=_build_model_uri(cfg),
+        manifests_dir=cfg.task.manifests_dir,
+        vocab_path=cfg.task.vocab_path,
+        poses_dir=cfg.model.poses_dir,
+        batch_size=cfg.model.batch_size,
+        num_workers=cfg.model.num_workers,
+        sample_frames=cfg.model.sample_frames,
+        sampling_dist=cfg.model.eval_sampling_dist,
+        device=cfg.model.device,
         experiment_name=cfg.experiment_name,
         run_name=cfg.run_name,
         top_k_worst=cfg.top_k_worst,
@@ -234,6 +253,12 @@ EVALUATION_TARGETS: dict[tuple[str, str], Callable[[DictConfig], None]] = {
     ),
     ("score_prediction", "pose_tcn"): lambda cfg: run_pose_tcn_score_prediction_eval(
         _build_pose_tcn_score_prediction_eval_config(cfg)
+    ),
+    (
+        "score_prediction_ordinal",
+        "pose_tcn",
+    ): lambda cfg: run_pose_tcn_score_prediction_ordinal_eval(
+        _build_pose_tcn_score_prediction_ordinal_eval_config(cfg)
     ),
     ("score_prediction", "video_mae"): lambda cfg: run_video_mae_score_prediction_eval(
         _build_video_mae_score_prediction_eval_config(cfg)

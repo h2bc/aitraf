@@ -60,7 +60,7 @@ class VideoMaeTemporalFusionScorePredictionBinaryTrainCfg:
     fusion_queries: int
     query_init_std: float
     fusion_dropout: float
-    ordinal_loss: str
+    loss: str
     use_class_weights: bool
     best_model_metric: str
     seed: int
@@ -214,7 +214,7 @@ def _training_params(
         "fusion_queries": config.fusion_queries,
         "query_init_std": config.query_init_std,
         "fusion_dropout": config.fusion_dropout,
-        "ordinal_loss": config.ordinal_loss,
+        "loss": config.loss,
         "use_class_weights": config.use_class_weights,
         "best_model_metric": config.best_model_metric,
         "seed": config.seed,
