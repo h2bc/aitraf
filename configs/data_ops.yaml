@@ -4,7 +4,7 @@ defaults:
 
 download_labels:
   enabled: true
-  force: true
+  force: false
   prefix: labels
   output_path: ${paths.labels_path}
 
@@ -16,7 +16,7 @@ download_clips:
 
 download_pairwise_labels:
   enabled: false
-  force: true
+  force: false
   prefix: ranks
   output_dir: ${paths.storage_data_dir}/pairwise_labels
   output_path: ${paths.pairwise_labels_path}
@@ -42,7 +42,7 @@ video_mae_feature_extraction:
   clips_dir: ${download_clips.output_dir}
   features_dir: ${paths.video_mae_features_dir}
   backbone: ${oc.env:AITRAF_VIDEO_FEATURE_BACKBONE,MCG-NJU/videomae-base-finetuned-kinetics}
-  model_cache_dir: ${paths.models_dir}/video_mae_feature_cache
+  model_cache_dir: ${paths.models_dir}
   device: cuda
   batch_size: 1
   num_workers: 4

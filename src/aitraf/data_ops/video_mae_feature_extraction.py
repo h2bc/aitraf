@@ -91,9 +91,10 @@ def extract_all_clip_features(
     total = len(clips)
     pending_clips, skipped = _filter_pending_clips(clips, config)
     logger.info(
-        "Extracting VideoMAE features for {} clips ({} skipped from cache)",
-        len(pending_clips),
+        "VideoMAE feature extraction cache scan: {} total clips, {} cached, {} pending",
+        total,
         skipped,
+        len(pending_clips),
     )
     if not pending_clips:
         logger.info(
@@ -103,24 +104,34 @@ def extract_all_clip_features(
         )
         return
 
+    logger.info(
+        "Extracting VideoMAE features for {} pending clips",
+        len(pending_clips),
+    )
+
     dataset = VideoMaeFeatureDataset(
         clips=pending_clips,
         processor=processor,
         config=config,
     )
-    dataloader = DataLoader(
-        dataset,
-        batch_size=config.batch_size,
-        num_workers=config.num_workers,
-        shuffle=False,
-        pin_memory=str(config.device).startswith("cuda"),
-        persistent_workers=config.num_workers > 0,
-        collate_fn=_collate_feature_samples,
-    )
+    dataloader_kwargs = {
+        "batch_size": config.batch_size,
+        "num_workers": config.num_workers,
+        "shuffle": False,
+        "pin_memory": str(config.device).startswith("cuda"),
+        "collate_fn": _collate_feature_samples,
+    }
+    if config.num_workers > 0:
+        dataloader_kwargs |= {
+            "persistent_workers": False,
+            "prefetch_factor": 1,
+        }
+    dataloader = DataLoader(dataset, **dataloader_kwargs)
 
     processed = 0
     errors = 0
-    progress_step = max(1, total // 10)
+    pending_total = len(pending_clips)
+    progress_step = max(1, pending_total // 10)
     next_progress = progress_step
 
     for batch in dataloader:
@@ -143,16 +154,21 @@ def extract_all_clip_features(
             processed += saved
             errors += save_errors
 
-        completed = skipped + processed + errors
-        if completed >= next_progress or completed == total:
-            pct = (completed / total) * 100
+        completed_pending = processed + errors
+        if completed_pending >= next_progress or completed_pending == pending_total:
+            pending_pct = (completed_pending / pending_total) * 100
+            total_completed = skipped + completed_pending
+            total_pct = (total_completed / total) * 100
             logger.info(
-                "VideoMAE feature extraction progress: {}/{} ({:.1f}%)",
-                completed,
+                "VideoMAE feature extraction progress: {}/{} pending ({:.1f}%), {}/{} total ready ({:.1f}%)",
+                completed_pending,
+                pending_total,
+                pending_pct,
+                total_completed,
                 total,
-                pct,
+                total_pct,
             )
-            while next_progress <= completed:
+            while next_progress <= completed_pending:
                 next_progress += progress_step
 
     logger.info(

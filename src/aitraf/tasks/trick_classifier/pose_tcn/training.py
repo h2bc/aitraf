@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader, Subset
 from aitraf.datasets.pose_tcn import PoseTCNDataset
 from aitraf.metrics import calc_metrics, accuracy, f1_macro
 from aitraf.models.pose_tcn import TCNClassifier
-from aitraf.processing import load_target_label_mappings
+from aitraf.processing import build_label_transform, load_target_label_mappings
 from aitraf.processing.models.pose_tcn import process_sample
 from aitraf.processing.utils import build_collate
 
@@ -60,12 +60,13 @@ def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
     """Train the Pose TCN classifier and log artifacts to MLflow."""
     labels, label2id, _ = load_target_label_mappings(config.vocab_path, "trick")
 
+    label_transform = build_label_transform(label2id)
     process_fn = partial(
         process_sample,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
         label_key="trick",
-        label_transform=lambda label: label2id[str(label)],
+        label_transform=label_transform,
     )
 
     collate_fn = build_collate(process_fn)

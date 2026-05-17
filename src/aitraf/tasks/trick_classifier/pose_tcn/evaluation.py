@@ -33,7 +33,7 @@ from aitraf.metrics import (
 )
 from aitraf.tracking import build_training_params, params_to_df
 from aitraf.models.pose_tcn import TCNClassifier
-from aitraf.processing import load_target_label_mappings
+from aitraf.processing import build_label_transform, load_target_label_mappings
 from aitraf.processing.models.pose_tcn import process_sample
 from aitraf.processing.utils import build_collate
 from aitraf.tracking.models.pose_tcn import TRAINING_PARAM_MAP
@@ -78,12 +78,13 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
         split="test",
     )
 
+    label_transform = build_label_transform(label2id)
     process_fn = partial(
         process_sample,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
         label_key="trick",
-        label_transform=lambda label: label2id[str(label)],
+        label_transform=label_transform,
     )
 
     collate_fn = build_collate(process_fn)

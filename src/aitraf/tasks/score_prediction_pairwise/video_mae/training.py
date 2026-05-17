@@ -23,7 +23,7 @@ from transformers import (
 
 from aitraf.logging import logger
 from aitraf.metrics import accuracy, calc_metrics
-from aitraf.processing import load_target_label_mappings
+from aitraf.processing import build_label_transform, load_target_label_mappings
 from aitraf.processing.utils import build_collate
 from ..dataset import ScorePredictionPairwiseDataset, ScorePredictionPairwiseSubset
 from ..metrics import compute_pairwise_pred_labels
@@ -138,13 +138,14 @@ def run_training(config: VideoMaeScorePredictionPairwiseTrainCfg) -> str:
         save_total_limit=1,
     )
 
+    label_transform = build_label_transform(label2id)
     process_fn = partial(
         process_pair_sample,
         processor=processor,
         local_clips_dir=config.clips_dir,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
-        label_transform=lambda label: label2id[str(label)],
+        label_transform=label_transform,
     )
 
     data_collator = build_collate(process_fn)

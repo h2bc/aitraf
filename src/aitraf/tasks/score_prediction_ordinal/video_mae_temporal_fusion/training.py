@@ -9,20 +9,31 @@ from pathlib import Path
 import mlflow
 import mlflow.pytorch
 from datasets import load_dataset
-from dlordinal.losses import EMDLoss
+from dlordinal.losses import CDWCELoss
 from dotenv import load_dotenv
 from mlflow.data import from_huggingface
-from transformers import EarlyStoppingCallback, EvalPrediction, Trainer, TrainingArguments
+from torch import nn
+from transformers import (
+    EarlyStoppingCallback,
+    EvalPrediction,
+    Trainer,
+    TrainingArguments,
+    set_seed,
+)
 
 from aitraf.logging import logger
 from aitraf.metrics import calc_metrics, compute_pred_ids
-from aitraf.processing import load_target_label_mappings
+from aitraf.processing import (
+    build_class_weights,
+    build_label_transform,
+    load_target_label_mappings,
+)
 from aitraf.processing.models.video_mae_temporal_fusion import (
     VideoMaeTemporalFusionClassifier,
     process_temporal_fusion_feature_sample,
 )
 from aitraf.processing.utils import build_collate
-from aitraf.tasks.score_prediction_ordinal.metrics import amae, mae
+from aitraf.tasks.score_prediction_ordinal.metrics import amae, mae, qwk
 
 
 @dataclass
@@ -45,10 +56,16 @@ class VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg:
     experiment_name: str
     run_name: str
     max_train_samples: int | None
-    early_stopping_patience: int
+    early_stopping_patience: int | None
     fusion_layers: int
     fusion_heads: int
+    fusion_queries: int
+    query_init_std: float
     fusion_dropout: float
+    ordinal_loss: str
+    use_class_weights: bool
+    best_model_metric: str
+    seed: int
 
     def __post_init__(self) -> None:
         self.manifests_dir = Path(self.manifests_dir)
@@ -59,6 +76,7 @@ class VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg:
 
 def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -> str:
     load_dotenv()
+    set_seed(config.seed)
 
     dataset = load_dataset(
         "json",
@@ -75,6 +93,7 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
     labels, label2id, _ = load_target_label_mappings(
         config.vocab_path, "execution_score"
     )
+    label_transform = build_label_transform(label2id)
     process_fn = partial(
         process_temporal_fusion_feature_sample,
         features_dir=config.features_dir,
@@ -83,17 +102,39 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
         num_clips=config.num_clips,
         sampling_dist=config.sampling_dist,
         label_key="execution_score",
-        label_transform=lambda label: label2id[str(label)],
+        label_transform=label_transform,
     )
     sample_clip = process_fn(dataset["train"][0])
-    model = _build_model(
-        config,
-        num_labels=len(labels),
+    class_weights = (
+        build_class_weights(
+            [label_transform(row["execution_score"]) for row in dataset["train"]],
+            num_labels=len(labels),
+            device=config.device,
+        )
+        if config.use_class_weights
+        else None
+    )
+
+    model = VideoMaeTemporalFusionClassifier(
         hidden_size=sample_clip["features"].shape[-1],
+        num_labels=len(labels),
+        num_clips=config.num_clips,
+        num_queries=config.fusion_queries,
+        fusion_layers=config.fusion_layers,
+        fusion_heads=config.fusion_heads,
+        fusion_dropout=config.fusion_dropout,
+        query_init_std=config.query_init_std,
+        loss_fn=_build_loss(
+            loss_name=config.ordinal_loss,
+            num_labels=len(labels),
+            class_weights=class_weights,
+        ),
     ).to(config.device)
+
     logger.info(
         f"VideoMAE temporal-fusion trainer using device: {next(model.parameters()).device}"
     )
+
     data_collator = build_collate(process_fn)
 
     def trainer_compute_metrics(prediction: EvalPrediction) -> dict[str, float]:
@@ -101,9 +142,12 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
         return calc_metrics(
             compute_pred_ids(pred_logits),
             actual_ids,
-            (amae, mae),
+            (amae, mae, qwk),
         )
 
+    metric_for_best_model, greater_is_better = _best_model_metric(
+        config.best_model_metric
+    )
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),
         dataloader_num_workers=config.num_workers,
@@ -112,16 +156,26 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
         per_device_eval_batch_size=config.batch_size,
         num_train_epochs=config.epochs,
         learning_rate=config.learning_rate,
+        seed=config.seed,
+        data_seed=config.seed,
         logging_strategy="epoch",
         eval_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,
-        metric_for_best_model="amae",
-        greater_is_better=False,
+        metric_for_best_model=metric_for_best_model,
+        greater_is_better=greater_is_better,
         remove_unused_columns=False,
         report_to=["mlflow"],
         run_name=config.run_name,
     )
+    callbacks = []
+    if config.early_stopping_patience is not None:
+        callbacks.append(
+            EarlyStoppingCallback(
+                early_stopping_patience=config.early_stopping_patience
+            )
+        )
+
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -129,11 +183,7 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
         eval_dataset=dataset["validation"],
         data_collator=data_collator,
         compute_metrics=trainer_compute_metrics,
-        callbacks=[
-            EarlyStoppingCallback(
-                early_stopping_patience=config.early_stopping_patience
-            )
-        ],
+        callbacks=callbacks,
     )
 
     mlflow.set_experiment(config.experiment_name)
@@ -156,23 +206,6 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
         return model_info.model_uri
 
 
-def _build_model(
-    config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg,
-    *,
-    num_labels: int,
-    hidden_size: int,
-) -> VideoMaeTemporalFusionClassifier:
-    return VideoMaeTemporalFusionClassifier(
-        hidden_size=hidden_size,
-        num_labels=num_labels,
-        num_clips=config.num_clips,
-        fusion_layers=config.fusion_layers,
-        fusion_heads=config.fusion_heads,
-        fusion_dropout=config.fusion_dropout,
-        loss_fn=EMDLoss(num_classes=num_labels),
-    )
-
-
 def _training_params(
     config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg,
 ) -> dict[str, object]:
@@ -184,13 +217,55 @@ def _training_params(
         "num_clips": config.num_clips,
         "fusion_layers": config.fusion_layers,
         "fusion_heads": config.fusion_heads,
+        "fusion_queries": config.fusion_queries,
+        "query_init_std": config.query_init_std,
         "fusion_dropout": config.fusion_dropout,
+        "ordinal_loss": config.ordinal_loss,
+        "use_class_weights": config.use_class_weights,
+        "best_model_metric": config.best_model_metric,
+        "seed": config.seed,
         "batch_size": config.batch_size,
         "num_workers": config.num_workers,
         "max_epochs": config.epochs,
         "learning_rate": config.learning_rate,
-        "metric_for_best_model": "amae",
+        "metric_for_best_model": _best_model_metric(config.best_model_metric)[0],
     }
+
+
+def _build_loss(
+    *,
+    loss_name: str,
+    num_labels: int,
+    class_weights,
+) -> nn.Module:
+    if loss_name == "cross_entropy":
+        return nn.CrossEntropyLoss(weight=class_weights)
+
+    if loss_name in {"cdwce", "cwde"}:
+        return CDWCELoss(num_classes=num_labels, alpha=0.5, weight=class_weights)
+
+    raise ValueError(
+        f"Unsupported ordinal_loss '{loss_name}'. Expected 'cross_entropy' or 'cdwce'."
+    )
+
+
+def _best_model_metric(metric_name: str) -> tuple[str, bool]:
+    
+    metric = metric_name.strip().lower()
+    
+    supported_metrics = {
+        "loss": ("eval_loss", False),
+        "amae": ("eval_amae", False),
+        "mae": ("eval_mae", False),
+        "qwk": ("eval_qwk", True),
+    }
+    
+    if metric not in supported_metrics:
+        raise ValueError(
+            f"Unsupported best_model_metric '{metric_name}'. "
+            f"Expected one of: {sorted(supported_metrics)}."
+        )
+    return supported_metrics[metric]
 
 
 __all__ = ["VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg", "run_training"]

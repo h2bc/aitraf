@@ -29,7 +29,7 @@ from aitraf.metrics import (
     get_top_k_worst_misses,
     metrics_to_df,
 )
-from aitraf.processing import load_target_label_mappings
+from aitraf.processing import build_label_transform, load_target_label_mappings
 from aitraf.processing.models.video_mae_temporal_fusion import (
     process_temporal_fusion_feature_sample,
 )
@@ -83,6 +83,7 @@ def run_evaluation(config: VideoMaeTemporalFusionScorePredictionBinaryEvalCfg) -
     logger.info(
         f"VideoMAE temporal-fusion evaluation running on device: {next(model.parameters()).device}"
     )
+    label_transform = build_label_transform(label2id)
     process_fn = partial(
         process_temporal_fusion_feature_sample,
         features_dir=config.features_dir,
@@ -91,7 +92,7 @@ def run_evaluation(config: VideoMaeTemporalFusionScorePredictionBinaryEvalCfg) -
         num_clips=config.num_clips,
         sampling_dist=config.sampling_dist,
         label_key="quality_label",
-        label_transform=lambda label: label2id[str(label)],
+        label_transform=label_transform,
     )
     data_collator = build_collate(process_fn)
     training_args = TrainingArguments(

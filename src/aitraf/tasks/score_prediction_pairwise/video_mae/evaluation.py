@@ -25,7 +25,7 @@ from aitraf.metrics import (
     metrics_to_df,
 )
 from aitraf.tracking import build_training_params, params_to_df
-from aitraf.processing import load_target_label_mappings
+from aitraf.processing import build_label_transform, load_target_label_mappings
 from aitraf.processing.utils import build_collate
 from aitraf.tracking.models.video_mae import TRAINING_PARAM_MAP
 from ..dataset import ScorePredictionPairwiseDataset
@@ -99,13 +99,14 @@ def run_evaluation(config: VideoMaeScorePredictionPairwiseEvalCfg) -> None:
         run_name=config.run_name,
     )
 
+    label_transform = build_label_transform(label2id)
     process_fn = partial(
         process_pair_sample,
         processor=processor,
         local_clips_dir=config.clips_dir,
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
-        label_transform=lambda label: label2id[str(label)],
+        label_transform=label_transform,
     )
 
     data_collator = build_collate(process_fn)

@@ -25,7 +25,11 @@ from aitraf.metrics import (
     calc_metrics,
     compute_pred_ids,
 )
-from aitraf.processing import load_target_label_mappings
+from aitraf.processing import (
+    build_class_weights,
+    build_label_transform,
+    load_target_label_mappings,
+)
 from aitraf.processing.models.video_mae import process_sample
 from aitraf.processing.utils import build_collate
 from ..metrics import amae, mae
@@ -54,6 +58,7 @@ class VideoMaeScorePredictionOrdinalTrainCfg:
     freeze_backbone: bool
     model_cache_dir: Path | str
     max_train_samples: int | None
+    use_class_weights: bool
     early_stopping_patience: int
 
     def __post_init__(self) -> None:
@@ -117,9 +122,20 @@ def run_training(config: VideoMaeScorePredictionOrdinalTrainCfg) -> str:
         for param in classifier.base_model.parameters():
             param.requires_grad = False
 
+    label_transform = build_label_transform(label2id)
+    class_weights = (
+        build_class_weights(
+            [label_transform(row["execution_score"]) for row in dataset["train"]],
+            num_labels=len(labels),
+            device=config.device,
+        )
+        if config.use_class_weights
+        else None
+    )
+
     model = ScorePredictionOrdinalModel(
         classifier=classifier,
-        num_classes=len(labels),
+        class_weights=class_weights,
     ).to(config.device)
 
     def trainer_compute_metrics(prediction: EvalPrediction) -> dict[str, float]:
@@ -151,7 +167,7 @@ def run_training(config: VideoMaeScorePredictionOrdinalTrainCfg) -> str:
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
         label_key="execution_score",
-        label_transform=lambda label: label2id[str(label)],
+        label_transform=label_transform,
     )
 
     data_collator = build_collate(process_fn)
@@ -174,6 +190,8 @@ def run_training(config: VideoMaeScorePredictionOrdinalTrainCfg) -> str:
 
     with mlflow.start_run(run_name=config.run_name):
         mlflow.log_param("frozen", config.freeze_backbone)
+        mlflow.log_param("ordinal_loss", "cross_entropy")
+        mlflow.log_param("use_class_weights", config.use_class_weights)
         mlflow.log_param("train_sampling_dist", config.sampling_dist)
         mlflow.log_input(
             from_huggingface(dataset["train"], name="train"), context="training"

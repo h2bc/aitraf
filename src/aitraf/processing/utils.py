@@ -6,7 +6,9 @@ import json
 from pathlib import Path
 from typing import Any, Callable, List
 
+import numpy as np
 import torch
+from sklearn.utils.class_weight import compute_class_weight
 
 
 def load_target_label_mappings(
@@ -27,6 +29,38 @@ def load_target_label_mappings(
     id2label = labels_config[column_name]["id2label"]
 
     return labels, label2id, id2label
+
+
+def build_label_transform(label2id: dict[str, int]) -> Callable[[Any], int]:
+    """Create a stable label-to-id transform for dataset processors."""
+
+    return lambda label: label2id[str(label)]
+
+
+def build_class_weights(
+    target_ids: list[int],
+    *,
+    num_labels: int,
+    device: str,
+) -> torch.Tensor:
+    """Build inverse-frequency class weights for classification losses."""
+
+    target_ids = np.asarray(target_ids)
+    classes = np.arange(num_labels)
+    missing_classes = sorted(set(classes) - set(target_ids))
+
+    if missing_classes:
+        raise ValueError(
+            "Cannot use balanced class weights when a class has zero train samples: "
+            f"{missing_classes}"
+        )
+
+    weights = compute_class_weight(
+        class_weight="balanced",
+        classes=classes,
+        y=target_ids,
+    )
+    return torch.as_tensor(weights, dtype=torch.float32, device=device)
 
 
 def sample_frame_indices(
@@ -96,4 +130,10 @@ def _center_indices(total_frames: int, num_frames: int) -> List[int]:
     return list(range(start, start + num_frames))
 
 
-__all__ = ["build_collate", "load_target_label_mappings", "sample_frame_indices"]
+__all__ = [
+    "build_class_weights",
+    "build_collate",
+    "build_label_transform",
+    "load_target_label_mappings",
+    "sample_frame_indices",
+]

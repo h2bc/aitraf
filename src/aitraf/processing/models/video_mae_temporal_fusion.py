@@ -18,9 +18,7 @@ def video_feature_cache_subdir(
     sample_frames: int,
     sampling_dist: str,
 ) -> Path:
-    config_slug = (
-        f"clips_{num_clips}_frames_{sample_frames}_sampling_{sampling_dist}"
-    )
+    config_slug = f"clips_{num_clips}_frames_{sample_frames}_sampling_{sampling_dist}"
     return Path(hf_model_cache_dir_name(backbone)) / config_slug
 
 
@@ -89,17 +87,17 @@ class VideoMaeTemporalFusionClassifier(nn.Module):
         hidden_size: int,
         num_labels: int,
         num_clips: int,
+        num_queries: int | None = None,
         fusion_layers: int,
         fusion_heads: int,
         fusion_dropout: float,
+        query_init_std: float,
         loss_fn: nn.Module,
     ) -> None:
         super().__init__()
+        query_count = num_queries or num_clips
         self.clip_norm = nn.LayerNorm(hidden_size)
-        self.query_embeddings = nn.Parameter(torch.zeros(1, num_labels, hidden_size))
-        self.position_embeddings = nn.Parameter(
-            torch.zeros(1, num_clips, hidden_size)
-        )
+        self.query_embeddings = nn.Parameter(torch.zeros(1, query_count, hidden_size))
         decoder_layer = nn.TransformerDecoderLayer(
             d_model=hidden_size,
             nhead=fusion_heads,
@@ -113,24 +111,29 @@ class VideoMaeTemporalFusionClassifier(nn.Module):
             decoder_layer,
             num_layers=fusion_layers,
         )
-        self.classifier = nn.Linear(hidden_size, 1)
+        self.classifier = nn.Sequential(
+            nn.LayerNorm(query_count * hidden_size),
+            nn.Linear(query_count * hidden_size, hidden_size),
+            nn.GELU(),
+            nn.Dropout(fusion_dropout),
+            nn.Linear(hidden_size, num_labels),
+        )
         self.loss_fn = loss_fn
 
-        nn.init.trunc_normal_(self.query_embeddings, std=0.02)
-        nn.init.trunc_normal_(self.position_embeddings, std=0.02)
+        nn.init.trunc_normal_(self.query_embeddings, std=query_init_std)
 
     def forward(
         self,
         features: torch.Tensor,
         labels: torch.Tensor | None = None,
     ) -> dict[str, torch.Tensor]:
-        batch_size, num_clips = features.shape[:2]
+        batch_size = features.shape[0]
         clip_embeddings = self.clip_norm(features)
 
-        memory = clip_embeddings + self.position_embeddings[:, :num_clips]
+        memory = clip_embeddings
         queries = self.query_embeddings.expand(batch_size, -1, -1)
         query_embeddings = self.fusion(tgt=queries, memory=memory)
-        logits = self.classifier(query_embeddings).squeeze(-1)
+        logits = self.classifier(query_embeddings.flatten(start_dim=1))
 
         result = {"logits": logits}
         if labels is not None:

@@ -10,6 +10,8 @@ TRAINING_PARAM_MAP = {
     "image_size": "image_size",
     "train_sampling_dist": "train_sampling_dist",
     "frozen": "frozen",
+    "ordinal_loss": "ordinal_loss",
+    "use_class_weights": "use_class_weights",
 }
 
 __all__ = ["TRAINING_PARAM_MAP"]

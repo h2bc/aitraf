@@ -14,7 +14,7 @@ from transformers import (
     VideoMAEImageProcessor,
 )
 
-from aitraf.processing import load_target_label_mappings
+from aitraf.processing import build_label_transform, load_target_label_mappings
 from aitraf.processing.models.video_mae import process_sample
 from aitraf.processing.utils import build_collate
 from aitraf.metrics import (
@@ -141,6 +141,7 @@ def run_training(config: VideoMaeTrickClassificationTrainCfg) -> str:
         run_name=config.run_name,
     )
 
+    label_transform = build_label_transform(label2id)
     process_fn = partial(
         process_sample,
         processor=processor,
@@ -148,7 +149,7 @@ def run_training(config: VideoMaeTrickClassificationTrainCfg) -> str:
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
         label_key="trick",
-        label_transform=lambda label: label2id[str(label)],
+        label_transform=label_transform,
     )
 
     data_collator = build_collate(process_fn)

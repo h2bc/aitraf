@@ -3,17 +3,20 @@
 from __future__ import annotations
 
 import torch
-from dlordinal.losses import EMDLoss
 from torch import nn
 
 
 class ScorePredictionOrdinalModel(nn.Module):
-    """Train a VideoMAE classifier with an ordinal-aware EMD loss."""
+    """Train a VideoMAE classifier with a task-local classification loss."""
 
-    def __init__(self, classifier: nn.Module, num_classes: int) -> None:
+    def __init__(
+        self,
+        classifier: nn.Module,
+        class_weights: torch.Tensor | None,
+    ) -> None:
         super().__init__()
         self.classifier = classifier
-        self.loss_fn = EMDLoss(num_classes=num_classes)
+        self.loss_fn = nn.CrossEntropyLoss(weight=class_weights)
 
     def forward(
         self,

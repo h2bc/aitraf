@@ -1,6 +1,9 @@
 """VideoMAE temporal-fusion binary score-prediction task entrypoints."""
 
-from .evaluation import VideoMaeTemporalFusionScorePredictionBinaryEvalCfg, run_evaluation
+from .evaluation import (
+    VideoMaeTemporalFusionScorePredictionBinaryEvalCfg,
+    run_evaluation,
+)
 from .training import VideoMaeTemporalFusionScorePredictionBinaryTrainCfg, run_training
 
 __all__ = [

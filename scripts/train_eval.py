@@ -373,6 +373,7 @@ def _build_video_mae_score_prediction_ordinal_training_config(
         freeze_backbone=cfg.model.freeze_backbone,
         model_cache_dir=cfg.model.model_cache_dir,
         max_train_samples=cfg.max_samples,
+        use_class_weights=cfg.model.use_class_weights,
         early_stopping_patience=cfg.model.early_stopping_patience,
     )
 
@@ -402,7 +403,7 @@ def _build_video_mae_temporal_fusion_training_config(
     *,
     config_cls,
 ):
-    return config_cls(
+    kwargs = dict(
         task_name=cfg.task.name,
         model_name=cfg.model.name,
         backbone=cfg.model.backbone,
@@ -424,8 +425,16 @@ def _build_video_mae_temporal_fusion_training_config(
         early_stopping_patience=cfg.model.early_stopping_patience,
         fusion_layers=cfg.model.fusion_layers,
         fusion_heads=cfg.model.fusion_heads,
+        fusion_queries=cfg.model.fusion_queries,
+        query_init_std=cfg.model.query_init_std,
         fusion_dropout=cfg.model.fusion_dropout,
+        ordinal_loss=cfg.model.ordinal_loss,
+        use_class_weights=cfg.model.use_class_weights,
+        best_model_metric=cfg.model.best_model_metric,
+        seed=cfg.model.seed,
     )
+
+    return config_cls(**kwargs)
 
 
 def _build_video_mae_temporal_fusion_eval_config(
@@ -535,7 +544,8 @@ TRAIN_EVAL_TARGETS: dict[
                 config_cls=VideoMaeTemporalFusionScorePredictionBinaryTrainCfg,
             )
         ),
-        lambda cfg, model_uri: run_video_mae_temporal_fusion_score_prediction_binary_eval(
+        lambda cfg,
+        model_uri: run_video_mae_temporal_fusion_score_prediction_binary_eval(
             _build_video_mae_temporal_fusion_eval_config(
                 cfg,
                 model_uri,
@@ -550,7 +560,8 @@ TRAIN_EVAL_TARGETS: dict[
                 config_cls=VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg,
             )
         ),
-        lambda cfg, model_uri: run_video_mae_temporal_fusion_score_prediction_ordinal_eval(
+        lambda cfg,
+        model_uri: run_video_mae_temporal_fusion_score_prediction_ordinal_eval(
             _build_video_mae_temporal_fusion_eval_config(
                 cfg,
                 model_uri,

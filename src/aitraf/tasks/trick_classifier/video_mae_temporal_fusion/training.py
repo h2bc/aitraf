@@ -12,11 +12,21 @@ from datasets import load_dataset
 from dotenv import load_dotenv
 from mlflow.data import from_huggingface
 from torch import nn
-from transformers import EarlyStoppingCallback, EvalPrediction, Trainer, TrainingArguments
+from transformers import (
+    EarlyStoppingCallback,
+    EvalPrediction,
+    Trainer,
+    TrainingArguments,
+    set_seed,
+)
 
 from aitraf.logging import logger
 from aitraf.metrics import accuracy, calc_metrics, compute_pred_ids, f1_macro
-from aitraf.processing import load_target_label_mappings
+from aitraf.processing import (
+    build_class_weights,
+    build_label_transform,
+    load_target_label_mappings,
+)
 from aitraf.processing.models.video_mae_temporal_fusion import (
     VideoMaeTemporalFusionClassifier,
     process_temporal_fusion_feature_sample,
@@ -44,10 +54,16 @@ class VideoMaeTemporalFusionTrickClassificationTrainCfg:
     experiment_name: str
     run_name: str
     max_train_samples: int | None
-    early_stopping_patience: int
+    early_stopping_patience: int | None
     fusion_layers: int
     fusion_heads: int
+    fusion_queries: int
+    query_init_std: float
     fusion_dropout: float
+    ordinal_loss: str
+    use_class_weights: bool
+    best_model_metric: str
+    seed: int
 
     def __post_init__(self) -> None:
         self.manifests_dir = Path(self.manifests_dir)
@@ -58,6 +74,7 @@ class VideoMaeTemporalFusionTrickClassificationTrainCfg:
 
 def run_training(config: VideoMaeTemporalFusionTrickClassificationTrainCfg) -> str:
     load_dotenv()
+    set_seed(config.seed)
 
     dataset = load_dataset(
         "json",
@@ -72,6 +89,7 @@ def run_training(config: VideoMaeTemporalFusionTrickClassificationTrainCfg) -> s
         )
 
     labels, label2id, _ = load_target_label_mappings(config.vocab_path, "trick")
+    label_transform = build_label_transform(label2id)
     process_fn = partial(
         process_temporal_fusion_feature_sample,
         features_dir=config.features_dir,
@@ -80,13 +98,28 @@ def run_training(config: VideoMaeTemporalFusionTrickClassificationTrainCfg) -> s
         num_clips=config.num_clips,
         sampling_dist=config.sampling_dist,
         label_key="trick",
-        label_transform=lambda label: label2id[str(label)],
+        label_transform=label_transform,
     )
     sample_clip = process_fn(dataset["train"][0])
-    model = _build_model(
-        config,
-        num_labels=len(labels),
+    class_weights = (
+        build_class_weights(
+            [label_transform(row["trick"]) for row in dataset["train"]],
+            num_labels=len(labels),
+            device=config.device,
+        )
+        if config.use_class_weights
+        else None
+    )
+    model = VideoMaeTemporalFusionClassifier(
         hidden_size=sample_clip["features"].shape[-1],
+        num_labels=len(labels),
+        num_clips=config.num_clips,
+        num_queries=config.fusion_queries,
+        fusion_layers=config.fusion_layers,
+        fusion_heads=config.fusion_heads,
+        fusion_dropout=config.fusion_dropout,
+        query_init_std=config.query_init_std,
+        loss_fn=nn.CrossEntropyLoss(weight=class_weights),
     ).to(config.device)
     logger.info(
         f"VideoMAE temporal-fusion trainer using device: {next(model.parameters()).device}"
@@ -108,6 +141,8 @@ def run_training(config: VideoMaeTemporalFusionTrickClassificationTrainCfg) -> s
         per_device_eval_batch_size=config.batch_size,
         num_train_epochs=config.epochs,
         learning_rate=config.learning_rate,
+        seed=config.seed,
+        data_seed=config.seed,
         logging_strategy="epoch",
         eval_strategy="epoch",
         save_strategy="epoch",
@@ -118,6 +153,14 @@ def run_training(config: VideoMaeTemporalFusionTrickClassificationTrainCfg) -> s
         report_to=["mlflow"],
         run_name=config.run_name,
     )
+    callbacks = []
+    if config.early_stopping_patience is not None:
+        callbacks.append(
+            EarlyStoppingCallback(
+                early_stopping_patience=config.early_stopping_patience
+            )
+        )
+
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -125,11 +168,7 @@ def run_training(config: VideoMaeTemporalFusionTrickClassificationTrainCfg) -> s
         eval_dataset=dataset["validation"],
         data_collator=data_collator,
         compute_metrics=trainer_compute_metrics,
-        callbacks=[
-            EarlyStoppingCallback(
-                early_stopping_patience=config.early_stopping_patience
-            )
-        ],
+        callbacks=callbacks,
     )
 
     mlflow.set_experiment(config.experiment_name)
@@ -152,23 +191,6 @@ def run_training(config: VideoMaeTemporalFusionTrickClassificationTrainCfg) -> s
         return model_info.model_uri
 
 
-def _build_model(
-    config: VideoMaeTemporalFusionTrickClassificationTrainCfg,
-    *,
-    num_labels: int,
-    hidden_size: int,
-) -> VideoMaeTemporalFusionClassifier:
-    return VideoMaeTemporalFusionClassifier(
-        hidden_size=hidden_size,
-        num_labels=num_labels,
-        num_clips=config.num_clips,
-        fusion_layers=config.fusion_layers,
-        fusion_heads=config.fusion_heads,
-        fusion_dropout=config.fusion_dropout,
-        loss_fn=nn.CrossEntropyLoss(),
-    )
-
-
 def _training_params(
     config: VideoMaeTemporalFusionTrickClassificationTrainCfg,
 ) -> dict[str, object]:
@@ -180,7 +202,13 @@ def _training_params(
         "num_clips": config.num_clips,
         "fusion_layers": config.fusion_layers,
         "fusion_heads": config.fusion_heads,
+        "fusion_queries": config.fusion_queries,
+        "query_init_std": config.query_init_std,
         "fusion_dropout": config.fusion_dropout,
+        "ordinal_loss": config.ordinal_loss,
+        "use_class_weights": config.use_class_weights,
+        "best_model_metric": config.best_model_metric,
+        "seed": config.seed,
         "batch_size": config.batch_size,
         "num_workers": config.num_workers,
         "max_epochs": config.epochs,

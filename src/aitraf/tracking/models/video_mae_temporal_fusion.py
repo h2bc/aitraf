@@ -13,7 +13,12 @@ TRAINING_PARAM_MAP = {
     "num_clips": "num_clips",
     "fusion_layers": "fusion_layers",
     "fusion_heads": "fusion_heads",
+    "fusion_queries": "fusion_queries",
+    "query_init_std": "query_init_std",
     "fusion_dropout": "fusion_dropout",
+    "ordinal_loss": "ordinal_loss",
+    "use_class_weights": "use_class_weights",
+    "best_model_metric": "best_model_metric",
 }
 
 __all__ = ["TRAINING_PARAM_MAP"]

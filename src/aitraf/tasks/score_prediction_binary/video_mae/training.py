@@ -27,7 +27,7 @@ from aitraf.metrics import (
     f1_macro,
     compute_pred_ids,
 )
-from aitraf.processing import load_target_label_mappings
+from aitraf.processing import build_label_transform, load_target_label_mappings
 from aitraf.processing.models.video_mae import process_sample
 from aitraf.processing.utils import build_collate
 
@@ -144,6 +144,7 @@ def run_training(config: VideoMaeScorePredictionBinaryTrainCfg) -> str:
         run_name=config.run_name,
     )
 
+    label_transform = build_label_transform(label2id)
     process_fn = partial(
         process_sample,
         processor=processor,
@@ -151,7 +152,7 @@ def run_training(config: VideoMaeScorePredictionBinaryTrainCfg) -> str:
         num_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
         label_key="quality_label",
-        label_transform=lambda label: label2id[str(label)],
+        label_transform=label_transform,
     )
 
     data_collator = build_collate(process_fn)
