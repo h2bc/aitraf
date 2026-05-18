@@ -8,12 +8,11 @@
   "workspaceFolder": "/workspace",
   "mounts": [
     "type=bind,source=${localWorkspaceFolder},target=/workspace",
-    "source=${localEnv:SSH_AUTH_SOCK},target=/ssh-agent.sock,type=bind",
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
   ],
-  "remoteEnv": {
-    "SSH_AUTH_SOCK": "/ssh-agent.sock"
-  },
+  "containerUser": "ubuntu",
+  "remoteUser": "ubuntu",
+  "updateRemoteUserUID": true,
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "username": "ubuntu"
@@ -33,6 +32,5 @@
         "tamasfe.even-better-toml"
       ]
     }
-  },
-  "remoteUser": "ubuntu"
+  }
 }
