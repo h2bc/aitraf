@@ -19,10 +19,14 @@ from aitraf.metrics import (
     EvalModel,
     EvalSet,
     accuracy,
+    balanced_accuracy,
     calc_metrics_for_models,
     compute_dummy_classification_pred_ids,
+    f1_binary,
     flatten_metrics_report,
     metrics_to_df,
+    precision,
+    recall,
 )
 from aitraf.tracking import build_training_params, params_to_df
 from aitraf.processing import build_label_transform, load_target_label_mappings
@@ -183,7 +187,13 @@ def run_evaluation(config: VideoMaeScorePredictionPairwiseEvalCfg) -> None:
                     ],
                 ),
             ],
-            eval_metrics=(accuracy,),
+            eval_metrics=(
+                accuracy,
+                balanced_accuracy,
+                f1_binary,
+                precision,
+                recall,
+            ),
         )
         all_metrics = flatten_metrics_report(metrics_report)
 

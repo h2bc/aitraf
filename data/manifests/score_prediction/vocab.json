@@ -48,6 +48,7 @@
       "Henrikas",
       "Justas",
       "Max",
+      "Mykolas",
       "Romka",
       "Rytis",
       "Vilius"
@@ -57,18 +58,20 @@
       "Henrikas": 1,
       "Justas": 2,
       "Max": 3,
-      "Romka": 4,
-      "Rytis": 5,
-      "Vilius": 6
+      "Mykolas": 4,
+      "Romka": 5,
+      "Rytis": 6,
+      "Vilius": 7
     },
     "id2label": {
       "0": "Andrej",
       "1": "Henrikas",
       "2": "Justas",
       "3": "Max",
-      "4": "Romka",
-      "5": "Rytis",
-      "6": "Vilius"
+      "4": "Mykolas",
+      "5": "Romka",
+      "6": "Rytis",
+      "7": "Vilius"
     }
   }
 }

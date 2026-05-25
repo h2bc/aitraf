@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Any
 
 import pandas as pd
@@ -19,7 +20,7 @@ from aitraf.data_ops.utils import apply_dtypes, validate_required_columns
 from aitraf.logging import logger
 
 
-REQUIRED_LABEL_COLUMNS = ("left", "right", "pref")
+REQUIRED_LABEL_COLUMNS = ("left", "right", "pref", "split")
 VOCAB_COLUMNS = ("trick", "pair_label")
 MANIFEST_COLUMNS = (
     "annotation_id",
@@ -56,16 +57,23 @@ def run_prepare(task_cfg: DictConfig, prepare_cfg: DictConfig) -> None:
     )
 
     source_dir = Path(task_cfg.source_manifests_dir)
+    source_manifest_df = pd.concat(
+        [
+            load_manifest_df(source_dir / f"{split_name}.jsonl")
+            for split_name in ("train", "val", "test")
+        ],
+        ignore_index=True,
+    )
     split_frames: dict[str, pd.DataFrame] = {}
     combined_frames: list[pd.DataFrame] = []
 
     for split_name in ("train", "val", "test"):
-        source_manifest_df = load_manifest_df(source_dir / f"{split_name}.jsonl")
         split_frame = _build_pairwise_split_manifest_df(
             pairwise_labels_df,
             source_manifest_df,
             split_name=split_name,
             task_name=task_cfg.name,
+            clips_dir=task_cfg.get("clips_dir"),
         )
         split_frames[split_name] = split_frame
         combined_frames.append(split_frame)
@@ -91,26 +99,45 @@ def _build_pairwise_split_manifest_df(
     *,
     split_name: str,
     task_name: str,
+    clips_dir: Path | str | None = None,
 ) -> pd.DataFrame:
     validate_required_columns(source_manifest_df, "s3_path", "video_id", "trick")
 
     source_manifest_df = source_manifest_df.dropna(
         subset=["s3_path", "video_id", "trick"]
     ).reset_index(drop=True)
+    source_manifest_df["match_s3_path"] = source_manifest_df["s3_path"].map(
+        _canonicalize_clip_uri
+    )
+    source_manifest_df["s3_path"] = source_manifest_df["match_s3_path"]
+    source_manifest_df["video_id"] = source_manifest_df.apply(
+        lambda row: _resolve_local_video_id(
+            row["video_id"],
+            row["match_s3_path"],
+            clips_dir=Path(clips_dir) if clips_dir else None,
+        ),
+        axis=1,
+    )
 
-    duplicate_paths = source_manifest_df["s3_path"].duplicated()
+    duplicate_paths = source_manifest_df["match_s3_path"].duplicated()
     if duplicate_paths.any():
-        duplicates = sorted(
-            source_manifest_df.loc[duplicate_paths, "s3_path"].astype(str).unique()
+        duplicate_count = int(duplicate_paths.sum())
+        logger.warning(
+            "Dropping {} duplicate source manifest clip rows after canonicalizing "
+            "segment ids",
+            duplicate_count,
         )
-        preview = ", ".join(duplicates[:5])
-        raise RuntimeError(
-            f"Source manifest for split '{split_name}' contains duplicate clip rows. "
-            f"Examples: {preview}"
+        source_manifest_df = (
+            source_manifest_df.drop_duplicates(subset=["match_s3_path"], keep="first")
+            .reset_index(drop=True)
         )
 
-    labels_df = pairwise_labels_df.copy()
+    labels_df = pairwise_labels_df.loc[
+        pairwise_labels_df["split"].astype(str) == split_name
+    ].copy()
     labels_df["pair_label"] = labels_df["pref"].apply(_extract_pair_label)
+    labels_df["left_match_s3_path"] = labels_df["left"].map(_canonicalize_clip_uri)
+    labels_df["right_match_s3_path"] = labels_df["right"].map(_canonicalize_clip_uri)
 
     missing_pair_label = labels_df["pair_label"].isna()
     if missing_pair_label.any():
@@ -129,10 +156,13 @@ def _build_pairwise_split_manifest_df(
             f"{bad_rows.head(5).to_dict(orient='records')}"
         )
 
-    clip_metadata = source_manifest_df[["s3_path", "video_id", "trick"]].copy()
+    clip_metadata = source_manifest_df[
+        ["match_s3_path", "s3_path", "video_id", "trick"]
+    ].copy()
 
     left_metadata = clip_metadata.rename(
         columns={
+            "match_s3_path": "left_match_s3_path",
             "s3_path": "left_s3_path",
             "video_id": "left_video_id",
             "trick": "left_trick",
@@ -140,6 +170,7 @@ def _build_pairwise_split_manifest_df(
     )
     right_metadata = clip_metadata.rename(
         columns={
+            "match_s3_path": "right_match_s3_path",
             "s3_path": "right_s3_path",
             "video_id": "right_video_id",
             "trick": "right_trick",
@@ -149,14 +180,44 @@ def _build_pairwise_split_manifest_df(
     merged = labels_df.merge(
         left_metadata,
         how="inner",
-        left_on="left",
-        right_on="left_s3_path",
+        on="left_match_s3_path",
     ).merge(
         right_metadata,
         how="inner",
-        left_on="right",
-        right_on="right_s3_path",
+        on="right_match_s3_path",
     )
+
+    dropped_rows = len(labels_df) - len(merged)
+    if dropped_rows > 0:
+        logger.warning(
+            "Dropping {} pairwise rows from split '{}' because one or both clips "
+            "were not found in the source manifests",
+            dropped_rows,
+            split_name,
+        )
+
+    mismatched_tricks = merged["left_trick"] != merged["right_trick"]
+    if mismatched_tricks.any():
+        logger.warning(
+            "Dropping {} pairwise rows from split '{}' because source manifests "
+            "assign different tricks to the compared clips",
+            int(mismatched_tricks.sum()),
+            split_name,
+        )
+        merged = merged.loc[~mismatched_tricks].reset_index(drop=True)
+
+    if "trick" in merged.columns:
+        stale_task_trick = merged["trick"].notna() & (
+            merged["trick"] != merged["left_trick"]
+        )
+        if stale_task_trick.any():
+            logger.warning(
+                "Dropping {} pairwise rows from split '{}' because pairwise labels "
+                "disagree with source manifest tricks",
+                int(stale_task_trick.sum()),
+                split_name,
+            )
+            merged = merged.loc[~stale_task_trick].reset_index(drop=True)
 
     _validate_pairwise_rows(merged, split_name=split_name, task_name=task_name)
 
@@ -191,6 +252,34 @@ def _extract_pair_label(value: Any) -> Any:
     if isinstance(value, dict):
         return value.get("selected")
     return value
+
+
+def _canonicalize_clip_uri(value: Any) -> str:
+    """Normalize old unpadded segment ids to the current clip naming convention."""
+
+    return re.sub(
+        r"-seg(\d+)(\.mp4)$",
+        lambda match: f"-seg{int(match.group(1)):02d}{match.group(2)}",
+        str(value),
+    )
+
+
+def _resolve_local_video_id(
+    video_id: Any,
+    canonical_s3_path: Any,
+    *,
+    clips_dir: Path | None,
+) -> str:
+    source_video_id = str(video_id)
+    canonical_video_id = Path(str(canonical_s3_path)).name
+
+    if clips_dir is None:
+        return source_video_id
+    if (clips_dir / source_video_id).exists():
+        return source_video_id
+    if (clips_dir / canonical_video_id).exists():
+        return canonical_video_id
+    return source_video_id
 
 
 def _validate_pairwise_rows(

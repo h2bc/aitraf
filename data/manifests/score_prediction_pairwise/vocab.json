@@ -1,0 +1,27 @@
+{
+  "trick": {
+    "labels": [
+      "ao-soul"
+    ],
+    "label2id": {
+      "ao-soul": 0
+    },
+    "id2label": {
+      "0": "ao-soul"
+    }
+  },
+  "pair_label": {
+    "labels": [
+      "left",
+      "right"
+    ],
+    "label2id": {
+      "left": 0,
+      "right": 1
+    },
+    "id2label": {
+      "0": "left",
+      "1": "right"
+    }
+  }
+}

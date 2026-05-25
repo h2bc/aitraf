@@ -3,7 +3,10 @@
 from .classification import (
     accuracy,
     balanced_accuracy,
+    f1_binary,
     f1_macro,
+    precision,
+    recall,
     compute_dummy_classification_pred_ids,
     compute_pred_confidences,
     compute_pred_ids,
@@ -45,7 +48,10 @@ from .metrics import (
 __all__ = [
     "accuracy",
     "balanced_accuracy",
+    "f1_binary",
     "f1_macro",
+    "precision",
+    "recall",
     "build_regression_metrics",
     "EvalMetric",
     "EvalMetrics",

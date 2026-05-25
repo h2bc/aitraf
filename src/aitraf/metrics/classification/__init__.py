@@ -5,7 +5,7 @@ from .compute import (
     compute_pred_confidences,
     compute_pred_ids,
 )
-from .metrics import accuracy, balanced_accuracy, f1_macro
+from .metrics import accuracy, balanced_accuracy, f1_binary, f1_macro, precision, recall
 from .plot import (
     get_confusion_matrix_figure,
     get_miss_sampling_figure,
@@ -18,7 +18,10 @@ from .plot import (
 __all__ = [
     "accuracy",
     "balanced_accuracy",
+    "f1_binary",
     "f1_macro",
+    "precision",
+    "recall",
     "compute_dummy_classification_pred_ids",
     "compute_pred_confidences",
     "compute_pred_ids",
