@@ -243,7 +243,7 @@ def _build_pose_tcn_score_prediction_ordinal_training_config(
         output_dir=cfg.train_output_dir,
         loss=cfg.task.loss,
         use_class_weights=cfg.task.use_class_weights,
-        best_model_metric=cfg.model.best_model_metric,
+        best_model_metric=cfg.task.best_model_metric,
         seed=cfg.model.seed,
         max_train_samples=cfg.max_samples,
     )
@@ -483,7 +483,7 @@ def _build_video_mae_temporal_fusion_training_config(
         fusion_dropout=cfg.model.fusion_dropout,
         loss=cfg.task.loss,
         use_class_weights=cfg.task.use_class_weights,
-        best_model_metric=cfg.model.best_model_metric,
+        best_model_metric=cfg.task.best_model_metric,
         seed=cfg.model.seed,
     )
 
