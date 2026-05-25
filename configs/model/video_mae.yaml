@@ -3,11 +3,10 @@ backbone: MCG-NJU/videomae-base-finetuned-kinetics
 model_cache_dir: ${paths.models_dir}
 freeze_backbone: False
 device: cuda
-epochs: 20
+epochs: 25
 sample_frames: 16
-train_sampling_dist: gaussian
-eval_sampling_dist: center
-use_class_weights: true
+train_sampling_dist: uniform
+eval_sampling_dist: uniform
 batch_size: 4
 num_workers: 4
 early_stopping_patience: 4

@@ -160,8 +160,8 @@ def _build_pose_tcn_score_prediction_ordinal_training_config(
         experiment_name=cfg.experiment_name,
         run_name=cfg.run_name,
         output_dir=cfg.output_dir,
-        loss=cfg.model.loss,
-        use_class_weights=cfg.model.use_class_weights,
+        loss=cfg.task.loss,
+        use_class_weights=cfg.task.use_class_weights,
         best_model_metric=cfg.model.best_model_metric,
         seed=cfg.model.seed,
         max_train_samples=cfg.max_samples,
@@ -267,7 +267,7 @@ def _build_video_mae_score_prediction_ordinal_training_config(
         freeze_backbone=cfg.model.freeze_backbone,
         model_cache_dir=cfg.model.model_cache_dir,
         max_train_samples=cfg.max_samples,
-        use_class_weights=cfg.model.use_class_weights,
+        use_class_weights=cfg.task.use_class_weights,
         early_stopping_patience=cfg.model.early_stopping_patience,
     )
 
@@ -302,8 +302,8 @@ def _build_video_mae_temporal_fusion_training_config(
         fusion_queries=cfg.model.fusion_queries,
         query_init_std=cfg.model.query_init_std,
         fusion_dropout=cfg.model.fusion_dropout,
-        loss=cfg.model.loss,
-        use_class_weights=cfg.model.use_class_weights,
+        loss=cfg.task.loss,
+        use_class_weights=cfg.task.use_class_weights,
         best_model_metric=cfg.model.best_model_metric,
         seed=cfg.model.seed,
     )

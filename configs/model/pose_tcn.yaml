@@ -14,8 +14,6 @@ kernel_size: 3
 dropout: 0.3
 max_epochs: 30
 early_stopping_patience: 5
-loss: cross_entropy
-use_class_weights: true
 best_model_metric: amae
 seed: 42
   

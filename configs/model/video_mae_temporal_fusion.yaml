@@ -13,8 +13,6 @@ fusion_heads: 1
 fusion_queries: 6
 query_init_std: 0.02
 fusion_dropout: 0.1
-loss: cross_entropy
-use_class_weights: true
 best_model_metric: amae
 seed: 42
 batch_size: 4

@@ -201,6 +201,7 @@ pyrightconfig.json
 .ionide
 
 /runs
+/multirun
 /models
 /storage
 /notebooks/runs

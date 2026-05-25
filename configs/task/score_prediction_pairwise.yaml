@@ -3,3 +3,4 @@ pairwise_labels_path: ${paths.pairwise_labels_path}
 source_manifests_dir: ${paths.manifests_dir}/score_prediction
 manifests_dir: ${paths.manifests_dir}/${.name}
 vocab_path: ${.manifests_dir}/vocab.json
+use_class_weights: false

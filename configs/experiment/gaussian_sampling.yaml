@@ -1,6 +1,0 @@
-# @package _global_
-
-name: ${model.name}_gaussian
-model:
-  train_sampling_dist: gaussian
-  eval_sampling_dist: center

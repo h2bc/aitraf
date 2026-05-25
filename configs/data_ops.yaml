@@ -15,14 +15,14 @@ download_clips:
   output_dir: ${paths.clips_dir}
 
 download_pairwise_labels:
-  enabled: false
+  enabled: true
   force: false
   prefix: ranks
   output_dir: ${paths.storage_data_dir}/pairwise_labels
   output_path: ${paths.pairwise_labels_path}
 
 pose_and_bbox_extraction:
-  enabled: false
+  enabled: true
   force: false
   limit: null
   clips_dir: ${download_clips.output_dir}
@@ -36,7 +36,7 @@ pose_and_bbox_extraction:
   max_det: 1
 
 video_mae_feature_extraction:
-  enabled: false
+  enabled: true
   force: false
   limit: null
   clips_dir: ${download_clips.output_dir}
