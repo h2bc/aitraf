@@ -11,9 +11,9 @@ eval_sampling_dist: uniform
 fusion_layers: 1
 fusion_heads: 1
 fusion_queries: 6
-query_init_std: 0.02
+query_init_std: 0.5
 fusion_dropout: 0.1
-seed: 42
+seed: 43
 batch_size: 4
 num_workers: 4
 early_stopping_patience: null
