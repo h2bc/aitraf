@@ -185,6 +185,16 @@ task train_eval -- -m task=trick_classification,score_prediction_ordinal model=v
 ```
 
 
+## MLOps
+
+Training and evaluation runs are tracked in MLflow for experiment comparison and reproducibility. Runs log the key config parameters, metrics, datasets, and trained model artifacts needed to compare local, remote, and multirun experiments.
+
+
+## DevOps
+
+The repository includes a production Docker image for running experiments outside the local dev container. GitHub Actions publishes the image to GHCR, giving remote or hosted training machines the same runtime used locally. Pull the image, provide credentials/storage, and run the same `task ... -- [overrides]` commands.
+
+
 ## Project Integrations
 
 - **S3 storage**: https://storage.h2bcweb.com (bucket `aitraf`)
