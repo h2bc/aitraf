@@ -13,6 +13,7 @@
   "containerUser": "ubuntu",
   "remoteUser": "ubuntu",
   "updateRemoteUserUID": true,
+  "postCreateCommand": "uv sync && uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@v0.10.2",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "username": "ubuntu"
@@ -20,7 +21,8 @@
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
     "ghcr.io/devcontainers-extra/features/ffmpeg-apt-get:1": {},
     "ghcr.io/devcontainer-community/devcontainer-features/astral.sh-uv:1": {},
-    "ghcr.io/eitsupi/devcontainer-features/go-task:1": {}
+    "ghcr.io/eitsupi/devcontainer-features/go-task:1": {},
+    "ghcr.io/sliekens/devcontainer-features/codex:1": {}
   },
   "customizations": {
     "vscode": {
