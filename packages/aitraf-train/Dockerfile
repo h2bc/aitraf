@@ -3,6 +3,7 @@
 FROM nvcr.io/nvidia/cuda:12.8.0-runtime-ubuntu24.04
 
 ENV UV_PROJECT_ENVIRONMENT=/workspace/.venv \
+    UV_LINK_MODE=copy \
     PATH=/workspace/.venv/bin:/usr/local/bin:${PATH}
 
 COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /uvx /usr/local/bin/
@@ -18,19 +19,13 @@ RUN curl -1sLf "https://dl.cloudsmith.io/public/task/task/setup.deb.sh" | bash \
 
 WORKDIR /workspace
 
-COPY pyproject.toml uv.lock README.md ./
+COPY pyproject.toml uv.lock ./
+COPY packages/aitraf-core ./packages/aitraf-core
+COPY packages/aitraf-train ./packages/aitraf-train
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-editable --no-install-project
+    uv sync --frozen --no-dev --no-editable --package aitraf-train
 
-COPY src ./src
-COPY scripts ./scripts
-COPY configs ./configs
-COPY data ./data
-COPY Taskfile.yml ./
-COPY .env.example ./
-
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-editable
+WORKDIR /workspace/packages/aitraf-train
 
 CMD ["sleep", "infinity"]
