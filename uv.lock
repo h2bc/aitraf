@@ -18,10 +18,10 @@ resolution-markers = [
 
 [manifest]
 members = [
+    "aitraf",
     "aitraf-api",
     "aitraf-core",
     "aitraf-train",
-    "aitraf-workspace",
 ]
 
 [[package]]
@@ -152,6 +152,39 @@ wheels = [
 ]
 
 [[package]]
+name = "aitraf"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "aitraf-api" },
+    { name = "aitraf-core" },
+    { name = "aitraf-train" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "ipykernel" },
+    { name = "ipywidgets" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aitraf-api", editable = "packages/aitraf-api" },
+    { name = "aitraf-core", editable = "packages/aitraf-core" },
+    { name = "aitraf-train", editable = "packages/aitraf-train" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "ipykernel" },
+    { name = "ipywidgets" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[[package]]
 name = "aitraf-api"
 version = "0.1.0"
 source = { editable = "packages/aitraf-api" }
@@ -243,39 +276,6 @@ requires-dist = [
     { name = "torchvision", marker = "sys_platform == 'linux'", specifier = "==0.24.1", index = "https://download.pytorch.org/whl/cu128" },
     { name = "transformers" },
     { name = "ultralytics" },
-]
-
-[[package]]
-name = "aitraf-workspace"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "aitraf-api" },
-    { name = "aitraf-core" },
-    { name = "aitraf-train" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "ipykernel" },
-    { name = "ipywidgets" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aitraf-api", editable = "packages/aitraf-api" },
-    { name = "aitraf-core", editable = "packages/aitraf-core" },
-    { name = "aitraf-train", editable = "packages/aitraf-train" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "ipykernel" },
-    { name = "ipywidgets" },
-    { name = "pytest" },
-    { name = "ruff" },
 ]
 
 [[package]]
