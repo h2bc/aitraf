@@ -23,7 +23,7 @@
   VideoMAE feature generation, model-input preparation, and shared inference-ready
   adapters into `aitraf_core`.
 - **Rationale**: The current code already shows shared seams in
-  `src/aitraf/processing/`, `src/aitraf/data_ops/`, and model-processing helpers.
+  the reusable processing, data workflow, and model-processing helpers.
   These capabilities are needed by both offline training support flows and future
   API inference flows, so core should own them.
 - **Clarification**: `data_ops` as a pipeline remains a train concern. What moves
@@ -59,9 +59,8 @@
 ## Decision 4: Keep only thin repo-level convenience entrypoints; move actual configs and scripts into `aitraf-train`
 
 - **Decision**: Move the actual Hydra config tree and offline scripts into
-  `packages/aitraf-train`, while optionally retaining thin repo-level convenience
-  entrypoints such as `Taskfile.yml` or short wrappers only if backward
-  compatibility is needed during migration.
+  `packages/aitraf-train`. Root `Taskfile.yml` owns global workspace tasks and
+  includes package-owned task namespaces.
 - **Rationale**: `configs/` is Hydra-specific and the current scripts are
   training/offline orchestration only. They belong to `aitraf-train`, not to
   `aitraf-core` or `aitraf-api`. Thin root wrappers are acceptable as ergonomics,
@@ -69,8 +68,8 @@
 - **Alternatives considered**:
   - Introduce a second command runner or new top-level CLI: rejected because it
     would add parallel workflow surfaces without user value.
-  - Keep `configs/` and `scripts/` permanently at repo root: rejected because it
-    obscures the intended boundary that Hydra/offline orchestration belongs to train.
+  - Keep config and script ownership at repo root: rejected because it obscures
+    the intended boundary that Hydra/offline orchestration belongs to train.
 
 ## Decision 5: Preserve existing internal module grouping where it already fits the boundary
 
@@ -83,7 +82,7 @@
 - **Alternatives considered**:
   - New top-level capability buckets such as `pose/`, `features/`, or
     `extractors/`: rejected because they describe an imagined architecture more
-    than the actual codebase and would create unnecessary migration work.
+    than the actual codebase and would create unnecessary structural churn.
 
 ## Decision 6: Reserve an empty API package now
 

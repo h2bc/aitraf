@@ -66,5 +66,4 @@ Each surface package must have:
   direction must fail as explicit errors.
 - API runtime invocation is unsupported because no API operations are implemented
   in this phase.
-- Temporary migration aliases, if any are required during the refactor, must be
-  thin, documented, and removable before the feature is marked complete.
+- Package boundary violations must be fixed at the owning package boundary.

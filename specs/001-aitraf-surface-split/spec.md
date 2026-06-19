@@ -80,7 +80,7 @@ As an API developer, I want an empty reserved `aitraf-api` surface for future tr
 
 ### Architecture And Reuse Requirements *(mandatory)*
 
-- **AR-001**: The feature MUST identify which existing repository surfaces it extends, including `src/aitraf/`, `configs/`, `scripts/`, `Taskfile.yml`, packaging metadata, and repository documentation.
+- **AR-001**: The feature MUST identify repository surfaces including package source trees, train-owned configs and scripts, `Taskfile.yml`, packaging metadata, and repository documentation.
 - **AR-002**: The feature MUST reuse the existing repository layout where practical and justify any new parallel structure introduced to represent `aitraf-core`, `aitraf-train`, or `aitraf-api`.
 - **AR-003**: Shared clip processing, shared prediction inputs, and other cross-surface runtime capabilities MUST be extracted into reusable modules instead of remaining embedded inside task- or surface-specific flows.
 - **AR-004**: Production-relevant behavior for shared processing and future serving contracts MUST live in versioned repository code rather than notebooks or local one-off commands.
@@ -101,7 +101,7 @@ As an API developer, I want an empty reserved `aitraf-api` surface for future tr
 
 ## Architecture And Data Impact
 
-- **Touched Surfaces**: existing `src/aitraf/` modules re-homed into packages, command entrypoints moved from root `scripts/` into `packages/aitraf-train/scripts/`, configuration surfaces moved from root `configs/` into `packages/aitraf-train/configs/`, task runners in `Taskfile.yml`, package metadata, and repository documentation for developer workflows.
+- **Touched Surfaces**: package source trees, train-owned command entrypoints in `packages/aitraf-train/scripts/`, train-owned configuration surfaces in `packages/aitraf-train/configs/`, task runners in `Taskfile.yml`, package metadata, and repository documentation for developer workflows.
 - **Shared Helpers To Add Or Extend**: Shared clip-to-frame processing, reusable prediction-input generation, shared feature and pose output generation, and explicit contracts between shared runtime capabilities and surface-specific orchestration.
 - **Data Or Artifact Impact**: Clarify which reusable outputs remain available through repo-managed storage or runtime processing, and which outputs remain owned by experiment-tracking and registry-managed workflows.
 - **Reproducibility Inputs**: Existing manifests, task and model configs, documented commands, required model assets, representative clip inputs, and any surface-specific assumptions needed to verify that the refactor preserves expected behavior.

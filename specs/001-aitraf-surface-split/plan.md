@@ -38,15 +38,15 @@ inference is implemented.
 
 **Constraints**: Use one dev container/workspace for all packages; move Hydra `configs/` and offline `scripts/` under `aitraf-train`; keep `data/`, `storage/`, and `notebooks/` at repo root; avoid excessive fallbacks; keep MLflow/run ownership in train; keep shared runtime outputs and registry-managed artifacts explicitly separated
 
-**Scale/Scope**: Re-home current `src/aitraf/` responsibilities into `packages/aitraf-core`, `packages/aitraf-train`, and `packages/aitraf-api` with minimal structural churn, add per-package `pyproject.toml` and `README.md` files, update operator docs and dependency ownership, and preserve current trick classification plus ordinal score workflows as the first validated consumers
+**Scale/Scope**: Organize project responsibilities into `packages/aitraf-core`, `packages/aitraf-train`, and `packages/aitraf-api` with minimal structural churn, add per-package `pyproject.toml` and `README.md` files, update operator docs and dependency ownership, and preserve current trick classification plus ordinal score workflows as the first validated consumers
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 - **No Excessive Fallbacks**: PASS. Missing package wiring and missing model
-  assets will raise explicit errors rather than silently rerouting to legacy
-  code. API runtime execution is not provided in this phase.
+  assets will raise explicit errors rather than silently rerouting through
+  alternate code paths. API runtime execution is not provided in this phase.
 - **Architecture Fit**: PASS WITH JUSTIFICATION. The feature introduces three
   explicit package surfaces under `packages/` because the product requirement is
   a repo-visible split with separate package ownership. This is broader than a
@@ -167,11 +167,9 @@ small set of shared utility modules instead of inventing new top-level folders.
 configs, and offline scripts. `aitraf-api` owns the future-serving seam, but it
 is intentionally empty in this implementation.
 `data/`, `storage/`, and `notebooks/` stay at repo root because they are shared
-workspace assets rather than package-owned code. The root may keep thin
-convenience wrappers such as `Taskfile.yml`, but package ownership must be
-explicit and package-local READMEs must explain each boundary. Temporary
-compatibility wrappers, if used during migration, must stay thin, explicit, and
-removable before the feature is considered complete.
+workspace assets rather than package-owned code. Root `Taskfile.yml` owns global
+workspace tasks and includes package-owned task namespaces. Package ownership is
+explicit and package-local READMEs explain each boundary.
 
 ## Complexity Tracking
 

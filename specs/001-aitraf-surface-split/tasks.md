@@ -34,7 +34,7 @@
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Establish shared package boundaries and compatibility wiring before story work
+**Purpose**: Establish shared package boundaries and package wiring before story work
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
@@ -45,7 +45,7 @@
 - [X] T009 Move the offline command entrypoints into `packages/aitraf-train/scripts/` while preserving the current file layout from `scripts/`
 - [X] T010 Update root command wrappers in `Taskfile.yml` and root `pyproject.toml` to execute the train package entrypoints
 - [X] T011 Add explicit package-boundary metadata in `packages/aitraf-core/src/aitraf_core/__init__.py`, `packages/aitraf-train/src/aitraf_train/__init__.py`, and `packages/aitraf-api/src/aitraf_api/__init__.py`
-- [X] T012 Document workspace-level migration rules and reproducibility expectations in `README.md`
+- [X] T012 Document workspace-level package rules and reproducibility expectations in `README.md`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -69,7 +69,7 @@
 - [X] T017 [US1] Move task implementations into `packages/aitraf-train/src/aitraf_train/tasks/` and update train-side imports there
 - [X] T018 [US1] Update the relocated scripts in `packages/aitraf-train/scripts/` and root `Taskfile.yml` to import only from `aitraf_train`
 - [X] T019 [US1] Write boundary and ownership documentation in `README.md`, `packages/aitraf-core/README.md`, and `packages/aitraf-train/README.md`
-- [X] T020 [US1] Remove stale unsupported package paths, root `scripts/` wrappers, and root `src/aitraf`
+- [X] T020 [US1] Keep root package, config, and script ownership out of the workspace root
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -124,8 +124,8 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [X] T034 [P] Update migration notes and package command examples in `README.md`, `packages/aitraf-core/README.md`, `packages/aitraf-train/README.md`, and `packages/aitraf-api/README.md`
-- [X] T035 Remove duplicated compatibility code and root legacy package/config/script surfaces
+- [X] T034 [P] Update package command examples in `README.md`, `packages/aitraf-core/README.md`, `packages/aitraf-train/README.md`, and `packages/aitraf-api/README.md`
+- [X] T035 Finalize package/config/script ownership boundaries
 - [X] T036 Run and document the final smoke-validation command set in `README.md` and `packages/aitraf-train/README.md`
 
 ---

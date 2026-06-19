@@ -52,7 +52,6 @@ Expected outcomes:
 
    ```bash
    uv run python -c "import aitraf_core, aitraf_train, aitraf_api"
-   uv run python -c "import importlib.util; assert importlib.util.find_spec('aitraf') is None"
    task --list
    ```
 
