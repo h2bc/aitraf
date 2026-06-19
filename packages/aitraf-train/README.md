@@ -14,6 +14,9 @@ train modules. For example, train-side feature extraction uses
   Train/val/test splits are stratified by the target to preserve class balance.
   Available labels: `ao-soul`, `bs-royale`, `fs-royale`, `fs-savanah`, `mizou`,
   `soul`, `top-soul`.
+- **score_prediction**: predicts the execution score as a regression-style
+  target.
+- **score_prediction_binary**: predicts a binary execution-quality target.
 - **score_prediction_ordinal**: predicts the execution score for each clip as an
   ordinal 1-3 star rating.
 - **score_prediction_pairwise**: predicts the preferred clip from same-trick
@@ -142,6 +145,8 @@ configs/
 |-- label_ops.yaml
 |-- task/
 |   |-- trick_classification.yaml
+|   |-- score_prediction.yaml
+|   |-- score_prediction_binary.yaml
 |   |-- score_prediction_ordinal.yaml
 |   `-- score_prediction_pairwise.yaml
 `-- model/

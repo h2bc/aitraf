@@ -87,14 +87,18 @@
 
 ### Architecture And Reuse Requirements *(mandatory)*
 
-- **AR-001**: The feature MUST identify which existing repository surfaces it extends
-  (`configs/`, `scripts/`, `src/aitraf/tasks/`, shared processing/utilities).
+- **AR-001**: The feature MUST identify which existing package and feature
+  surfaces it extends (`packages/aitraf-api`, `packages/aitraf-core`,
+  `packages/aitraf-train`, and their route/service/task/workflow modules).
 - **AR-002**: The feature MUST avoid introducing parallel architecture unless the
   spec explicitly justifies why the existing structure cannot be extended.
 - **AR-003**: Shared logic MUST be extracted into reusable functions/modules rather
-  than duplicated across task/model pipelines.
+  than duplicated across feature surfaces or task/model pipelines.
 - **AR-004**: Production behavior MUST live in versioned repository code, not only
   in notebooks or local ad hoc commands.
+- **AR-005**: Business logic MUST prefer functional programming practices where
+  practical: pure helpers, explicit inputs and outputs, and localized mutable
+  state at framework boundaries.
 
 ### Validation And Reproducibility Requirements *(mandatory)*
 
@@ -120,7 +124,7 @@
 
 ## Architecture And Data Impact
 
-- **Touched Surfaces**: [Which configs/scripts/modules/trackers the feature changes]
+- **Touched Surfaces**: [Which packages, configs, scripts, modules, routes, services, or trackers the feature changes]
 - **Shared Helpers To Add Or Extend**: [List reusable functions/modules instead of duplicating logic]
 - **Data Or Artifact Impact**: [Manifests, labels, vocab, metrics, MLflow artifacts, storage paths]
 - **Reproducibility Inputs**: [Configs, commands, seeds, environment assumptions, model/data references]

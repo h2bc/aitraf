@@ -4,6 +4,9 @@ includes:
   train:
     taskfile: packages/aitraf-train/Taskfile.yml
     dir: .
+  api:
+    taskfile: packages/aitraf-api/Taskfile.yml
+    dir: .
 
 tasks:
 

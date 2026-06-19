@@ -1,0 +1,20 @@
+version: "3"
+
+tasks:
+  run:
+    desc: Run the FastAPI demo inference API
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run uvicorn aitraf_api.app:create_app --factory --host 0.0.0.0 --port 8000 {{.CLI_ARGS}}"
+
+  test:
+    desc: Run API tests
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run pytest packages/aitraf-api/tests {{.CLI_ARGS}}"
+
+  lint:
+    desc: Run API lint checks
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run ruff check packages/aitraf-api/src/aitraf_api packages/aitraf-api/tests {{.CLI_ARGS}}"

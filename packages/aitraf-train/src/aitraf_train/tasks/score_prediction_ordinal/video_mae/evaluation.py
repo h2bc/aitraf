@@ -9,7 +9,6 @@ from pathlib import Path
 import mlflow
 from datasets import load_dataset
 from dotenv import load_dotenv
-from mlflow import transformers as mlflow_transformers
 from mlflow.data import from_huggingface
 from transformers import Trainer, TrainingArguments
 
@@ -29,6 +28,7 @@ from aitraf_train.tracking import build_training_params, params_to_df
 from aitraf_core.processing import build_label_transform, load_target_label_mappings
 from aitraf_core.processing.models.video_mae import process_sample
 from aitraf_core.processing.utils import build_collate
+from aitraf_core.utils import load_transformers_model
 from aitraf_train.tracking.models.video_mae import TRAINING_PARAM_MAP
 from ..metrics import (
     amae,
@@ -85,14 +85,12 @@ def run_evaluation(config: VideoMaeScorePredictionOrdinalEvalCfg) -> None:
         config.vocab_path, "execution_score"
     )
 
-    components = mlflow_transformers.load_model(
-        config.model_uri, return_type="components"
-    )
-    model = components["model"].to(config.device)
+    loaded_model = load_transformers_model(config.model_uri)
+    model = loaded_model.model.to(config.device)
     logger.info(
         f"VideoMAE evaluation running on device: {next(model.parameters()).device}"
     )
-    processor = components["image_processor"]
+    processor = loaded_model.image_processor
 
     training_args = TrainingArguments(
         output_dir=str(config.output_dir),
@@ -122,9 +120,8 @@ def run_evaluation(config: VideoMaeScorePredictionOrdinalEvalCfg) -> None:
         eval_dataset=test_dataset,
         data_collator=data_collator,
     )
-    source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
     source_train_params = build_training_params(
-        source_train_run_id, TRAINING_PARAM_MAP
+        loaded_model.run_id, TRAINING_PARAM_MAP
     ) | {"eval_sampling_dist": config.sampling_dist}
 
     mlflow.set_experiment(config.experiment_name)

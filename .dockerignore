@@ -1,6 +1,7 @@
 .git
 .devcontainer
 .env
+.env*
 .history
 .idea
 .ipynb_checkpoints
@@ -20,3 +21,4 @@ notebooks/data
 notebooks/runs
 runs
 storage
+coverage/

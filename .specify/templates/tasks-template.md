@@ -21,10 +21,14 @@ description: "Task list template for feature implementation"
 
 ## Path Conventions
 
-- **Repository configs**: `configs/`
-- **Pipeline entrypoints**: `scripts/`
-- **Application code**: `src/aitraf/`
-- **Validation**: `tests/unit/`, `tests/integration/`, `tests/smoke/`
+- **API package**: `packages/aitraf-api/src/aitraf_api/`,
+  `packages/aitraf-api/tests/`
+- **Core runtime package**: `packages/aitraf-core/src/aitraf_core/`
+- **Train package configs**: `packages/aitraf-train/configs/`
+- **Train package entrypoints**: `packages/aitraf-train/scripts/`
+- **Train package code**: `packages/aitraf-train/src/aitraf_train/`
+- **Validation**: package-local `tests/`, `tests/unit/`,
+  `tests/integration/`, `tests/smoke/`
 - **Analysis only**: `notebooks/` (do not leave production-only behavior here)
 
 <!--
@@ -64,10 +68,10 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Extend shared helpers in `src/aitraf/` instead of duplicating story-specific logic
+- [ ] T004 Extend helpers in the owning package, or shared package only when multiple feature surfaces need them
 - [ ] T005 [P] Add or update config wiring and task/model dispatch paths
 - [ ] T006 [P] Add explicit error handling for invalid config, data, or unsupported states
-- [ ] T007 Define reusable data/model/metric interfaces needed by all stories
+- [ ] T007 Define reusable data/model/metric interfaces as functional helpers with explicit inputs and outputs
 - [ ] T008 Configure logging, tracking, or artifact outputs required across stories
 - [ ] T009 Document reproducibility inputs and command surfaces
 
@@ -90,9 +94,9 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Add or extend decomposed helper functions in the appropriate `src/aitraf/` module
-- [ ] T013 [P] [US1] Update the relevant task/model/config wiring without introducing parallel architecture
-- [ ] T014 [US1] Implement the user-facing pipeline behavior in the appropriate `scripts/` or `src/aitraf/tasks/` surface
+- [ ] T012 [P] [US1] Add or extend decomposed helper functions in the owning package/feature module
+- [ ] T013 [P] [US1] Update the relevant package/task/model/config wiring without introducing parallel architecture
+- [ ] T014 [US1] Implement the user-facing behavior in the appropriate package route/service/script/task surface
 - [ ] T015 [US1] Add explicit failure handling for invalid or unsupported states
 - [ ] T016 [US1] Add tracking/logging/artifact output changes required for verification
 - [ ] T017 [US1] Update docs/spec references for the new command/config behavior
@@ -114,7 +118,7 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Add or extend decomposed helper functions in the appropriate `src/aitraf/` module
+- [ ] T020 [P] [US2] Add or extend decomposed helper functions in the owning package/feature module
 - [ ] T021 [US2] Update the relevant task/model/config wiring without duplicating existing logic
 - [ ] T022 [US2] Implement the user-facing pipeline behavior in the appropriate repo surface
 - [ ] T023 [US2] Integrate through shared components instead of story-specific parallel paths
@@ -136,7 +140,7 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Add or extend decomposed helper functions in the appropriate `src/aitraf/` module
+- [ ] T026 [P] [US3] Add or extend decomposed helper functions in the owning package/feature module
 - [ ] T027 [US3] Update the relevant task/model/config wiring without duplicating existing logic
 - [ ] T028 [US3] Implement the user-facing pipeline behavior in the appropriate repo surface
 
@@ -181,7 +185,8 @@ Examples of foundational tasks (adjust based on your project):
 ### Within Each User Story
 
 - Validation tasks MUST be defined before implementation
-- Shared helpers before task/model-specific wiring
+- Shared helpers before task/model-specific wiring, but only promote shared code
+  when more than one feature surface needs it
 - Config and architecture updates before command-surface integration
 - Core implementation before integration
 - Story complete before moving to next priority
@@ -205,8 +210,8 @@ Task: "Add unit/integration coverage in tests/"
 Task: "Add a smoke validation command and expected outcome for the user journey"
 
 # Launch decomposed helper work for User Story 1 together:
-Task: "Add or extend helper function in src/aitraf/<module_a>/"
-Task: "Add or extend helper function in src/aitraf/<module_b>/"
+Task: "Add or extend helper function in packages/<owning-package>/src/<module_a>/"
+Task: "Add or extend helper function in packages/<owning-package>/src/<module_b>/"
 ```
 
 ---
@@ -247,8 +252,8 @@ With multiple developers:
 - [P] tasks = different files, no dependencies
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
-- Prefer extending existing architecture over adding new parallel structure
-- Prefer small, single-purpose functions over large procedural blocks
+- Prefer package-by-feature ownership over adding new parallel structure
+- Prefer functional programming: small, pure helpers with explicit inputs and outputs
 - Ensure invalid states fail explicitly instead of relying on fallback behavior
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently

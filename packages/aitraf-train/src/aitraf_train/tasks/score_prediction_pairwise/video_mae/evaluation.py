@@ -10,7 +10,6 @@ import mlflow
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from mlflow import transformers as mlflow_transformers
 from mlflow.data import from_pandas
 from transformers import Trainer, TrainingArguments
 
@@ -31,6 +30,7 @@ from aitraf_train.metrics import (
 from aitraf_train.tracking import build_training_params, params_to_df
 from aitraf_core.processing import build_label_transform, load_target_label_mappings
 from aitraf_core.processing.utils import build_collate
+from aitraf_core.utils import load_transformers_model
 from aitraf_train.tracking.models.video_mae import TRAINING_PARAM_MAP
 from ..dataset import ScorePredictionPairwiseDataset
 from ..metrics import compute_pairwise_pred_labels
@@ -84,14 +84,12 @@ def run_evaluation(config: VideoMaeScorePredictionPairwiseEvalCfg) -> None:
 
     _, label2id, _ = load_target_label_mappings(config.vocab_path, "pair_label")
 
-    components = mlflow_transformers.load_model(
-        config.model_uri, return_type="components"
-    )
-    scorer = components["model"].to(config.device)
+    loaded_model = load_transformers_model(config.model_uri)
+    scorer = loaded_model.model.to(config.device)
     logger.info(
         f"VideoMAE evaluation running on device: {next(scorer.parameters()).device}"
     )
-    processor = components["image_processor"]
+    processor = loaded_model.image_processor
     model = ScorePredictionPairwiseModel(scorer=scorer).to(config.device)
 
     training_args = TrainingArguments(
@@ -122,9 +120,8 @@ def run_evaluation(config: VideoMaeScorePredictionPairwiseEvalCfg) -> None:
         data_collator=data_collator,
     )
 
-    source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
     source_train_params = build_training_params(
-        source_train_run_id, TRAINING_PARAM_MAP
+        loaded_model.run_id, TRAINING_PARAM_MAP
     ) | {"eval_sampling_dist": config.sampling_dist}
 
     mlflow.set_experiment(config.experiment_name)
