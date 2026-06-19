@@ -17,7 +17,7 @@ feedback.
 3. Install workspace dependencies:
 
 ```bash
-uv sync
+task install
 ```
 
 ## Workspace Commands
@@ -25,10 +25,9 @@ uv sync
 Root commands are workspace-level only:
 
 ```bash
+task install
 task lint
-task lint -- --fix
 task format
-task format -- --check
 ```
 
 Train workflows are exposed through the `train:` task namespace. See

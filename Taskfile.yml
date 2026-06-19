@@ -7,6 +7,11 @@ includes:
 
 tasks:
 
+  install:
+    desc: Install workspace dependencies
+    cmds:
+      - uv sync
+
   lint:
     desc: Run ruff linting
     cmds: 
