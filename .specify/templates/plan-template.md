@@ -12,35 +12,39 @@
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
+**Language/Version**: Python 3.10+ (repo currently supports `>=3.10,<3.14`)
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+**Primary Dependencies**: PyTorch, Transformers, Lightning, Hydra, MLflow, pandas, scikit-learn
 
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
+**Storage**: Repo-local `data/` manifests, generated `storage/` artifacts, MLflow tracking, S3-backed inputs/artifacts as applicable
 
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+**Testing**: `pytest` where practical, plus command-level smoke validation for pipeline entrypoints
 
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
+**Target Platform**: Linux GPU environment, dev container / Docker runtime, CUDA-capable training hosts
 
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: ML training, evaluation, and data-preparation pipeline
 
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
+**Performance Goals**: [NEEDS CLARIFICATION: expected runtime, memory, throughput, or experiment-turnaround targets]
 
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
+**Constraints**: Preserve repository architecture, avoid excessive fallbacks, keep behavior reproducible and reviewable
 
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
-
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Scale/Scope**: Task/model pipelines, shared processing utilities, manifests, metrics, and experiment tracking
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- **No Excessive Fallbacks**: Does the design avoid silent defaults, implicit repair
+  logic, and best-effort branches that hide defects?
+- **Architecture Fit**: Do changes extend existing repo surfaces (`configs/`,
+  `scripts/`, `src/aitraf/tasks/`, `src/aitraf/processing/`, shared utilities)
+  instead of introducing parallel structure?
+- **Function Decomposition**: Can the work be implemented as small, single-purpose
+  functions with explicit inputs, outputs, and failure modes?
+- **State And Mutation**: Is mutable or framework-managed state localized and
+  justified, with functional-style transformations preferred elsewhere?
+- **Reproducibility**: Are config changes, manifests, seeds, command surfaces, and
+  run artifacts sufficient for another developer to rerun the change?
 
 ## Project Structure
 
@@ -57,51 +61,54 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+configs/
+├── base.yaml
+├── data_ops.yaml
+├── eval.yaml
+├── label_ops.yaml
+├── model/
+├── prepare.yaml
+├── task/
+├── train.yaml
+└── train_eval.yaml
+
+scripts/
+├── data_ops_pipeline.py
+├── eval.py
+├── label_ops_pipeline.py
+├── prepare.py
+├── train.py
+└── train_eval.py
+
 src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+└── aitraf/
+    ├── data_ops/
+    ├── datasets/
+    ├── label_ops/
+    ├── metrics/
+    ├── models/
+    ├── processing/
+    ├── tasks/
+    ├── tracking/
+    └── utils/
 
 tests/
-├── contract/
 ├── integration/
+├── smoke/
 └── unit/
 
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+notebooks/
+storage/
+data/
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Keep all feature work inside the existing AITRAF pipeline
+layout. Add new configuration under `configs/`, new command entrypoints only when
+existing scripts cannot be extended, task/model-specific behavior under
+`src/aitraf/tasks/`, and shared behavior in existing shared modules. Avoid adding
+parallel architecture or notebook-only production paths.
 
 ## Complexity Tracking
 
@@ -109,5 +116,5 @@ directories captured above]
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| [e.g., new top-level subsystem] | [current need] | [why existing repo surfaces were insufficient] |
+| [e.g., stateful orchestration] | [specific problem] | [why decomposed functional helpers were insufficient] |

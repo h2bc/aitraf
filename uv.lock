@@ -16,6 +16,14 @@ resolution-markers = [
     "python_full_version < '3.11' and sys_platform == 'win32'",
 ]
 
+[manifest]
+members = [
+    "aitraf-api",
+    "aitraf-core",
+    "aitraf-train",
+    "aitraf-workspace",
+]
+
 [[package]]
 name = "accelerate"
 version = "1.11.0"
@@ -144,19 +152,50 @@ wheels = [
 ]
 
 [[package]]
+name = "aitraf-api"
+version = "0.1.0"
+source = { editable = "packages/aitraf-api" }
+
+[[package]]
+name = "aitraf-core"
+version = "0.1.0"
+source = { editable = "packages/aitraf-core" }
+dependencies = [
+    { name = "huggingface-hub" },
+    { name = "kornia" },
+    { name = "numpy" },
+    { name = "torch", version = "2.9.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
+    { name = "torch", version = "2.9.1+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "sys_platform == 'linux'" },
+    { name = "torchcodec", version = "0.8.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
+    { name = "torchcodec", version = "0.8.1+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "sys_platform == 'linux'" },
+    { name = "transformers" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "huggingface-hub" },
+    { name = "kornia", specifier = ">=0.8.2" },
+    { name = "numpy" },
+    { name = "torch", marker = "sys_platform != 'linux'", specifier = "==2.9.1" },
+    { name = "torch", marker = "sys_platform == 'linux'", specifier = "==2.9.1", index = "https://download.pytorch.org/whl/cu128" },
+    { name = "torchcodec", marker = "sys_platform != 'linux'", specifier = "==0.8.1" },
+    { name = "torchcodec", marker = "sys_platform == 'linux'", specifier = "==0.8.1", index = "https://download.pytorch.org/whl/cu128" },
+    { name = "transformers" },
+]
+
+[[package]]
 name = "aitraf-train"
 version = "0.1.0"
-source = { editable = "." }
+source = { editable = "packages/aitraf-train" }
 dependencies = [
     { name = "accelerate" },
+    { name = "aitraf-core" },
     { name = "av" },
     { name = "boto3" },
     { name = "datasets" },
     { name = "dlordinal" },
-    { name = "huggingface-hub" },
     { name = "hydra-core" },
     { name = "imageio" },
-    { name = "kornia" },
     { name = "lightning" },
     { name = "loguru" },
     { name = "matplotlib" },
@@ -170,8 +209,6 @@ dependencies = [
     { name = "seaborn" },
     { name = "torch", version = "2.9.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
     { name = "torch", version = "2.9.1+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "sys_platform == 'linux'" },
-    { name = "torchcodec", version = "0.8.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
-    { name = "torchcodec", version = "0.8.1+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "sys_platform == 'linux'" },
     { name = "torchvision", version = "0.24.1", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "platform_machine == 'aarch64' and platform_python_implementation == 'CPython' and sys_platform == 'linux'" },
     { name = "torchvision", version = "0.24.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
     { name = "torchvision", version = "0.24.1+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "(platform_machine != 'aarch64' and sys_platform == 'linux') or (platform_python_implementation != 'CPython' and sys_platform == 'linux')" },
@@ -179,25 +216,16 @@ dependencies = [
     { name = "ultralytics" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "ipykernel" },
-    { name = "ipywidgets" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "accelerate" },
+    { name = "aitraf-core", editable = "packages/aitraf-core" },
     { name = "av", specifier = ">=16.0.1" },
     { name = "boto3" },
     { name = "datasets" },
     { name = "dlordinal", specifier = ">=2.6.0" },
-    { name = "huggingface-hub" },
     { name = "hydra-core" },
     { name = "imageio", specifier = ">=2.37.2" },
-    { name = "kornia", specifier = ">=0.8.2" },
     { name = "lightning", specifier = ">=2.6.0" },
     { name = "loguru" },
     { name = "matplotlib" },
@@ -211,12 +239,35 @@ requires-dist = [
     { name = "seaborn" },
     { name = "torch", marker = "sys_platform != 'linux'", specifier = "==2.9.1" },
     { name = "torch", marker = "sys_platform == 'linux'", specifier = "==2.9.1", index = "https://download.pytorch.org/whl/cu128" },
-    { name = "torchcodec", marker = "sys_platform != 'linux'", specifier = "==0.8.1" },
-    { name = "torchcodec", marker = "sys_platform == 'linux'", specifier = "==0.8.1", index = "https://download.pytorch.org/whl/cu128" },
     { name = "torchvision", marker = "sys_platform != 'linux'", specifier = "==0.24.1" },
     { name = "torchvision", marker = "sys_platform == 'linux'", specifier = "==0.24.1", index = "https://download.pytorch.org/whl/cu128" },
     { name = "transformers" },
     { name = "ultralytics" },
+]
+
+[[package]]
+name = "aitraf-workspace"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "aitraf-api" },
+    { name = "aitraf-core" },
+    { name = "aitraf-train" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "ipykernel" },
+    { name = "ipywidgets" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aitraf-api", editable = "packages/aitraf-api" },
+    { name = "aitraf-core", editable = "packages/aitraf-core" },
+    { name = "aitraf-train", editable = "packages/aitraf-train" },
 ]
 
 [package.metadata.requires-dev]

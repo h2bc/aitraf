@@ -1,0 +1,38 @@
+version: "3"
+
+tasks:
+  data_ops:
+    desc: Run the data ops pipeline
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run python {{.TASKFILE_DIR}}/scripts/data_ops_pipeline.py {{.CLI_ARGS}}"
+
+  prepare:
+    desc: Run the task preparation pipeline
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run python {{.TASKFILE_DIR}}/scripts/prepare.py {{.CLI_ARGS}}"
+
+  label_ops:
+    desc: Run the label ops pipeline
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run python {{.TASKFILE_DIR}}/scripts/label_ops_pipeline.py {{.CLI_ARGS}}"
+
+  train:
+    desc: Run the Hydra-managed training pipeline
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run python {{.TASKFILE_DIR}}/scripts/train.py {{.CLI_ARGS}}"
+
+  eval:
+    desc: Run the Hydra-managed evaluation pipeline
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run python {{.TASKFILE_DIR}}/scripts/eval.py {{.CLI_ARGS}}"
+
+  train_eval:
+    desc: Run the Hydra-managed train+eval pipeline
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run python {{.TASKFILE_DIR}}/scripts/train_eval.py {{.CLI_ARGS}}"

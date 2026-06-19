@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aitraf-train"
+version = "0.1.0"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "aitraf-core",
+    "accelerate",
+    "av>=16.0.1",
+    "boto3",
+    "datasets",
+    "dlordinal>=2.6.0",
+    "hydra-core",
+    "imageio>=2.37.2",
+    "lightning>=2.6.0",
+    "loguru",
+    "matplotlib",
+    "mlflow[mcp]",
+    "nvidia-ml-py",
+    "numpy",
+    "pandas",
+    "pip>=25.3",
+    "python-dotenv",
+    "scikit-learn",
+    "seaborn",
+    "torch==2.9.1",
+    "torchvision==0.24.1",
+    "transformers",
+    "ultralytics",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

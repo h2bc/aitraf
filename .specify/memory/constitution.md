@@ -1,50 +1,111 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+Version change: template -> 1.0.0
+Modified principles:
+- Template principle 1 -> I. No Excessive Fallbacks
+- Template principle 2 -> II. Preserve Repository Architecture
+- Template principle 3 -> III. Simple, Decomposed Functions
+- Template principle 4 -> IV. Functional Style Preferred
+- Template principle 5 -> V. Reproducible Experiment Surfaces
+Added sections:
+- Repository Constraints
+- Workflow And Quality Gates
+Removed sections:
+- None
+Templates requiring updates:
+- ✅ .specify/templates/plan-template.md
+- ✅ .specify/templates/spec-template.md
+- ✅ .specify/templates/tasks-template.md
+Follow-up TODOs:
+- None
+-->
+# AITRAF Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. No Excessive Fallbacks
+The codebase MUST not hide defects behind silent defaults, implicit repair logic,
+best-effort fallback paths, or undocumented state repair. Missing configuration,
+missing artifacts, schema mismatches, invalid labels, unsupported task/model
+combinations, and ambiguous experiment state MUST raise explicit errors. The
+repository preference is to break loudly so defects are fixed at the source.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Preserve Repository Architecture
+Changes MUST extend the existing repository structure before introducing new
+architectural patterns. Task and model behavior belongs in `src/aitraf/tasks/`,
+shared processing belongs in `src/aitraf/processing/`, shared utilities belong
+in existing common modules, configuration belongs in `configs/`, and executable
+entrypoints belong in `scripts/` and `Taskfile.yml`. New parallel structures,
+one-off orchestration layers, or notebook-only production logic require explicit
+justification in the implementation plan.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Simple, Decomposed Functions
+New code MUST prefer small, single-purpose functions with clear inputs, outputs,
+and failure modes. Shared logic MUST be extracted into reusable helpers instead
+of being duplicated across pipelines. Functions that mix configuration loading,
+data transformation, model orchestration, artifact persistence, and reporting in
+one block are a constitution violation unless the framework boundary requires it.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Functional Style Preferred
+Code SHOULD prefer transformation-oriented, low-mutation patterns when they make
+behavior easier to reason about. Helpers SHOULD avoid unnecessary shared mutable
+state, hidden side effects, and long procedural control flow. Stateful objects
+remain acceptable where the surrounding framework requires them, but state MUST
+stay localized and explicit.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Reproducible Experiment Surfaces
+Any change that affects data preparation, training, evaluation, metrics, or
+artifacts MUST preserve reproducibility through versioned code and reviewable
+configuration. Experiment behavior MUST be reconstructable from repository code,
+configs, manifests, seeds where applicable, and logged artifacts. Notebook
+exploration is allowed, but production behavior MUST live in versioned modules
+and command surfaces that can be rerun by another developer.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Repository Constraints
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+- Pipeline behavior MUST be expressed through repository-managed code and
+  configuration, not hidden local state.
+- Secrets and environment-specific credentials MUST stay outside committed files
+  and be provided through environment variables or approved external systems.
+- Data and model artifacts generated by the pipeline MUST land in the repository's
+  documented storage locations or registered tracking systems, not ad hoc paths.
+- Feature work that changes manifests, labels, preprocessing, or metrics MUST
+  document the affected inputs, outputs, and compatibility assumptions in the
+  feature spec and implementation plan.
+- Notebooks MAY be used for analysis, but any relied-on production logic MUST be
+  migrated into `src/`, `scripts/`, `configs/`, or other versioned repo surfaces.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+## Workflow And Quality Gates
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Every feature spec MUST state which architectural surfaces it touches and how it
+  avoids excessive fallbacks.
+- Every implementation plan MUST include a constitution check covering fallback
+  behavior, architectural fit, function decomposition, mutation/state decisions,
+  and reproducibility impact.
+- Every task list MUST include validation work. Automated tests SHOULD be added
+  when practical, and command-level smoke validation is REQUIRED for pipeline
+  changes even when full tests are not feasible.
+- Code review MUST reject changes that add duplicate pipeline branches, hidden
+  defaulting behavior, notebook-only production logic, or unreproducible run
+  paths without explicit justification.
+- Documentation updates are REQUIRED whenever a change alters command usage,
+  configuration surfaces, architecture boundaries, or reproducibility assumptions.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes informal project habits for repository changes.
+Compliance MUST be checked during specification, planning, implementation, and
+review. Any amendment to these principles MUST update this file and any affected
+Spec Kit templates in the same change.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Versioning policy for the constitution follows semantic versioning:
+
+- MAJOR: remove or redefine a principle in a backward-incompatible way
+- MINOR: add a new principle or materially expand governance requirements
+- PATCH: clarify wording without changing the governing meaning
+
+The implementation plan, generated tasks, and review process MUST treat
+constitution violations as blockers unless the plan records a specific, reviewed
+exception and explains why the simpler compliant alternative was rejected.
+
+**Version**: 1.0.0 | **Ratified**: 2026-06-19 | **Last Amended**: 2026-06-19

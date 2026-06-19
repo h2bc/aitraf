@@ -1,6 +1,17 @@
 # AITRAF: Aggressive Inline Trick Recognition and Feedback
 
-Model training and evaluation stack for inline skating trick recognition & performance feedback
+Model training and evaluation stack for inline skating trick recognition and
+performance feedback.
+
+## Repository Surfaces
+
+AITRAF is a single repository with three Python package surfaces:
+
+- `packages/aitraf-core`: shared runtime processing and model-input helpers.
+- `packages/aitraf-train`: Hydra-driven data ops, label ops, prepare, train,
+  eval, metrics, tracking, configs, and scripts.
+- `packages/aitraf-api`: empty placeholder reserved for future inference API
+  work for trick recognition and trick assessment.
 
 
 ## Prerequisites
@@ -13,7 +24,7 @@ Model training and evaluation stack for inline skating trick recognition & perfo
 
 1. Start the dev container (VS Code `Reopen in Container` or `devcontainer up`).
 2. Copy `.env.example` to `.env` and fill in the AWS + MLflow credentials.
-3. Install task runner dependencies once with `uv sync`
+3. Install workspace dependencies once with `uv sync`
 
 
 ## Dev Commands
@@ -33,11 +44,11 @@ Model training and evaluation stack for inline skating trick recognition & perfo
 
 ## Models
 
-- **pose_tcn** (`configs/model/pose_tcn.yaml`)  
+- **pose_tcn** (`packages/aitraf-train/configs/model/pose_tcn.yaml`)  
   Temporal convolutional network over pose keypoints sampled from pose sequences. Configurable depth/hidden size, Gaussian frame sampling, and Lightning-based training on GPU.
-- **video_mae** (`configs/model/video_mae.yaml`)  
+- **video_mae** (`packages/aitraf-train/configs/model/video_mae.yaml`)  
   Hugging Face VideoMAE backbone fine-tuned on sampled clips. Supports freezing the backbone, cacheable weights, and MLflow logging via the Hugging Face Trainer stack.
-- **video_mae_temporal_fusion** (`configs/model/video_mae_temporal_fusion.yaml`)  
+- **video_mae_temporal_fusion** (`packages/aitraf-train/configs/model/video_mae_temporal_fusion.yaml`)  
   Temporal fusion model over cached VideoMAE features from multiple clips per sample. Configurable clip count, sampling strategy, fusion layers/heads/queries, dropout, and training hyperparameters.
 
 
@@ -46,7 +57,7 @@ Model training and evaluation stack for inline skating trick recognition & perfo
 `data/` contains lightweight repo-local experiment inputs and outputs:
 
 - `data/labels.jsonl` and `data/pairwise_labels.jsonl` are merged annotation files.
-- `data/manifests/<task>/` contains train/val/test manifests and task vocab files created by `task prepare`.
+- `data/manifests/<task>/` contains train/val/test manifests and task vocab files created by `task train:prepare`.
 
 `storage/` contains larger generated assets, caches, and run outputs. By default it is created at `./storage`, but it can be moved by setting `AITRAF_STORAGE_PATH`.
 
@@ -62,16 +73,16 @@ Run commands via [Task](https://taskfile.dev)
 
 | Command | Description |
 |---------|-------------|
-| `task label_ops -- [overrides]` | Executes the label ops pipeline (`scripts/label_ops_pipeline.py`). |
-| `task data_ops -- [overrides]` | Executes the data ops pipeline (`scripts/data_ops_pipeline.py`). |
-| `task prepare -- task=<task> [overrides]` | Executes the task preparation pipeline (`scripts/prepare.py`). |
-| `task train -- task=<task> model=<model> [overrides]` | Runs the training pipeline (`scripts/train.py`). |
-| `task eval -- task=<task> model=<model> model_id=<model_id> [overrides]` | Runs the evaluation pipeline (`scripts/eval.py`). |
-| `task train_eval -- task=<task> model=<model> [overrides]` | Runs the combined train+eval pipeline (`scripts/train_eval.py`). |
+| `task train:label_ops -- [overrides]` | Executes the label ops pipeline (`packages/aitraf-train/scripts/label_ops_pipeline.py`). |
+| `task train:data_ops -- [overrides]` | Executes the data ops pipeline (`packages/aitraf-train/scripts/data_ops_pipeline.py`). |
+| `task train:prepare -- task=<task> [overrides]` | Executes the task preparation pipeline (`packages/aitraf-train/scripts/prepare.py`). |
+| `task train:train -- task=<task> model=<model> [overrides]` | Runs the training pipeline (`packages/aitraf-train/scripts/train.py`). |
+| `task train:eval -- task=<task> model=<model> model_id=<model_id> [overrides]` | Runs the evaluation pipeline (`packages/aitraf-train/scripts/eval.py`). |
+| `task train:train_eval -- task=<task> model=<model> [overrides]` | Runs the combined train+eval pipeline (`packages/aitraf-train/scripts/train_eval.py`). |
 
 ### Label ops script
 
-`task label_ops` runs `scripts/label_ops_pipeline.py`, a workflow composed of three stages:
+`task train:label_ops` runs `packages/aitraf-train/scripts/label_ops_pipeline.py`, a workflow composed of three stages:
 
 #### Download Labels
 
@@ -87,7 +98,7 @@ Run commands via [Task](https://taskfile.dev)
 
 ### Data ops script
 
-`task data_ops` runs `scripts/data_ops_pipeline.py`, a workflow composed of shared-data stages:
+`task train:data_ops` runs `packages/aitraf-train/scripts/data_ops_pipeline.py`, a workflow composed of shared-data stages:
 
 #### Download Labels
 
@@ -112,15 +123,15 @@ Run commands via [Task](https://taskfile.dev)
 
 ### Prepare script
 
-`task prepare` runs `scripts/prepare.py`, a one-step pipeline that dispatches manifest creation to the selected task's own preparation module.
+`task train:prepare` runs `packages/aitraf-train/scripts/prepare.py`, a one-step pipeline that dispatches manifest creation to the selected task's own preparation module.
 
 - Builds train/val/test JSONL manifests under `data/manifests/<task>/`.
 - Emits a task-local `vocab.json` under `data/manifests/<task>/` when the task defines one.
-- Use `task prepare -- task=score_prediction_ordinal` to prepare one task.
+- Use `task train:prepare -- task=score_prediction_ordinal` to prepare one task.
 
 ### Train script
 
-`task train` runs `scripts/train.py`, dispatching to the training implementation for the selected task/model pair.
+`task train:train` runs `packages/aitraf-train/scripts/train.py`, dispatching to the training implementation for the selected task/model pair.
 
 - Reads prepared manifests from `data/manifests/<task>/`.
 - Writes run outputs under `storage/runs/`.
@@ -128,7 +139,7 @@ Run commands via [Task](https://taskfile.dev)
 
 ### Eval script
 
-`task eval` runs `scripts/eval.py`, evaluating an existing MLflow model for the selected task/model pair.
+`task train:eval` runs `packages/aitraf-train/scripts/eval.py`, evaluating an existing MLflow model for the selected task/model pair.
 
 - Requires `model_id=<model-name-or-version>` so the script can load `models:/<model_id>`.
 - Reads the selected task's prepared manifests.
@@ -136,19 +147,19 @@ Run commands via [Task](https://taskfile.dev)
 
 ### Train + Eval script
 
-`task train_eval` runs `scripts/train_eval.py`, training and then evaluating the model produced by that training run.
+`task train:train_eval` runs `packages/aitraf-train/scripts/train_eval.py`, training and then evaluating the model produced by that training run.
 
-- Uses the same task/model dispatch as `task train` and `task eval`.
+- Uses the same task/model dispatch as `task train:train` and `task train:eval`.
 - Passes the trained model URI directly into evaluation.
 - Useful for single experiment runs and Hydra multiruns.
 
 
 ## Experiment Configuration
 
-Experiment defaults live in `configs/` and are composed with Hydra when a pipeline runs. Top-level files such as `train.yaml`, `eval.yaml`, `train_eval.yaml`, `prepare.yaml`, `data_ops.yaml`, and `label_ops.yaml` define pipeline defaults. Task configs live in `configs/task/`, model configs live in `configs/model/`, and shared paths live in `configs/base.yaml`.
+Experiment defaults live in `packages/aitraf-train/configs/` and are composed with Hydra when a pipeline runs. Top-level files such as `train.yaml`, `eval.yaml`, `train_eval.yaml`, `prepare.yaml`, `data_ops.yaml`, and `label_ops.yaml` define pipeline defaults. Task configs live in `packages/aitraf-train/configs/task/`, model configs live in `packages/aitraf-train/configs/model/`, and shared paths live in `packages/aitraf-train/configs/base.yaml`.
 
 ```text
-configs/
+packages/aitraf-train/configs/
 |-- base.yaml
 |-- train.yaml
 |-- eval.yaml
@@ -172,16 +183,35 @@ You can change experiment settings in two ways:
 - Pass command-line overrides after `--` when running one experiment.
 
 ```bash
-task train_eval -- task=score_prediction_ordinal model=video_mae_temporal_fusion
-task train -- task=trick_classification model=pose_tcn model.learning_rate=5e-4
-task prepare -- task=score_prediction_ordinal create_manifests.force=false
+task train:train_eval -- task=score_prediction_ordinal model=video_mae_temporal_fusion
+task train:train -- task=trick_classification model=pose_tcn model.learning_rate=5e-4
+task train:prepare -- task=score_prediction_ordinal create_manifests.force=false
 ```
 
 Use Hydra multirun with `-m` to run several experiment variants from one command. Comma-separated values define the sweep:
 
 ```bash
-task train_eval -- -m task=score_prediction_ordinal model=video_mae,pose_tcn
-task train_eval -- -m task=trick_classification,score_prediction_ordinal model=video_mae_temporal_fusion
+task train:train_eval -- -m task=score_prediction_ordinal model=video_mae,pose_tcn
+task train:train_eval -- -m task=trick_classification,score_prediction_ordinal model=video_mae_temporal_fusion
+```
+
+## Migration Notes
+
+Use `aitraf_core` for shared runtime processing imports and `aitraf_train` for
+training/offline workflow imports. The old root-level `src/aitraf` namespace is
+removed.
+
+Root `Taskfile.yml` remains the convenience command surface, but the executable
+scripts and Hydra configs are owned by `packages/aitraf-train`. There are no root
+`scripts/` or root `configs/` owners after this split.
+
+Run lightweight boundary validation with:
+
+```bash
+uv run python -m compileall -q packages/aitraf-core/src packages/aitraf-train/src packages/aitraf-api/src packages/aitraf-train/scripts
+uv run python -c "import aitraf_core, aitraf_train, aitraf_api"
+uv run python -c "import importlib.util; assert importlib.util.find_spec('aitraf') is None"
+task --list
 ```
 
 

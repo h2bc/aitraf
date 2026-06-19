@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aitraf-core"
+version = "0.1.0"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "huggingface-hub",
+    "kornia>=0.8.2",
+    "numpy",
+    "torch==2.9.1",
+    "torchcodec==0.8.1",
+    "transformers",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

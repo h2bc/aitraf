@@ -1,44 +1,18 @@
 version: "3"
 
+includes:
+  train:
+    taskfile: packages/aitraf-train/Taskfile.yml
+    dir: .
+
 tasks:
 
   lint:
     desc: Run ruff linting
     cmds: 
-      - uv run ruff check .
+      - uv run ruff check . {{.CLI_ARGS}}
 
   format:
     desc: Run ruff formatting 
     cmds: 
-      - uv run ruff format .  
-
-  data_ops:
-    desc: Run the data ops pipeline
-    cmds:
-      - "uv run python scripts/data_ops_pipeline.py {{.CLI_ARGS}}"
-
-  prepare:
-    desc: Run the task preparation pipeline
-    cmds:
-      - "uv run python scripts/prepare.py {{.CLI_ARGS}}"
-
-  label_ops:
-    desc: Run the label ops pipeline
-    cmds:
-      - "uv run python scripts/label_ops_pipeline.py {{.CLI_ARGS}}"
-
-  train:
-    desc: Run the Hydra-managed training pipeline
-    cmds:
-      - "uv run python scripts/train.py {{.CLI_ARGS}}"
-  
-  eval:
-    desc: Run the Hydra-managed evaluation pipeline
-    cmds:
-      - "uv run python scripts/eval.py {{.CLI_ARGS}}"
-  
-  train_eval:
-    desc: Run the Hydra-managed train+eval pipeline
-    cmds:
-      - "uv run python scripts/train_eval.py {{.CLI_ARGS}}"
-  
+      - uv run ruff format . {{.CLI_ARGS}}

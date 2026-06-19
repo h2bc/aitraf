@@ -70,32 +70,47 @@
 
 ### Edge Cases
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right edge cases.
--->
-
-- What happens when [boundary condition]?
-- How does system handle [error scenario]?
+- What happens when required config, artifacts, or manifests are missing?
+- How does the system fail when a task/model combination is unsupported?
+- What happens when schema, label vocabulary, or metric assumptions change?
+- How is ambiguous or partial pipeline state surfaced without silent fallback?
 
 ## Requirements *(mandatory)*
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right functional requirements.
--->
-
 ### Functional Requirements
 
-- **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]
-- **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
-- **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
-- **FR-005**: System MUST [behavior, e.g., "log all security events"]
+- **FR-001**: System MUST [specific capability]
+- **FR-002**: System MUST [specific capability]
+- **FR-003**: Users MUST be able to [key interaction]
+- **FR-004**: System MUST [data requirement]
+- **FR-005**: System MUST [behavior]
+
+### Architecture And Reuse Requirements *(mandatory)*
+
+- **AR-001**: The feature MUST identify which existing repository surfaces it extends
+  (`configs/`, `scripts/`, `src/aitraf/tasks/`, shared processing/utilities).
+- **AR-002**: The feature MUST avoid introducing parallel architecture unless the
+  spec explicitly justifies why the existing structure cannot be extended.
+- **AR-003**: Shared logic MUST be extracted into reusable functions/modules rather
+  than duplicated across task/model pipelines.
+- **AR-004**: Production behavior MUST live in versioned repository code, not only
+  in notebooks or local ad hoc commands.
+
+### Validation And Reproducibility Requirements *(mandatory)*
+
+- **VR-001**: The spec MUST define how the change will be validated, including
+  automated tests where practical and command-level smoke validation for pipeline
+  behavior.
+- **VR-002**: The spec MUST state what configs, manifests, seeds, artifacts, or
+  tracking outputs are required to rerun or verify the change.
+- **VR-003**: The spec MUST describe expected failure behavior for invalid or
+  missing inputs instead of relying on silent fallback paths.
+- **VR-004**: If evaluation behavior changes, the spec MUST state which metrics,
+  reports, or tracked artifacts are expected to prove correctness.
 
 *Example of marking unclear requirements:*
 
-- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
+- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified]
 - **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
 ### Key Entities *(include if feature involves data)*
@@ -103,29 +118,26 @@
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
-## Success Criteria *(mandatory)*
+## Architecture And Data Impact
 
-<!--
-  ACTION REQUIRED: Define measurable success criteria.
-  These must be technology-agnostic and measurable.
--->
+- **Touched Surfaces**: [Which configs/scripts/modules/trackers the feature changes]
+- **Shared Helpers To Add Or Extend**: [List reusable functions/modules instead of duplicating logic]
+- **Data Or Artifact Impact**: [Manifests, labels, vocab, metrics, MLflow artifacts, storage paths]
+- **Reproducibility Inputs**: [Configs, commands, seeds, environment assumptions, model/data references]
+
+## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: [Measurable metric, e.g., "Users can complete account creation in under 2 minutes"]
-- **SC-002**: [Measurable metric, e.g., "System handles 1000 concurrent users without degradation"]
-- **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
-- **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
+- **SC-001**: [Measurable metric]
+- **SC-002**: [Measurable metric]
+- **SC-003**: [Validation or usability metric]
+- **SC-004**: [Operational or experiment comparison metric]
 
 ## Assumptions
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right assumptions based on reasonable defaults
-  chosen when the feature description did not specify certain details.
--->
-
-- [Assumption about target users, e.g., "Users have stable internet connectivity"]
-- [Assumption about scope boundaries, e.g., "Mobile support is out of scope for v1"]
-- [Assumption about data/environment, e.g., "Existing authentication system will be reused"]
-- [Dependency on existing system/service, e.g., "Requires access to the existing user profile API"]
+- [Assumption about target users]
+- [Assumption about scope boundaries]
+- [Assumption about data/environment]
+- [Dependency on existing system/service]
+- [Assumption about failure behavior, e.g., invalid pipeline state is surfaced as an explicit error rather than repaired implicitly]
