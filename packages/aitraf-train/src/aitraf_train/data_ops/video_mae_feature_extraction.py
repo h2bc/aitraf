@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
@@ -12,11 +12,16 @@ from transformers import AutoConfig, AutoModel, VideoMAEImageProcessor
 
 from aitraf_train.logging import logger
 from aitraf_train.data_ops.utils import list_clip_files
-from aitraf_core.processing.models.video_mae_temporal_fusion import (
+from aitraf_core.pre_processing import (
+    cached_video_mae_feature_extraction,
+    video_feature_cache_dir,
     video_feature_cache_path,
 )
-from aitraf_core.processing.video import load_segmented_video_frames
-
+from aitraf_core.pre_processing.models.video_mae import (
+    VideoMaeFeatureExtractor,
+    extract_video_mae_batch_features,
+    prepare_clip_pixel_values,
+)
 ClipFeatureExtractionResult = Literal["processed", "skipped", "error"]
 
 
@@ -34,11 +39,19 @@ class VideoMaeFeatureExtractionConfig:
     sampling_dist: str
     force: bool
     limit: int | None
+    feature_cache_dir: Path = field(init=False)
 
     def __post_init__(self) -> None:
         self.clips_dir = Path(self.clips_dir)
         self.features_dir = Path(self.features_dir)
         self.model_cache_dir = Path(self.model_cache_dir)
+        self.feature_cache_dir = video_feature_cache_dir(
+            features_dir=self.features_dir,
+            backbone=self.backbone,
+            num_clips=self.num_clips,
+            sample_frames=self.sample_frames,
+            sampling_dist=self.sampling_dist,
+        )
         self.model_cache_dir.mkdir(parents=True, exist_ok=True)
         if self.batch_size <= 0:
             raise ValueError("batch_size must be positive")
@@ -144,7 +157,7 @@ def extract_all_clip_features(
         errors += len(batch["errors"])
 
         if "pixel_values" in batch:
-            features = _extract_batch_features(
+            features = extract_video_mae_batch_features(
                 pixel_values=batch["pixel_values"],
                 model=model,
                 device=config.device,
@@ -193,24 +206,21 @@ def extract_clip_features(
         return "skipped"
 
     try:
-        features, frame_indices = _extract_clip_features(
+        cached_video_mae_feature_extraction(
             video_id=video_id,
-            processor=processor,
-            model=model,
-            config=config,
-        )
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        torch.save(
-            {
-                "video_id": video_id,
-                "backbone": config.backbone,
-                "num_clips": config.num_clips,
-                "sample_frames": config.sample_frames,
-                "sampling_dist": config.sampling_dist,
-                "frame_indices": frame_indices,
-                "features": features.half().cpu(),
-            },
-            output_path,
+            clips_dir=config.clips_dir,
+            feature_path=output_path,
+            feature_extractor=VideoMaeFeatureExtractor(
+                processor=processor,
+                model=model,
+                device=config.device,
+            ),
+            backbone=config.backbone,
+            num_clips=config.num_clips,
+            sample_frames=config.sample_frames,
+            sampling_dist=config.sampling_dist,
+            cache_video_features=True,
+            force=config.force,
         )
     except Exception as exc:  # pragma: no cover - log only
         logger.warning("Failed to extract VideoMAE features for {}: {}", clip, exc)
@@ -240,10 +250,13 @@ class VideoMaeFeatureDataset(Dataset):
         output_path = _feature_output_path(video_id, self.config)
 
         try:
-            pixel_values, frame_indices = _prepare_clip_pixel_values(
+            pixel_values, frame_indices = prepare_clip_pixel_values(
                 video_id=video_id,
                 processor=self.processor,
-                config=self.config,
+                clips_dir=self.config.clips_dir,
+                num_clips=self.config.num_clips,
+                sample_frames=self.config.sample_frames,
+                sampling_dist=self.config.sampling_dist,
             )
         except Exception as exc:  # pragma: no cover - worker-safe reporting
             return {
@@ -260,61 +273,6 @@ class VideoMaeFeatureDataset(Dataset):
             "frame_indices": frame_indices,
             "pixel_values": pixel_values,
         }
-
-
-def _extract_clip_features(
-    *,
-    video_id: str,
-    processor: VideoMAEImageProcessor,
-    model: torch.nn.Module,
-    config: VideoMaeFeatureExtractionConfig,
-) -> tuple[torch.Tensor, list[list[int]]]:
-    clip_pixel_values, frame_indices = _prepare_clip_pixel_values(
-        video_id=video_id,
-        processor=processor,
-        config=config,
-    )
-    clip_pixel_values = clip_pixel_values.to(config.device)
-
-    with torch.inference_mode():
-        outputs = model(pixel_values=clip_pixel_values)
-        features = outputs.last_hidden_state.mean(dim=1)
-    return features, frame_indices
-
-
-def _prepare_clip_pixel_values(
-    *,
-    video_id: str,
-    processor: VideoMAEImageProcessor,
-    config: VideoMaeFeatureExtractionConfig,
-) -> tuple[torch.Tensor, list[list[int]]]:
-    segments, frame_indices = load_segmented_video_frames(
-        video_id=video_id,
-        local_clips_dir=config.clips_dir,
-        num_segments=config.num_clips,
-        frames_per_segment=config.sample_frames,
-        sampling_dist=config.sampling_dist,
-    )
-    clip_pixel_values = processor(segments, return_tensors="pt")["pixel_values"]
-    return clip_pixel_values, frame_indices
-
-
-def _extract_batch_features(
-    *,
-    pixel_values: torch.Tensor,
-    model: torch.nn.Module,
-    device: str,
-    num_clips: int,
-) -> torch.Tensor:
-    batch_size = pixel_values.shape[0]
-    flat_pixel_values = pixel_values.reshape(
-        batch_size * num_clips,
-        *pixel_values.shape[2:],
-    ).to(device, non_blocking=True)
-    with torch.inference_mode():
-        outputs = model(pixel_values=flat_pixel_values)
-        features = outputs.last_hidden_state.mean(dim=1)
-    return features.reshape(batch_size, num_clips, -1).half().cpu()
 
 
 def _save_batch_features(
@@ -394,12 +352,8 @@ def _feature_output_path(
     config: VideoMaeFeatureExtractionConfig,
 ) -> Path:
     return video_feature_cache_path(
-        features_dir=config.features_dir,
+        feature_cache_dir=config.feature_cache_dir,
         video_id=video_id,
-        backbone=config.backbone,
-        num_clips=config.num_clips,
-        sample_frames=config.sample_frames,
-        sampling_dist=config.sampling_dist,
     )
 
 

@@ -2,38 +2,39 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+from aitraf_core.inference import predict_video_mae_label as predict
 from aitraf_api.config import Settings
-from aitraf_api.manifests import find_manifest_row_by_video_id
-from aitraf_api.prediction import (
-    LoadModel,
-    PredictVideo,
-    predict_manifest_row,
-    validate_clip_exists,
-)
-from aitraf_api.schemas import InferenceResult
+from aitraf_api.schemas import DisplayResult, InferenceResult, ModelInfo, PredictionResult
+from aitraf_api.video_loading import load_video_row
 
 
 def predict_trick_classification(
     *,
     video_id: str,
     settings: Settings,
-    predict_video: PredictVideo,
-    load_model: LoadModel | None = None,
+    loaded_model: Any,
 ) -> InferenceResult:
-    
-    row = find_manifest_row_by_video_id(
+    row = load_video_row(
         manifest_path=settings.classification.manifest_path,
+        clips_dir=settings.clips_dir,
         video_id=video_id,
     )
 
-    validate_clip_exists(settings, str(row["video_id"]))
-    
-    return predict_manifest_row(
-        ref=settings.classification,
-        row=row,
-        settings=settings,
-        load_model=load_model,
-        predict_video=predict_video,
+    label, confidence = predict(
+        loaded_model=loaded_model,
+        video_id=video_id,
+        local_clips_dir=settings.clips_dir,
+    )
+
+    return InferenceResult(
+        video_id=video_id,
+        prediction=PredictionResult(label=label, confidence=confidence),
+        ground_truth=DisplayResult(
+            label=str(row[settings.classification.ground_truth_field])
+        ),
+        model=ModelInfo(kind=settings.classification.model_kind),
     )
 
 

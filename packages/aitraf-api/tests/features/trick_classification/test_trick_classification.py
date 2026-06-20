@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 def test_classification_returns_prediction_for_valid_video_id(
     client: TestClient,
     auth_headers: dict[str, str],
-    predict_video,
 ) -> None:
     response = client.post(
         "/inference/trick-classification/shared.mp4",
@@ -20,7 +19,3 @@ def test_classification_returns_prediction_for_valid_video_id(
         "ground_truth": {"label": "top-soul"},
         "model": {"kind": "video_mae"},
     }
-    assert predict_video.calls[-1] == (
-        "models:/aitraf-trick-classification@infant",
-        "shared.mp4",
-    )

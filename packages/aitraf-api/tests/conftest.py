@@ -1,46 +1,18 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 import pytest
+import torch
 from fastapi.testclient import TestClient
 
 from aitraf_api.app import create_app
-from aitraf_api.config import RegisteredModelReference, Settings
-
-
-@dataclass(frozen=True)
-class StubLoadedModel:
-    model_uri: str
-
-
-class StubPredictVideo:
-    def __init__(self) -> None:
-        self.calls: list[tuple[str, str]] = []
-
-    def load_model(
-        self,
-        model_uri: str,
-        tracking_uri: str | None,
-    ) -> StubLoadedModel:
-        _ = tracking_uri
-        return StubLoadedModel(model_uri=model_uri)
-
-    def predict(
-        self,
-        *,
-        loaded_model: StubLoadedModel,
-        video_id: str,
-        local_clips_dir: Path,
-    ) -> tuple[str, float]:
-        _ = local_clips_dir
-        self.calls.append((loaded_model.model_uri, video_id))
-        if "classification" in loaded_model.model_uri:
-            return "top-soul", 0.91
-        return "3", 0.72
+from aitraf_api.config import Settings, TrickAssessmentConfig, TrickClassificationConfig
+from aitraf_core.pre_processing import (
+    video_feature_cache_dir,
+    video_feature_cache_path,
+)
 
 
 @pytest.fixture()
@@ -88,37 +60,40 @@ def settings(api_token: str, manifest_paths: tuple[Path, Path], tmp_path: Path) 
     clips_dir = tmp_path / "clips"
     clips_dir.mkdir()
     (clips_dir / "shared.mp4").touch()
+    features_dir = tmp_path / "video_mae_features"
+    feature_cache_dir = video_feature_cache_dir(
+        features_dir=features_dir,
+        backbone="test/backbone",
+        num_clips=2,
+        sample_frames=1,
+        sampling_dist="uniform",
+    )
+    feature_path = video_feature_cache_path(
+        feature_cache_dir=feature_cache_dir,
+        video_id="shared.mp4",
+    )
+    feature_path.parent.mkdir(parents=True)
+    torch.save({"features": torch.ones(2, 4)}, feature_path)
     return Settings(
         api_token=api_token,
-        mlflow_tracking_uri="http://mlflow.test",
         clips_dir=clips_dir,
-        classification=RegisteredModelReference(
+        classification=TrickClassificationConfig(
             model_uri="models:/aitraf-trick-classification@infant",
-            model_kind="video_mae",
             manifest_path=classification_path,
-            ground_truth_field="trick",
         ),
-        aqa=RegisteredModelReference(
+        aqa=TrickAssessmentConfig(
             model_uri="models:/aitraf-trick-aqa@infant",
-            model_kind="ordinal",
             manifest_path=aqa_path,
-            ground_truth_field="execution_score",
+            features_dir=features_dir,
+            frame_cache_dir=tmp_path / "frame_cache",
+            model_cache_dir=tmp_path / "models",
         ),
     )
 
 
 @pytest.fixture()
-def predict_video() -> StubPredictVideo:
-    return StubPredictVideo()
-
-
-@pytest.fixture()
-def client(settings: Settings, predict_video: StubPredictVideo) -> TestClient:
-    app = create_app(
-        settings=settings,
-        load_model=predict_video.load_model,
-        predict_video=predict_video.predict,
-    )
+def client(settings: Settings) -> TestClient:
+    app = create_app(settings=settings)
     return TestClient(app)
 
 

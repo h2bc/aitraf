@@ -22,3 +22,7 @@ notebooks/runs
 runs
 storage
 coverage/
+node_modules/
+Dockerfile*
+.dockerignore
+*.log*

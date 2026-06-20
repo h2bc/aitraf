@@ -6,7 +6,8 @@ scripts.
 
 Shared runtime processing is imported from `aitraf_core`; it is not duplicated in
 train modules. For example, train-side feature extraction uses
-`aitraf_core.processing.video` and `aitraf_core.processing.models`.
+`aitraf_core.pre_processing`, `aitraf_core.processing.video`, and
+`aitraf_core.processing.models`.
 
 ## Tasks
 
@@ -102,6 +103,8 @@ task train_eval -- task=score_prediction_ordinal model=video_mae_temporal_fusion
   `storage/data/boxes/`.
 - Download pairwise labels into one JSONL file.
 - Extract and cache VideoMAE features into `storage/data/video_mae_features/`.
+  Temporal-fusion feature extraction delegates frame-to-pixel processing and
+  VideoMAE feature extraction to `aitraf_core.pre_processing`.
 
 ### Prepare
 

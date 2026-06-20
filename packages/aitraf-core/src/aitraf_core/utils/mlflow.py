@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any, Mapping
 
+import mlflow
+import mlflow.pytorch
+from mlflow import transformers as mlflow_transformers
+from mlflow.tracking import MlflowClient
 from torch import nn
 
 
@@ -16,18 +21,17 @@ class LoadedTransformersModel:
     run_params: Mapping[str, str]
 
 
+@dataclass(frozen=True)
+class LoadedTorchModel:
+    model: nn.Module
+    run_id: str
+    run_params: Mapping[str, str]
+
+
+@lru_cache(maxsize=4)
 def load_transformers_model(
     model_uri: str,
-    *,
-    tracking_uri: str | None = None,
 ) -> LoadedTransformersModel:
-    import mlflow
-    from mlflow import transformers as mlflow_transformers
-    from mlflow.tracking import MlflowClient
-
-    if tracking_uri:
-        mlflow.set_tracking_uri(tracking_uri)
-
     components = mlflow_transformers.load_model(
         model_uri,
         return_type="components",
@@ -43,7 +47,24 @@ def load_transformers_model(
     )
 
 
+@lru_cache(maxsize=4)
+def load_torch_model(
+    model_uri: str,
+) -> LoadedTorchModel:
+    model = mlflow.pytorch.load_model(model_uri)
+    model_info = mlflow.models.get_model_info(model_uri)
+    run = MlflowClient().get_run(model_info.run_id)
+
+    return LoadedTorchModel(
+        model=model,
+        run_id=model_info.run_id,
+        run_params=run.data.params,
+    )
+
+
 __all__ = [
+    "LoadedTorchModel",
     "LoadedTransformersModel",
+    "load_torch_model",
     "load_transformers_model",
 ]

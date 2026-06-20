@@ -7,12 +7,13 @@ from functools import partial
 from pathlib import Path
 
 import mlflow
-import mlflow.pytorch
 from datasets import load_dataset
 from dotenv import load_dotenv
 from mlflow.data import from_huggingface
 from transformers import Trainer, TrainingArguments
 
+from aitraf_core.utils import load_torch_model
+from aitraf_core.pre_processing import video_feature_cache_dir
 from aitraf_train.logging import logger
 from aitraf_train.metrics import (
     EvalModel,
@@ -79,18 +80,22 @@ def run_evaluation(config: VideoMaeTemporalFusionScorePredictionBinaryEvalCfg) -
     label_names, label2id, id2label = load_target_label_mappings(
         config.vocab_path, "quality_label"
     )
-    model = mlflow.pytorch.load_model(config.model_uri).to(config.device)
+    loaded_model = load_torch_model(config.model_uri)
+    model = loaded_model.model.to(config.device)
     logger.info(
         f"VideoMAE temporal-fusion evaluation running on device: {next(model.parameters()).device}"
     )
     label_transform = build_label_transform(label2id)
-    process_fn = partial(
-        process_temporal_fusion_feature_sample,
+    feature_cache_dir = video_feature_cache_dir(
         features_dir=config.features_dir,
         backbone=config.backbone,
-        num_frames=config.sample_frames,
         num_clips=config.num_clips,
+        sample_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
+    )
+    process_fn = partial(
+        process_temporal_fusion_feature_sample,
+        feature_cache_dir=feature_cache_dir,
         label_key="quality_label",
         label_transform=label_transform,
     )
@@ -110,7 +115,7 @@ def run_evaluation(config: VideoMaeTemporalFusionScorePredictionBinaryEvalCfg) -
         data_collator=data_collator,
     )
 
-    source_train_run_id = mlflow.models.get_model_info(config.model_uri).run_id
+    source_train_run_id = loaded_model.run_id
     source_train_params = build_training_params(
         source_train_run_id, TRAINING_PARAM_MAP
     ) | {

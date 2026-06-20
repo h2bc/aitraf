@@ -7,12 +7,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from aitraf_api.auth import require_app_token
 from aitraf_api.config import Settings
 from aitraf_api.dependencies import (
-    get_load_model,
-    get_predict_video,
+    get_aqa_feature_extractor,
+    get_aqa_model,
+    get_aqa_pre_processing,
     get_settings,
 )
 from aitraf_api.features.trick_assessment.service import predict_trick_assessment
-from aitraf_api.prediction import LoadModel, PredictVideo
 from aitraf_api.schemas import InferenceResult
 
 router = APIRouter()
@@ -25,9 +25,11 @@ router = APIRouter()
 )
 def trick_assessment_inference(
     id: str,
+    cache_video_features: bool = True,
     settings: Settings = Depends(get_settings),
-    load_model: LoadModel | None = Depends(get_load_model),
-    predict_video: PredictVideo = Depends(get_predict_video),
+    loaded_model=Depends(get_aqa_model),
+    feature_extractor=Depends(get_aqa_feature_extractor),
+    pre_processing_config=Depends(get_aqa_pre_processing),
 ) -> InferenceResult:
     if not id.strip():
         raise HTTPException(status_code=422, detail="Inference id is required")
@@ -35,8 +37,10 @@ def trick_assessment_inference(
     return predict_trick_assessment(
         video_id=id,
         settings=settings,
-        load_model=load_model,
-        predict_video=predict_video,
+        loaded_model=loaded_model,
+        feature_extractor=feature_extractor,
+        pre_processing_config=pre_processing_config,
+        cache_video_features=cache_video_features,
     )
 
 

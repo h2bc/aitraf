@@ -34,7 +34,7 @@ class DisplayResult(BaseModel):
 
 
 class ModelInfo(BaseModel):
-    kind: str
+    kind: str = Field(min_length=1)
 
 
 class InferenceResult(BaseModel):

@@ -7,9 +7,9 @@ FastAPI inference surface for the AITRAF demo frontend.
 Required at app startup:
 
 - `AITRAF_CLASSIFICATION_MODEL_URI`: MLflow model URI for trick classification, for example `models:/aitraf-trick-classification@infant`.
-- `AITRAF_AQA_MODEL_URI`: MLflow model URI for trick AQA, for example `models:/aitraf-trick-aqa@infant`.
+- `AITRAF_AQA_MODEL_URI`: MLflow model URI for temporal-fusion trick AQA, for example `models:/aitraf-trick-aqa-temporal-fusion@infant`.
 - `AITRAF_DATA_PATH`: repo data directory; manifests are derived from this.
-- `AITRAF_STORAGE_PATH`: repo storage directory; clips are derived from this.
+- `AITRAF_STORAGE_PATH`: repo storage directory; clips and VideoMAE features are derived from this.
 
 Required for protected endpoints:
 
@@ -36,9 +36,32 @@ OpenAPI JSON at `http://localhost:8000/openapi.json`.
 task api:test
 ```
 
-Tests use stubbed model loading/prediction and are split by feature under
+Tests use the configured MLflow model URIs and are split by feature under
 `packages/aitraf-api/tests/features/`. Shared auth coverage lives in
 `packages/aitraf-api/tests/test_auth.py`.
+
+## Temporal-Fusion Trick AQA Smoke
+
+Fetch demo videos, then use one returned `id` for trick AQA:
+
+```bash
+curl -H "Authorization: Bearer $AITRAF_API_TOKEN" \
+  http://localhost:8000/demo-videos
+
+curl -X POST -H "Authorization: Bearer $AITRAF_API_TOKEN" \
+  "http://localhost:8000/inference/trick-aqa/{id}?cache_video_features=true"
+```
+
+Expected response shape:
+
+```json
+{
+  "video_id": "{id}",
+  "prediction": {"label": "3", "confidence": 0.72},
+  "ground_truth": {"label": "3"},
+  "model": {"kind": "video_mae_temporal_fusion"}
+}
+```
 
 ## Architecture Boundary
 

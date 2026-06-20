@@ -8,72 +8,35 @@ from typing import Any, Callable
 import torch
 from torch import nn
 
-from aitraf_core.utils.huggingface import hf_model_cache_dir_name
+from aitraf_core.pre_processing.models.video_mae_temporal_fusion import (
+    load_video_mae_features,
+    video_feature_cache_path,
+)
 
 
-def video_feature_cache_subdir(
-    *,
-    backbone: str,
-    num_clips: int,
-    sample_frames: int,
-    sampling_dist: str,
-) -> Path:
-    config_slug = f"clips_{num_clips}_frames_{sample_frames}_sampling_{sampling_dist}"
-    return Path(hf_model_cache_dir_name(backbone)) / config_slug
-
-
-def video_feature_cache_path(
-    *,
-    features_dir: Path | str,
-    video_id: str,
-    backbone: str,
-    num_clips: int,
-    sample_frames: int,
-    sampling_dist: str,
-) -> Path:
-    relative_video = Path(video_id)
-    relative_feature = relative_video.with_suffix(".pt")
-    return (
-        Path(features_dir)
-        / video_feature_cache_subdir(
-            backbone=backbone,
-            num_clips=num_clips,
-            sample_frames=sample_frames,
-            sampling_dist=sampling_dist,
-        )
-        / relative_feature
-    )
+def process_temporal_fusion_features(features: torch.Tensor) -> torch.Tensor:
+    return features.float()
 
 
 def process_temporal_fusion_feature_sample(
     manifest_row: dict[str, Any],
-    features_dir: str | Path,
-    backbone: str,
-    num_frames: int,
-    num_clips: int,
-    sampling_dist: str,
+    feature_cache_dir: str | Path,
     label_key: str,
     label_transform: Callable[[Any], Any] = lambda x: x,
 ) -> dict[str, torch.Tensor]:
     """Load one cached temporal-fusion feature sequence and label."""
 
     feature_path = video_feature_cache_path(
-        features_dir=features_dir,
+        feature_cache_dir=feature_cache_dir,
         video_id=manifest_row["video_id"],
-        backbone=backbone,
-        num_clips=num_clips,
-        sample_frames=num_frames,
-        sampling_dist=sampling_dist,
     )
     if not feature_path.exists():
         raise FileNotFoundError(
-            f"Missing cached VideoMAE features for {manifest_row['video_id']}: "
-            f"{feature_path}. Run data_ops.video_mae_feature_extraction first."
+            f"Missing precomputed VideoMAE features for training/evaluation: {feature_path}"
         )
-
-    payload = torch.load(feature_path, map_location="cpu", weights_only=False)
+    features = load_video_mae_features(feature_path)
     return {
-        "features": payload["features"].float(),
+        "features": process_temporal_fusion_features(features),
         "labels": torch.as_tensor(label_transform(manifest_row[label_key])),
     }
 
@@ -144,6 +107,6 @@ class VideoMaeTemporalFusionClassifier(nn.Module):
 __all__ = [
     "VideoMaeTemporalFusionClassifier",
     "process_temporal_fusion_feature_sample",
+    "process_temporal_fusion_features",
     "video_feature_cache_path",
-    "video_feature_cache_subdir",
 ]

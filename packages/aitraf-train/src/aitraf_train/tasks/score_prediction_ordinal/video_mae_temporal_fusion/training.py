@@ -23,6 +23,7 @@ from transformers import (
 
 from aitraf_train.logging import logger
 from aitraf_train.metrics import calc_metrics, compute_pred_ids
+from aitraf_core.pre_processing import video_feature_cache_dir
 from aitraf_core.processing import (
     build_class_weights,
     build_label_transform,
@@ -94,13 +95,16 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
         config.vocab_path, "execution_score"
     )
     label_transform = build_label_transform(label2id)
-    process_fn = partial(
-        process_temporal_fusion_feature_sample,
+    feature_cache_dir = video_feature_cache_dir(
         features_dir=config.features_dir,
         backbone=config.backbone,
-        num_frames=config.sample_frames,
         num_clips=config.num_clips,
+        sample_frames=config.sample_frames,
         sampling_dist=config.sampling_dist,
+    )
+    process_fn = partial(
+        process_temporal_fusion_feature_sample,
+        feature_cache_dir=feature_cache_dir,
         label_key="execution_score",
         label_transform=label_transform,
     )
