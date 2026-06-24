@@ -27,7 +27,10 @@ def classification_label_from_logits(
 ) -> tuple[str, float]:
     probs = torch.softmax(logits, dim=-1)
     class_id = int(torch.argmax(probs).item())
-    label = id2label.get(class_id, id2label[str(class_id)])
+    if class_id in id2label:
+        label = id2label[class_id]
+    else:
+        label = id2label[str(class_id)]
     return str(label), float(probs[class_id].item())
 
 
