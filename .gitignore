@@ -205,6 +205,8 @@ pyrightconfig.json
 /runs
 /multirun
 /models
+/mlruns
+/mlartifacts
 /storage
 /attachments
 /notebooks/runs
