@@ -10,12 +10,7 @@ from torch import nn
 
 from aitraf_core.pre_processing.models.video_mae_temporal_fusion import (
     load_video_mae_features,
-    video_feature_cache_path,
 )
-
-
-def process_temporal_fusion_features(features: torch.Tensor) -> torch.Tensor:
-    return features.float()
 
 
 def process_temporal_fusion_feature_sample(
@@ -26,9 +21,8 @@ def process_temporal_fusion_feature_sample(
 ) -> dict[str, torch.Tensor]:
     """Load one cached temporal-fusion feature sequence and label."""
 
-    feature_path = video_feature_cache_path(
-        feature_cache_dir=feature_cache_dir,
-        video_id=manifest_row["video_id"],
+    feature_path = Path(feature_cache_dir) / Path(manifest_row["video_id"]).with_suffix(
+        ".pt"
     )
     if not feature_path.exists():
         raise FileNotFoundError(
@@ -36,7 +30,7 @@ def process_temporal_fusion_feature_sample(
         )
     features = load_video_mae_features(feature_path)
     return {
-        "features": process_temporal_fusion_features(features),
+        "features": features.float(),
         "labels": torch.as_tensor(label_transform(manifest_row[label_key])),
     }
 
@@ -107,6 +101,4 @@ class VideoMaeTemporalFusionClassifier(nn.Module):
 __all__ = [
     "VideoMaeTemporalFusionClassifier",
     "process_temporal_fusion_feature_sample",
-    "process_temporal_fusion_features",
-    "video_feature_cache_path",
 ]

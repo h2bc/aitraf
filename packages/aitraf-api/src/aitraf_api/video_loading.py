@@ -7,7 +7,19 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from aitraf_api.manifests import find_manifest_row_by_video_id
+from aitraf_api.manifests import find_manifest_row_by_video_id, read_jsonl_manifest
+
+
+def get_video_metadata(
+    *,
+    manifest_path: Path,
+    video_id: str,
+) -> dict[str, Any] | None:
+    rows = read_jsonl_manifest(manifest_path)
+    for row in rows:
+        if str(row["video_id"]) == video_id:
+            return row
+    return None
 
 
 def load_video_row(
@@ -16,14 +28,12 @@ def load_video_row(
     clips_dir: Path,
     video_id: str,
 ) -> dict[str, Any]:
-    
     row = find_manifest_row_by_video_id(
         manifest_path=manifest_path,
         video_id=video_id,
     )
 
     clip_path = clips_dir / video_id
-    
     if not clip_path.exists():
         raise HTTPException(
             status_code=503,
@@ -32,4 +42,7 @@ def load_video_row(
     return row
 
 
-__all__ = ["load_video_row"]
+__all__ = [
+    "get_video_metadata",
+    "load_video_row",
+]

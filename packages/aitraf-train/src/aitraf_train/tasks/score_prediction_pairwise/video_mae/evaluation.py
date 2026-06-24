@@ -28,9 +28,12 @@ from aitraf_train.metrics import (
     recall,
 )
 from aitraf_train.tracking import build_training_params, params_to_df
-from aitraf_core.processing import build_label_transform, load_target_label_mappings
-from aitraf_core.processing.utils import build_collate
-from aitraf_core.utils import load_transformers_model
+from aitraf_train.data.labels import (
+    build_label_transform,
+    load_target_label_mappings,
+)
+from aitraf_train.data.collate import build_collate
+from aitraf_core.loading import load_mlflow_transformers_model
 from aitraf_train.tracking.models.video_mae import TRAINING_PARAM_MAP
 from ..dataset import ScorePredictionPairwiseDataset
 from ..metrics import compute_pairwise_pred_labels
@@ -84,7 +87,7 @@ def run_evaluation(config: VideoMaeScorePredictionPairwiseEvalCfg) -> None:
 
     _, label2id, _ = load_target_label_mappings(config.vocab_path, "pair_label")
 
-    loaded_model = load_transformers_model(config.model_uri)
+    loaded_model = load_mlflow_transformers_model(config.model_uri)
     scorer = loaded_model.model.to(config.device)
     logger.info(
         f"VideoMAE evaluation running on device: {next(scorer.parameters()).device}"

@@ -4,9 +4,18 @@ from hydra import main
 from omegaconf import DictConfig
 from dotenv import load_dotenv
 
-from aitraf_train.data_ops.download_labels import LabelDownloadConfig, download_labels
-from aitraf_train.label_ops.create_pairs import PairGenerationConfig, create_pairs
-from aitraf_train.label_ops.upload_pairs import PairUploadConfig, upload_pairs
+from aitraf_train.preparation.data_ops.download_labels import (
+    LabelDownloadConfig,
+    download_labels,
+)
+from aitraf_train.preparation.label_ops.create_pairs import (
+    PairGenerationConfig,
+    create_pairs,
+)
+from aitraf_train.preparation.label_ops.upload_pairs import (
+    PairUploadConfig,
+    upload_pairs,
+)
 from aitraf_train.logging import setup_logging, heading
 
 

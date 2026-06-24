@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
@@ -12,6 +11,7 @@ from dotenv import load_dotenv
 
 CLASSIFICATION_MANIFEST = "manifests/trick_classification/test.jsonl"
 AQA_MANIFEST = "manifests/score_prediction_ordinal/test.jsonl"
+AQA_VOCAB = "manifests/score_prediction_ordinal/vocab.json"
 CLIPS_DIR = "data/clips"
 
 
@@ -27,6 +27,7 @@ class TrickClassificationConfig:
 class TrickAssessmentConfig:
     model_uri: str
     manifest_path: Path
+    vocab_path: Path
     features_dir: Path
     frame_cache_dir: Path
     model_cache_dir: Path
@@ -41,6 +42,7 @@ class TrickAssessmentPreProcessingConfig:
     sample_frames: int
     sampling_dist: str
     feature_cache_dir: Path
+    id2label: dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -75,6 +77,7 @@ def load_settings(
         aqa=TrickAssessmentConfig(
             model_uri=env["AITRAF_AQA_MODEL_URI"],
             manifest_path=data_dir / AQA_MANIFEST,
+            vocab_path=data_dir / AQA_VOCAB,
             features_dir=features_dir,
             frame_cache_dir=frame_cache_dir,
             model_cache_dir=model_cache_dir,

@@ -7,11 +7,13 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
-from aitraf_core.pre_processing import (
-    load_video_mae_feature_extractor,
-    video_feature_cache_dir,
+from aitraf_core.loading import (
+    load_huggingface_model,
+    load_mlflow_torch_model,
+    load_mlflow_transformers_model,
 )
-from aitraf_core.utils import load_torch_model, load_transformers_model
+from aitraf_core.pre_processing import video_feature_cache_dir
+from aitraf_core.utils import read_json
 from aitraf_api.config import (
     Settings,
     TrickAssessmentPreProcessingConfig,
@@ -24,22 +26,24 @@ def create_app(
     *,
     settings: Settings,
 ) -> FastAPI:
-    classification_model = load_transformers_model(
+    classification_model = load_mlflow_transformers_model(
         settings.classification.model_uri,
     )
 
-    aqa_model = load_torch_model(
+    aqa_model = load_mlflow_torch_model(
         settings.aqa.model_uri,
     )
     aqa_params = aqa_model.run_params
     aqa_num_clips = int(aqa_params["num_clips"])
     aqa_sample_frames = int(aqa_params["num_frames"])
     aqa_sampling_dist = aqa_params["train_sampling_dist"]
+    aqa_vocab = read_json(settings.aqa.vocab_path)
     aqa_pre_processing = TrickAssessmentPreProcessingConfig(
         backbone=aqa_params["backbone"],
         num_clips=aqa_num_clips,
         sample_frames=aqa_sample_frames,
         sampling_dist=aqa_sampling_dist,
+        id2label=aqa_vocab[settings.aqa.ground_truth_field]["id2label"],
         feature_cache_dir=video_feature_cache_dir(
             features_dir=settings.aqa.features_dir,
             backbone=aqa_params["backbone"],
@@ -48,11 +52,11 @@ def create_app(
             sampling_dist=aqa_sampling_dist,
         ),
     )
-    aqa_feature_extractor = load_video_mae_feature_extractor(
-        backbone=aqa_pre_processing.backbone,
-        sample_frames=aqa_pre_processing.sample_frames,
+    aqa_feature_extractor = load_huggingface_model(
+        model_name=aqa_pre_processing.backbone,
         model_cache_dir=settings.aqa.model_cache_dir,
         device="cpu",
+        config_kwargs={"num_frames": aqa_pre_processing.sample_frames},
     )
 
     app = FastAPI(title="AITRAF Demo Inference API", version="0.1.0")

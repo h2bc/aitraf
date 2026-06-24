@@ -23,7 +23,7 @@ from transformers import (
 from aitraf_train.logging import logger
 from aitraf_train.metrics import accuracy, calc_metrics, compute_pred_ids, f1_macro
 from aitraf_core.pre_processing import video_feature_cache_dir
-from aitraf_core.processing import (
+from aitraf_train.data.labels import (
     build_class_weights,
     build_label_transform,
     load_target_label_mappings,
@@ -32,7 +32,7 @@ from aitraf_core.processing.models.video_mae_temporal_fusion import (
     VideoMaeTemporalFusionClassifier,
     process_temporal_fusion_feature_sample,
 )
-from aitraf_core.processing.utils import build_collate
+from aitraf_train.data.collate import build_collate
 
 
 @dataclass

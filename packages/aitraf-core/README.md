@@ -14,8 +14,9 @@ Owned code:
   VideoMAE, and VideoMAE temporal-fusion inputs.
 - `aitraf_core.inference`: shared prediction helpers for decoding logits and
   running VideoMAE inference.
-- `aitraf_core.utils.huggingface`, `aitraf_core.utils.jsonl`,
-  `aitraf_core.utils.mlflow`, and `aitraf_core.utils.video_utils`: shared helper
+- `aitraf_core.loading`: model loaders grouped by artifact source, including
+  MLflow-trained artifacts and HuggingFace base components.
+- `aitraf_core.utils.huggingface` and `aitraf_core.utils.jsonl`: shared helper
   code used by train-side workflows and the API.
 
 Runtime outputs such as sampled frames, pose outputs, and feature tensors may be

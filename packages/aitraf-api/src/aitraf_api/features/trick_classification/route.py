@@ -26,7 +26,7 @@ router = APIRouter()
 def trick_classification_inference(
     id: str,
     settings: Settings = Depends(get_settings),
-    loaded_model=Depends(get_classification_model),
+    model=Depends(get_classification_model),
 ) -> InferenceResult:
     if not id.strip():
         raise HTTPException(status_code=422, detail="Inference id is required")
@@ -34,7 +34,7 @@ def trick_classification_inference(
     return predict_trick_classification(
         video_id=id,
         settings=settings,
-        loaded_model=loaded_model,
+        model=model,
     )
 
 

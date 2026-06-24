@@ -25,7 +25,6 @@ router = APIRouter()
 )
 def trick_assessment_inference(
     id: str,
-    cache_video_features: bool = True,
     settings: Settings = Depends(get_settings),
     loaded_model=Depends(get_aqa_model),
     feature_extractor=Depends(get_aqa_feature_extractor),
@@ -40,7 +39,6 @@ def trick_assessment_inference(
         loaded_model=loaded_model,
         feature_extractor=feature_extractor,
         pre_processing_config=pre_processing_config,
-        cache_video_features=cache_video_features,
     )
 
 

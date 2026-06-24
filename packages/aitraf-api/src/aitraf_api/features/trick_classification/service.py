@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from aitraf_core.inference import predict_video_mae_label as predict
+from aitraf_core.inference.tasks.trick_classification.video_mae import (
+    predict_trick_classification_video_mae,
+)
+
 from aitraf_api.config import Settings
 from aitraf_api.schemas import DisplayResult, InferenceResult, ModelInfo, PredictionResult
 from aitraf_api.video_loading import load_video_row
@@ -14,7 +17,7 @@ def predict_trick_classification(
     *,
     video_id: str,
     settings: Settings,
-    loaded_model: Any,
+    model: Any,
 ) -> InferenceResult:
     row = load_video_row(
         manifest_path=settings.classification.manifest_path,
@@ -22,8 +25,8 @@ def predict_trick_classification(
         video_id=video_id,
     )
 
-    label, confidence = predict(
-        loaded_model=loaded_model,
+    label, confidence = predict_trick_classification_video_mae(
+        loaded_model=model,
         video_id=video_id,
         local_clips_dir=settings.clips_dir,
     )

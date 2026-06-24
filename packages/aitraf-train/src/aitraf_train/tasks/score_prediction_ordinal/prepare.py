@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 from omegaconf import DictConfig
 
-from aitraf_train.prepare import (
+from aitraf_train.preparation.prepare import (
     build_clip_manifest_base,
     ensure_manifest_targets_clear,
     load_labels_df,
@@ -15,7 +15,7 @@ from aitraf_train.prepare import (
     split_manifest_rows,
     write_manifest_splits,
 )
-from aitraf_train.data_ops.utils import (
+from aitraf_train.preparation.data_ops.utils import (
     apply_dtypes,
     build_vocab_payload,
     validate_required_columns,

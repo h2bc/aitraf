@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from mlflow.data import from_huggingface
 from transformers import Trainer, TrainingArguments
 
-from aitraf_core.utils import load_torch_model
+from aitraf_core.loading import load_mlflow_torch_model
 from aitraf_core.pre_processing import video_feature_cache_dir
 from aitraf_train.logging import logger
 from aitraf_train.metrics import (
@@ -25,11 +25,14 @@ from aitraf_train.metrics import (
     get_target_distribution_figure,
     metrics_to_df,
 )
-from aitraf_core.processing import build_label_transform, load_target_label_mappings
+from aitraf_train.data.labels import (
+    build_label_transform,
+    load_target_label_mappings,
+)
 from aitraf_core.processing.models.video_mae_temporal_fusion import (
     process_temporal_fusion_feature_sample,
 )
-from aitraf_core.processing.utils import build_collate
+from aitraf_train.data.collate import build_collate
 from aitraf_train.tasks.score_prediction_ordinal.metrics import (
     amae,
     compute_constant_median_pred_ids,
@@ -83,7 +86,7 @@ def run_evaluation(config: VideoMaeTemporalFusionScorePredictionOrdinalEvalCfg) 
     label_names, label2id, id2label = load_target_label_mappings(
         config.vocab_path, "execution_score"
     )
-    loaded_model = load_torch_model(config.model_uri)
+    loaded_model = load_mlflow_torch_model(config.model_uri)
     model = loaded_model.model.to(config.device)
     logger.info(
         f"VideoMAE temporal-fusion evaluation running on device: {next(model.parameters()).device}"

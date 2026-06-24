@@ -2,19 +2,22 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
-from aitraf_core.inference import predict_temporal_fusion_label as predict
-from aitraf_core.pre_processing import (
-    cached_video_mae_feature_extraction as pre_processing,
-    video_feature_cache_path,
-)
-from aitraf_core.processing.models.video_mae_temporal_fusion import (
-    process_temporal_fusion_features as processing,
+from fastapi import HTTPException
+
+from aitraf_core.inference.tasks.trick_assessment.video_mae_temporal_fusion import (
+    predict_trick_assessment_video_mae_temporal_fusion,
 )
 from aitraf_api.config import Settings, TrickAssessmentPreProcessingConfig
-from aitraf_api.schemas import DisplayResult, InferenceResult, ModelInfo, PredictionResult
-from aitraf_api.video_loading import load_video_row
+from aitraf_api.schemas import (
+    DisplayResult,
+    InferenceResult,
+    ModelInfo,
+    PredictionResult,
+)
+from aitraf_api.video_loading import get_video_metadata
 
 
 def predict_trick_assessment(
@@ -24,43 +27,48 @@ def predict_trick_assessment(
     loaded_model: Any,
     feature_extractor: Any,
     pre_processing_config: TrickAssessmentPreProcessingConfig,
-    cache_video_features: bool = True,
 ) -> InferenceResult:
-    row = load_video_row(
+    video_meta = get_video_metadata(
         manifest_path=settings.aqa.manifest_path,
-        clips_dir=settings.clips_dir,
         video_id=video_id,
     )
 
-    feature_path = video_feature_cache_path(
-        feature_cache_dir=pre_processing_config.feature_cache_dir,
-        video_id=video_id,
+    if video_meta is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Selected video id is not in the current manifest: {video_id}",
+        )
+
+    clip_path = settings.clips_dir / video_id
+
+    if not clip_path.exists():
+        raise HTTPException(
+            status_code=503,
+            detail=f"Video file is unavailable: {clip_path}",
+        )
+
+    feature_path = pre_processing_config.feature_cache_dir / Path(video_id).with_suffix(
+        ".pt"
     )
 
-    features = pre_processing(
+    label, confidence = predict_trick_assessment_video_mae_temporal_fusion(
+        loaded_model=loaded_model,
+        feature_extractor=feature_extractor,
         video_id=video_id,
         clips_dir=settings.clips_dir,
         feature_path=feature_path,
-        feature_extractor=feature_extractor,
-        backbone=pre_processing_config.backbone,
         num_clips=pre_processing_config.num_clips,
         sample_frames=pre_processing_config.sample_frames,
         sampling_dist=pre_processing_config.sampling_dist,
-        cache_video_features=cache_video_features,
-    )
-
-    processed_features = processing(features)
-
-    label, confidence = predict(
-        model=loaded_model.model,
-        features=processed_features,
-        id2label=loaded_model.model.config.id2label,
+        id2label=pre_processing_config.id2label,
     )
 
     return InferenceResult(
         video_id=video_id,
         prediction=PredictionResult(label=label, confidence=confidence),
-        ground_truth=DisplayResult(label=str(row[settings.aqa.ground_truth_field])),
+        ground_truth=DisplayResult(
+            label=str(video_meta[settings.aqa.ground_truth_field])
+        ),
         model=ModelInfo(kind=settings.aqa.model_kind),
     )
 

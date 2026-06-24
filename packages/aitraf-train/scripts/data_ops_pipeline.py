@@ -3,18 +3,24 @@
 from hydra import main
 from omegaconf import DictConfig
 from dotenv import load_dotenv
-from aitraf_train.data_ops.download_labels import LabelDownloadConfig, download_labels
-from aitraf_train.data_ops.download_pairwise_labels import (
+from aitraf_train.preparation.data_ops.download_labels import (
+    LabelDownloadConfig,
+    download_labels,
+)
+from aitraf_train.preparation.data_ops.download_pairwise_labels import (
     PairwiseLabelDownloadConfig,
     download_pairwise_labels,
 )
-from aitraf_train.data_ops.download_clips import ClipDownloadConfig, download_clips
+from aitraf_train.preparation.data_ops.download_clips import (
+    ClipDownloadConfig,
+    download_clips,
+)
 from aitraf_train.logging import setup_logging, heading
-from aitraf_train.data_ops.pose_and_bbox_extraction import (
+from aitraf_train.preparation.data_ops.pose_and_bbox_extraction import (
     PoseAndBBoxExtractionConfig,
     pose_and_bbox_extraction,
 )
-from aitraf_train.data_ops.video_mae_feature_extraction import (
+from aitraf_train.preparation.data_ops.video_mae_feature_extraction import (
     VideoMaeFeatureExtractionConfig,
     video_mae_feature_extraction,
 )

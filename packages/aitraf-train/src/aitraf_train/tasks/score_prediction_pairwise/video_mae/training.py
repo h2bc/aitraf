@@ -30,8 +30,11 @@ from aitraf_train.metrics import (
     precision,
     recall,
 )
-from aitraf_core.processing import build_label_transform, load_target_label_mappings
-from aitraf_core.processing.utils import build_collate
+from aitraf_train.data.labels import (
+    build_label_transform,
+    load_target_label_mappings,
+)
+from aitraf_train.data.collate import build_collate
 from ..dataset import ScorePredictionPairwiseDataset, ScorePredictionPairwiseSubset
 from ..metrics import compute_pairwise_pred_labels
 from .model import ScorePredictionPairwiseModel

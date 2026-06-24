@@ -37,8 +37,8 @@ task api:test
 ```
 
 Tests use the configured MLflow model URIs and are split by feature under
-`packages/aitraf-api/tests/features/`. Shared auth coverage lives in
-`packages/aitraf-api/tests/test_auth.py`.
+`packages/aitraf-api/tests/features/`. The current retained smoke coverage is
+the health endpoint test.
 
 ## Temporal-Fusion Trick AQA Smoke
 
@@ -49,7 +49,7 @@ curl -H "Authorization: Bearer $AITRAF_API_TOKEN" \
   http://localhost:8000/demo-videos
 
 curl -X POST -H "Authorization: Bearer $AITRAF_API_TOKEN" \
-  "http://localhost:8000/inference/trick-aqa/{id}?cache_video_features=true"
+  "http://localhost:8000/inference/trick-aqa/{id}"
 ```
 
 Expected response shape:

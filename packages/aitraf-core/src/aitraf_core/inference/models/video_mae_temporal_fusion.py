@@ -1,56 +1,28 @@
-"""Temporal-fusion inference helpers."""
+"""VideoMAE temporal-fusion inference helpers."""
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Mapping
 
 import torch
 from torch import nn
 
-from aitraf_core.inference.classification import decode_classification_logits
+from aitraf_core.inference.classification import classification_label_from_logits
 
 
-def predict_temporal_fusion_logits(
+def predict(
     *,
     model: nn.Module,
     features: torch.Tensor,
-) -> torch.Tensor:
-    model.eval()
-    batched_features = features if features.ndim == 3 else features.unsqueeze(0)
-    with torch.inference_mode():
-        output = model(features=batched_features)
-
-    logits = _extract_logits(output)
-    if logits.ndim == 2:
-        return logits[0].float()
-    if logits.ndim == 1:
-        return logits.float()
-    raise ValueError(f"Unsupported temporal-fusion logits shape: {tuple(logits.shape)}")
-
-
-def predict_temporal_fusion_label(
-    *,
-    model: nn.Module,
-    features: torch.Tensor,
-    id2label: dict[str, str] | dict[int, str],
+    id2label: Mapping[int | str, str],
 ) -> tuple[str, float]:
-    logits = predict_temporal_fusion_logits(model=model, features=features)
-    normalized_id2label = {str(key): str(value) for key, value in id2label.items()}
-    return decode_classification_logits(logits, normalized_id2label)
+    model.eval()
+    model_device = next(model.parameters()).device
+    with torch.inference_mode():
+        output = model(features=features.to(model_device).unsqueeze(0))
+
+    logits = output["logits"][0].float()
+    return classification_label_from_logits(logits, id2label)
 
 
-def _extract_logits(output: Any) -> torch.Tensor:
-    if isinstance(output, torch.Tensor):
-        return output
-    if isinstance(output, dict) and "logits" in output:
-        return torch.as_tensor(output["logits"])
-    logits = getattr(output, "logits", None)
-    if logits is not None:
-        return torch.as_tensor(logits)
-    raise ValueError("Temporal-fusion model output missing logits")
-
-
-__all__ = [
-    "predict_temporal_fusion_label",
-    "predict_temporal_fusion_logits",
-]
+__all__ = ["predict"]
