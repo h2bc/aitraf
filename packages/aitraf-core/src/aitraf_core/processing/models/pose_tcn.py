@@ -7,7 +7,7 @@ from typing import Any, Callable
 import numpy as np
 import torch
 
-from aitraf_core.processing.utils import sample_frame_indices
+from aitraf_core.processing.sampling import sample_frame_indices
 
 
 def process_sample(
@@ -80,7 +80,7 @@ def _sample_pose_tensor(
     persons, person_scores, frame_numbers = zip(*valid)
 
     frame_indices = sample_frame_indices(
-        total_frames=len(persons),
+        frame_range=(0, len(persons)),
         num_frames=num_frames,
         sampling_dist=sampling_dist,
         source=video_id,

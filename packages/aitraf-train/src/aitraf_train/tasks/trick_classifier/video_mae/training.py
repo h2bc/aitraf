@@ -14,9 +14,12 @@ from transformers import (
     VideoMAEImageProcessor,
 )
 
-from aitraf_core.processing import build_label_transform, load_target_label_mappings
+from aitraf_train.data.labels import (
+    build_label_transform,
+    load_target_label_mappings,
+)
 from aitraf_core.processing.models.video_mae import process_sample
-from aitraf_core.processing.utils import build_collate
+from aitraf_train.data.collate import build_collate
 from aitraf_train.metrics import (
     calc_metrics,
     accuracy,

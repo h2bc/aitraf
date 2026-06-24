@@ -5,99 +5,54 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List
 
+import av
 import kornia
 import torch
 from torchcodec.decoders import VideoDecoder
 
-from aitraf_core.processing.utils import sample_frame_indices
-from aitraf_core.utils.video_utils import get_video_rotation_deg
+from aitraf_core.processing.sampling import sample_frame_indices
 
 
-def load_sampled_video_frames(
+def get_video_rotation_deg(path: Path) -> int:
+    with av.open(str(path)) as container:
+        frame = next(container.decode(video=0))
+        rotation_deg = getattr(frame, "rotation", None)
+        if rotation_deg is None:
+            raise ValueError(f"No rotation metadata found: {path}")
+
+        return (rotation_deg + 360) % 360
+
+
+def sample_video_frames(
     *,
-    video_id: str,
-    local_clips_dir: str | Path,
+    decoder: VideoDecoder,
+    video_path: Path,
+    frame_range: tuple[int, int],
     num_frames: int,
     sampling_dist: str,
-) -> tuple[List[torch.Tensor], list[int]]:
-    clip_path = Path(local_clips_dir) / video_id
-    decoder = VideoDecoder(str(clip_path), dimension_order="NHWC")
+) -> List[torch.Tensor]:
     frame_indices = sample_frame_indices(
-        len(decoder),
-        num_frames,
-        sampling_dist,
-        source=clip_path,
+        frame_range=frame_range,
+        num_frames=num_frames,
+        sampling_dist=sampling_dist,
+        source=video_path,
     )
+
+    return decode_video_frames(
+        decoder=decoder,
+        video_path=video_path,
+        frame_indices=frame_indices,
+    )
+
+
+def decode_video_frames(
+    *,
+    decoder: VideoDecoder,
+    video_path: Path,
+    frame_indices: list[int],
+) -> List[torch.Tensor]:
     frames = list(decoder.get_frames_at(frame_indices).data)
-    frames = rotate_frames(frames, get_video_rotation_deg(clip_path))
-    return frames, frame_indices
-
-
-def load_segmented_video_frames(
-    *,
-    video_id: str,
-    local_clips_dir: str | Path,
-    num_segments: int,
-    frames_per_segment: int,
-    sampling_dist: str,
-) -> tuple[list[List[torch.Tensor]], list[list[int]]]:
-    clip_path = Path(local_clips_dir) / video_id
-    decoder = VideoDecoder(str(clip_path), dimension_order="NHWC")
-    total_frames = len(decoder)
-    if total_frames <= 0:
-        raise ValueError(f"Video has no frames: {clip_path}")
-
-    boundaries = torch.linspace(0, total_frames, steps=num_segments + 1).long().tolist()
-
-    segment_indices = [
-        _sample_segment_frame_indices(
-            start=boundaries[idx],
-            end=boundaries[idx + 1],
-            num_frames=frames_per_segment,
-            sampling_dist=sampling_dist,
-            source=clip_path,
-            total_frames=total_frames,
-        )
-        for idx in range(num_segments)
-    ]
-    flat_indices = [frame_idx for segment in segment_indices for frame_idx in segment]
-    frames = list(decoder.get_frames_at(flat_indices).data)
-    frames = rotate_frames(frames, get_video_rotation_deg(clip_path))
-
-    segmented_frames = [
-        frames[idx * frames_per_segment : (idx + 1) * frames_per_segment]
-        for idx in range(num_segments)
-    ]
-    return segmented_frames, segment_indices
-
-
-def _sample_segment_frame_indices(
-    *,
-    start: int,
-    end: int,
-    num_frames: int,
-    sampling_dist: str,
-    source: Path | str,
-    total_frames: int,
-) -> list[int]:
-    if end <= start:
-        start = min(start, total_frames - 1)
-        end = start + 1
-
-    segment_frames = end - start
-    if segment_frames >= num_frames:
-        return [
-            start + idx
-            for idx in sample_frame_indices(
-                segment_frames,
-                num_frames,
-                sampling_dist,
-                source=source,
-            )
-        ]
-
-    indices = torch.linspace(0, segment_frames - 1, steps=num_frames).long().tolist()
-    return [start + idx for idx in indices]
+    return rotate_frames(frames, get_video_rotation_deg(video_path))
 
 
 def rotate_frames(frames: List[torch.Tensor], rotation_deg: int) -> List[torch.Tensor]:
@@ -118,7 +73,8 @@ def rotate_frames(frames: List[torch.Tensor], rotation_deg: int) -> List[torch.T
 
 
 __all__ = [
-    "load_sampled_video_frames",
-    "load_segmented_video_frames",
+    "decode_video_frames",
+    "get_video_rotation_deg",
     "rotate_frames",
+    "sample_video_frames",
 ]

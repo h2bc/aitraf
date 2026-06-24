@@ -29,11 +29,24 @@ def read_jsonl_records(path: Path | str) -> list[dict[str, Any]]:
                     f"Invalid JSON at line {line_number}: {jsonl_path}"
                 ) from exc
             if not isinstance(row, dict):
-                raise ValueError(
-                    f"Expected object at line {line_number}: {jsonl_path}"
-                )
+                raise ValueError(f"Expected object at line {line_number}: {jsonl_path}")
             rows.append(row)
     return rows
 
 
-__all__ = ["read_jsonl_records"]
+def read_json(path: Path | str) -> dict[str, Any]:
+    json_path = Path(path)
+    if not json_path.exists():
+        raise FileNotFoundError(f"JSON file not found: {json_path}")
+    if not json_path.is_file():
+        raise IsADirectoryError(f"JSON path is not a file: {json_path}")
+
+    with json_path.open("r", encoding="utf-8") as handle:
+        value = json.load(handle)
+
+    if not isinstance(value, dict):
+        raise ValueError(f"Expected JSON object: {json_path}")
+    return value
+
+
+__all__ = ["read_json", "read_jsonl_records"]

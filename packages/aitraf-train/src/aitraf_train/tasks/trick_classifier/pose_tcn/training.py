@@ -15,12 +15,15 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import MLFlowLogger
 from torch.utils.data import DataLoader, Subset
 
-from aitraf_train.datasets.pose_tcn import PoseTCNDataset
+from aitraf_train.data.datasets import PoseTCNDataset
 from aitraf_train.metrics import calc_metrics, accuracy, f1_macro
 from aitraf_train.models.pose_tcn import TCNClassifier
-from aitraf_core.processing import build_label_transform, load_target_label_mappings
+from aitraf_train.data.labels import (
+    build_label_transform,
+    load_target_label_mappings,
+)
 from aitraf_core.processing.models.pose_tcn import process_sample
-from aitraf_core.processing.utils import build_collate
+from aitraf_train.data.collate import build_collate
 
 
 @dataclass

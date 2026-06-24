@@ -8,8 +8,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.figure import Figure
 from sklearn.metrics import ConfusionMatrixDisplay, f1_score
+from torchcodec.decoders import VideoDecoder
 
-from aitraf_core.processing.video import load_sampled_video_frames
+from aitraf_core.processing.sampling import sample_frame_indices
+from aitraf_core.processing.video import decode_video_frames
 from aitraf_train.utils.s3_utils import (
     build_s3_client,
     load_s3_settings,
@@ -132,11 +134,18 @@ def get_miss_sampling_figures(
     """Yield one sampled-frame contact sheet figure per miss."""
 
     for rank, (_, miss) in enumerate(misses.iterrows(), start=1):
-        frames, frame_indices = load_sampled_video_frames(
-            video_id=str(miss["video_id"]),
-            local_clips_dir=clips_dir,
+        video_path = Path(clips_dir) / str(miss["video_id"])
+        decoder = VideoDecoder(str(video_path), dimension_order="NHWC")
+        frame_indices = sample_frame_indices(
+            frame_range=(0, len(decoder)),
             num_frames=num_frames,
             sampling_dist=sampling_dist,
+            source=video_path,
+        )
+        frames = decode_video_frames(
+            decoder=decoder,
+            video_path=video_path,
+            frame_indices=frame_indices,
         )
         miss = miss.copy()
         miss["frame_indices"] = frame_indices

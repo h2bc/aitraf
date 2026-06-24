@@ -22,7 +22,8 @@ from transformers import (
 
 from aitraf_train.logging import logger
 from aitraf_train.metrics import accuracy, calc_metrics, compute_pred_ids, f1_macro
-from aitraf_core.processing import (
+from aitraf_core.pre_processing import video_feature_cache_dir
+from aitraf_train.data.labels import (
     build_class_weights,
     build_label_transform,
     load_target_label_mappings,
@@ -31,7 +32,7 @@ from aitraf_core.processing.models.video_mae_temporal_fusion import (
     VideoMaeTemporalFusionClassifier,
     process_temporal_fusion_feature_sample,
 )
-from aitraf_core.processing.utils import build_collate
+from aitraf_train.data.collate import build_collate
 
 
 @dataclass
@@ -92,14 +93,17 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionBinaryTrainCfg) ->
     labels, label2id, _ = load_target_label_mappings(config.vocab_path, "quality_label")
 
     label_transform = build_label_transform(label2id)
+    feature_cache_dir = video_feature_cache_dir(
+        features_dir=config.features_dir,
+        backbone=config.backbone,
+        num_clips=config.num_clips,
+        sample_frames=config.sample_frames,
+        sampling_dist=config.sampling_dist,
+    )
 
     process_fn = partial(
         process_temporal_fusion_feature_sample,
-        features_dir=config.features_dir,
-        backbone=config.backbone,
-        num_frames=config.sample_frames,
-        num_clips=config.num_clips,
-        sampling_dist=config.sampling_dist,
+        feature_cache_dir=feature_cache_dir,
         label_key="quality_label",
         label_transform=label_transform,
     )

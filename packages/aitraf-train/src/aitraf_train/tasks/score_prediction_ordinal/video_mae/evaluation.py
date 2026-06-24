@@ -25,10 +25,13 @@ from aitraf_train.metrics import (
     metrics_to_df,
 )
 from aitraf_train.tracking import build_training_params, params_to_df
-from aitraf_core.processing import build_label_transform, load_target_label_mappings
+from aitraf_train.data.labels import (
+    build_label_transform,
+    load_target_label_mappings,
+)
 from aitraf_core.processing.models.video_mae import process_sample
-from aitraf_core.processing.utils import build_collate
-from aitraf_core.utils import load_transformers_model
+from aitraf_train.data.collate import build_collate
+from aitraf_core.loading import load_mlflow_transformers_model
 from aitraf_train.tracking.models.video_mae import TRAINING_PARAM_MAP
 from ..metrics import (
     amae,
@@ -85,7 +88,7 @@ def run_evaluation(config: VideoMaeScorePredictionOrdinalEvalCfg) -> None:
         config.vocab_path, "execution_score"
     )
 
-    loaded_model = load_transformers_model(config.model_uri)
+    loaded_model = load_mlflow_transformers_model(config.model_uri)
     model = loaded_model.model.to(config.device)
     logger.info(
         f"VideoMAE evaluation running on device: {next(model.parameters()).device}"

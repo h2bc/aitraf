@@ -1,6 +1,6 @@
 """Model factories and backbones."""
 
-from .pose_tcn import (
+from .datasets import (
     TCNBackbone,
     TCNClassificationHead,
     TCNClassifier,

@@ -15,7 +15,7 @@ import torch
 from mlflow.data import from_pandas
 from torch.utils.data import DataLoader
 
-from aitraf_train.datasets.pose_tcn import PoseTCNDataset
+from aitraf_train.data.datasets import PoseTCNDataset
 from aitraf_train.metrics import (
     EvalModel,
     EvalSet,
@@ -34,7 +34,7 @@ from aitraf_train.metrics import (
 from aitraf_train.tracking import build_training_params, params_to_df
 from aitraf_train.models.pose_tcn import TCNRegressor
 from aitraf_core.processing.models.pose_tcn import process_sample
-from aitraf_core.processing.utils import build_collate
+from aitraf_train.data.collate import build_collate
 from aitraf_train.tracking.models.pose_tcn import TRAINING_PARAM_MAP
 
 

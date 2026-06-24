@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 from omegaconf import DictConfig
 
-from aitraf_train.prepare import (
+from aitraf_train.preparation.prepare import (
     build_clip_manifest_base,
     ensure_manifest_targets_clear,
     load_labels_df,
@@ -14,7 +14,10 @@ from aitraf_train.prepare import (
     write_manifest_splits,
     write_task_vocab,
 )
-from aitraf_train.data_ops.utils import apply_dtypes, validate_required_columns
+from aitraf_train.preparation.data_ops.utils import (
+    apply_dtypes,
+    validate_required_columns,
+)
 
 
 VIDEO_COL = "video"
