@@ -11,7 +11,7 @@ tasks:
     desc: Run API tests
     dir: "{{.TASKFILE_DIR}}/../.."
     cmds:
-      - "uv run pytest packages/aitraf-api/tests {{.CLI_ARGS}}"
+      - "uv run --package aitraf-api --extra dev pytest packages/aitraf-api/tests {{.CLI_ARGS}}"
 
   lint:
     desc: Run API lint checks

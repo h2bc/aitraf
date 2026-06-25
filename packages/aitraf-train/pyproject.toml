@@ -9,7 +9,6 @@ requires-python = ">=3.10,<3.14"
 dependencies = [
     "aitraf-core",
     "accelerate",
-    "av>=16.0.1",
     "boto3",
     "datasets",
     "dlordinal>=2.6.0",
