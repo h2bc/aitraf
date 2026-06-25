@@ -4,10 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from aitraf_core.inference.tasks.trick_classification.video_mae import (
-    predict_trick_classification_video_mae,
-)
-
 from aitraf_api.config import Settings
 from aitraf_api.schemas import DisplayResult, InferenceResult, ModelInfo, PredictionResult
 from aitraf_api.video_loading import load_video_row
@@ -41,4 +37,15 @@ def predict_trick_classification(
     )
 
 
-__all__ = ["predict_trick_classification"]
+def predict_trick_classification_video_mae(**kwargs):
+    from aitraf_core.inference.tasks.trick_classification.video_mae import (
+        predict_trick_classification_video_mae as predict,
+    )
+
+    return predict(**kwargs)
+
+
+__all__ = [
+    "predict_trick_classification",
+    "predict_trick_classification_video_mae",
+]

@@ -7,9 +7,6 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from aitraf_core.inference.tasks.trick_assessment.video_mae_temporal_fusion import (
-    predict_trick_assessment_video_mae_temporal_fusion,
-)
 from aitraf_api.config import Settings, TrickAssessmentPreProcessingConfig
 from aitraf_api.schemas import (
     DisplayResult,
@@ -73,4 +70,15 @@ def predict_trick_assessment(
     )
 
 
-__all__ = ["predict_trick_assessment"]
+def predict_trick_assessment_video_mae_temporal_fusion(**kwargs):
+    from aitraf_core.inference.tasks.trick_assessment.video_mae_temporal_fusion import (
+        predict_trick_assessment_video_mae_temporal_fusion as predict,
+    )
+
+    return predict(**kwargs)
+
+
+__all__ = [
+    "predict_trick_assessment",
+    "predict_trick_assessment_video_mae_temporal_fusion",
+]

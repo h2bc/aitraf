@@ -36,9 +36,8 @@ OpenAPI JSON at `http://localhost:8000/openapi.json`.
 task api:test
 ```
 
-Tests use the configured MLflow model URIs and are split by feature under
-`packages/aitraf-api/tests/features/`. The current retained smoke coverage is
-the health endpoint test.
+Endpoint tests mock model prediction and are split by feature under
+`packages/aitraf-api/tests`.
 
 ## Temporal-Fusion Trick AQA Smoke
 

@@ -13,7 +13,6 @@ from aitraf_core.loading import (
     load_mlflow_transformers_model,
 )
 from aitraf_core.pre_processing import video_feature_cache_dir
-from aitraf_core.utils import read_json
 from aitraf_api.config import (
     Settings,
     TrickAssessmentPreProcessingConfig,
@@ -37,13 +36,26 @@ def create_app(
     aqa_num_clips = int(aqa_params["num_clips"])
     aqa_sample_frames = int(aqa_params["num_frames"])
     aqa_sampling_dist = aqa_params["train_sampling_dist"]
-    aqa_vocab = read_json(settings.aqa.vocab_path)
+    aqa_metadata = aqa_model.metadata
+    if aqa_metadata is None:
+        raise RuntimeError(
+            "AQA model metadata is missing. Retrain and re-register the model."
+        )
+    aqa_id2label = aqa_metadata.get("id2label")
+    if not isinstance(aqa_id2label, dict):
+        raise RuntimeError(
+            "AQA model metadata is missing id2label. Retrain and re-register the model."
+        )
+    if aqa_metadata.get("target_column") != settings.aqa.ground_truth_field:
+        raise RuntimeError(
+            "AQA model metadata target_column does not match API ground truth field."
+        )
     aqa_pre_processing = TrickAssessmentPreProcessingConfig(
         backbone=aqa_params["backbone"],
         num_clips=aqa_num_clips,
         sample_frames=aqa_sample_frames,
         sampling_dist=aqa_sampling_dist,
-        id2label=aqa_vocab[settings.aqa.ground_truth_field]["id2label"],
+        id2label=aqa_id2label,
         feature_cache_dir=video_feature_cache_dir(
             features_dir=settings.aqa.features_dir,
             backbone=aqa_params["backbone"],

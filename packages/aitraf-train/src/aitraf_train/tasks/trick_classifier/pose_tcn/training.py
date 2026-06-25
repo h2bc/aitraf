@@ -61,9 +61,9 @@ class PoseTcnTrickClassificationTrainCfg:
 
 def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
     """Train the Pose TCN classifier and log artifacts to MLflow."""
-    labels, label2id, _ = load_target_label_mappings(config.vocab_path, "trick")
+    label_mappings = load_target_label_mappings(config.vocab_path, "trick")
 
-    label_transform = build_label_transform(label2id)
+    label_transform = build_label_transform(label_mappings.label2id)
     process_fn = partial(
         process_sample,
         num_frames=config.sample_frames,
@@ -112,7 +112,7 @@ def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
 
     first_batch = next(iter(train_loader))
     feature_dim = first_batch["inputs"].shape[-1]
-    num_classes = len(labels)
+    num_classes = len(label_mappings.labels)
 
     model = TCNClassifier(
         feature_dim=feature_dim,
@@ -220,6 +220,7 @@ def run_training(config: PoseTcnTrickClassificationTrainCfg) -> str:
             exported_model,
             name=f"{config.task_name}_{config.model_name}",
             input_example=sample_input,
+            metadata=label_mappings.model_metadata(),
         )
 
         return model_info.model_uri

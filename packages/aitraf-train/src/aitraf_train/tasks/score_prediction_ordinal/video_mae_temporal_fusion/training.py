@@ -91,10 +91,8 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
             range(min(config.max_train_samples, len(dataset["train"])))
         )
 
-    labels, label2id, _ = load_target_label_mappings(
-        config.vocab_path, "execution_score"
-    )
-    label_transform = build_label_transform(label2id)
+    label_mappings = load_target_label_mappings(config.vocab_path, "execution_score")
+    label_transform = build_label_transform(label_mappings.label2id)
     feature_cache_dir = video_feature_cache_dir(
         features_dir=config.features_dir,
         backbone=config.backbone,
@@ -112,7 +110,7 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
     class_weights = (
         build_class_weights(
             [label_transform(row["execution_score"]) for row in dataset["train"]],
-            num_labels=len(labels),
+            num_labels=len(label_mappings.labels),
             device=config.device,
         )
         if config.use_class_weights
@@ -121,7 +119,7 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
 
     model = VideoMaeTemporalFusionClassifier(
         hidden_size=sample_clip["features"].shape[-1],
-        num_labels=len(labels),
+        num_labels=len(label_mappings.labels),
         num_clips=config.num_clips,
         num_queries=config.fusion_queries,
         fusion_layers=config.fusion_layers,
@@ -130,7 +128,7 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
         query_init_std=config.query_init_std,
         loss_fn=_build_loss(
             loss_name=config.loss,
-            num_labels=len(labels),
+            num_labels=len(label_mappings.labels),
             class_weights=class_weights,
         ),
     ).to(config.device)
@@ -206,6 +204,7 @@ def run_training(config: VideoMaeTemporalFusionScorePredictionOrdinalTrainCfg) -
             pytorch_model=model,
             name=f"{config.task_name}_{config.model_name}",
             input_example={"features": sample_clip["features"].unsqueeze(0).numpy()},
+            metadata=label_mappings.model_metadata(),
         )
         return model_info.model_uri
 

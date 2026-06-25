@@ -26,6 +26,7 @@ class MlflowTorchModel:
     model: nn.Module
     run_id: str
     run_params: Mapping[str, str]
+    metadata: Mapping[str, Any] | None = None
 
 
 @lru_cache(maxsize=4)
@@ -59,6 +60,7 @@ def load_mlflow_torch_model(
         model=model,
         run_id=model_info.run_id,
         run_params=run.data.params,
+        metadata=model_info.metadata,
     )
 
 
