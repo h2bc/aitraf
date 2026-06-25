@@ -6,7 +6,7 @@ The existing Docker image publishing workflow is extended to publish both train
 and API images.
 
 ```text
-.github/workflows/publish-train-image.yml
+.github/workflows/publish-docker-images.yml
 ```
 
 ## Triggers

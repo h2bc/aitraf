@@ -56,7 +56,7 @@ Represents the repository automation for publishing Docker images.
 
 **Fields**:
 
-- `path`: `.github/workflows/publish-train-image.yml`
+- `path`: `.github/workflows/publish-docker-images.yml`
 - `triggers`: push to `master`, manual dispatch
 - `registry`: `ghcr.io`
 - `train_image`: `ghcr.io/<owner>/aitraf-train`

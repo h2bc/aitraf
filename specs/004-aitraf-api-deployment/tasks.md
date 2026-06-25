@@ -18,7 +18,7 @@
 
 - **API package**: `packages/aitraf-api/`, `packages/aitraf-api/src/aitraf_api/`, `packages/aitraf-api/tests/`
 - **Core runtime package**: `packages/aitraf-core/src/aitraf_core/`
-- **Workflow**: `.github/workflows/publish-train-image.yml`
+- **Workflow**: `.github/workflows/publish-docker-images.yml`
 - **Validation docs**: `specs/004-aitraf-api-deployment/quickstart.md`
 - **Existing train image precedent**: `packages/aitraf-train/Dockerfile`
 
@@ -27,7 +27,7 @@
 **Purpose**: Confirm the existing image publishing and API runtime surfaces before editing.
 
 - [x] T001 Review existing train image conventions in `packages/aitraf-train/Dockerfile` for base image, uv install, system packages, workspace copy order, and package-scoped `uv sync`
-- [x] T002 [P] Review existing publish workflow conventions in `.github/workflows/publish-train-image.yml` for GHCR login, metadata tags, Buildx cache, and `master`/manual triggers
+- [x] T002 [P] Review existing publish workflow conventions in `.github/workflows/publish-docker-images.yml` for GHCR login, metadata tags, Buildx cache, and `master`/manual triggers
 - [x] T003 [P] Review API package runtime command and tests in `packages/aitraf-api/Taskfile.yml` before encoding Docker CMD and workflow test steps
 - [x] T004 [P] Verify `.dockerignore` excludes `storage/`, `.env*`, notebooks, local models, virtualenvs, and cache directories for the root Docker build context
 
@@ -77,22 +77,22 @@
 
 **Goal**: Extend the existing image publishing workflow so `master` and manual dispatch build both images, with API tests gating only API image publishing.
 
-**Independent Test**: Inspect and validate `.github/workflows/publish-train-image.yml` so train publish is independent, API publish depends on API tests, and the API image target is `ghcr.io/${{ github.repository_owner }}/aitraf-api`.
+**Independent Test**: Inspect and validate `.github/workflows/publish-docker-images.yml` so train publish is independent, API publish depends on API tests, and the API image target is `ghcr.io/${{ github.repository_owner }}/aitraf-api`.
 
 ### Validation for User Story 2
 
 - [x] T018 [P] [US2] Add or update workflow validation expectations in `specs/004-aitraf-api-deployment/quickstart.md` for train independence, API test gating, and API GHCR image naming
-- [x] T019 [P] [US2] Run `task api:test` for `packages/aitraf-api/tests` locally before editing `.github/workflows/publish-train-image.yml`
-- [x] T020 [US2] Validate `.github/workflows/publish-train-image.yml` preserves `push` to `master` and `workflow_dispatch` triggers after workflow edits
+- [x] T019 [P] [US2] Run `task api:test` for `packages/aitraf-api/tests` locally before editing `.github/workflows/publish-docker-images.yml`
+- [x] T020 [US2] Validate `.github/workflows/publish-docker-images.yml` preserves `push` to `master` and `workflow_dispatch` triggers after workflow edits
 
 ### Implementation for User Story 2
 
-- [x] T021 [US2] Rename or restructure jobs in `.github/workflows/publish-train-image.yml` so the existing train publish path remains an independent `aitraf-train` image job
-- [x] T022 [US2] Add an API test job in `.github/workflows/publish-train-image.yml` that checks out the repo, installs locked API test dependencies, and runs `uv run pytest packages/aitraf-api/tests`
-- [x] T023 [US2] Add an API publish job in `.github/workflows/publish-train-image.yml` that depends on the API test job and publishes `ghcr.io/${{ github.repository_owner }}/aitraf-api`
-- [x] T024 [US2] Configure API image metadata in `.github/workflows/publish-train-image.yml` with `latest` and short-SHA tags matching the existing train image convention
-- [x] T025 [US2] Configure API Docker build in `.github/workflows/publish-train-image.yml` to use root context `.` and Dockerfile `packages/aitraf-api/Dockerfile` with GitHub Actions cache
-- [x] T026 [US2] Confirm `.github/workflows/publish-train-image.yml` lets train publish continue without depending on API tests while API publish stops when API tests fail
+- [x] T021 [US2] Rename or restructure jobs in `.github/workflows/publish-docker-images.yml` so the existing train publish path remains an independent `aitraf-train` image job
+- [x] T022 [US2] Add an API test job in `.github/workflows/publish-docker-images.yml` that checks out the repo, installs locked API test dependencies, and runs `uv run pytest packages/aitraf-api/tests`
+- [x] T023 [US2] Add an API publish job in `.github/workflows/publish-docker-images.yml` that depends on the API test job and publishes `ghcr.io/${{ github.repository_owner }}/aitraf-api`
+- [x] T024 [US2] Configure API image metadata in `.github/workflows/publish-docker-images.yml` with `latest` and short-SHA tags matching the existing train image convention
+- [x] T025 [US2] Configure API Docker build in `.github/workflows/publish-docker-images.yml` to use root context `.` and Dockerfile `packages/aitraf-api/Dockerfile` with GitHub Actions cache
+- [x] T026 [US2] Confirm `.github/workflows/publish-docker-images.yml` lets train publish continue without depending on API tests while API publish stops when API tests fail
 
 **Checkpoint**: User Story 2 is complete when the workflow builds/publishes train independently and publishes API only after API tests pass.
 
@@ -106,8 +106,8 @@
 - [x] T028 [P] Update `specs/004-aitraf-api-deployment/quickstart.md` if implementation changes the final Docker build, run, or workflow validation commands
 - [x] T029 Run final API validation with `task api:test` for `packages/aitraf-api/tests`
 - [x] T030 Run final Docker validation with `docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:local .` for `packages/aitraf-api/Dockerfile`
-- [x] T031 Run final workflow review on `.github/workflows/publish-train-image.yml` and confirm image names, job dependencies, permissions, tags, and Buildx cache match `specs/004-aitraf-api-deployment/contracts/github-workflow.md`
-- [x] T032 Verify no secrets, `.env*`, `storage/`, local models, notebooks, or generated cache directories are introduced into `packages/aitraf-api/Dockerfile`, `.github/workflows/publish-train-image.yml`, or committed docs
+- [x] T031 Run final workflow review on `.github/workflows/publish-docker-images.yml` and confirm image names, job dependencies, permissions, tags, and Buildx cache match `specs/004-aitraf-api-deployment/contracts/github-workflow.md`
+- [x] T032 Verify no secrets, `.env*`, `storage/`, local models, notebooks, or generated cache directories are introduced into `packages/aitraf-api/Dockerfile`, `.github/workflows/publish-docker-images.yml`, or committed docs
 
 ---
 

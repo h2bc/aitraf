@@ -65,7 +65,7 @@ but not `storage/`. Do not commit secrets. Missing runtime env vars, model refs,
 storage paths, model artifacts, or workflow permissions must fail explicitly.
 
 **Scale/Scope**: One new `packages/aitraf-api/Dockerfile`, updates to the
-existing `.github/workflows/publish-train-image.yml` image publishing workflow,
+existing `.github/workflows/publish-docker-images.yml` image publishing workflow,
 and API deployment documentation/validation notes. No hosting infrastructure,
 rollout policy, model registry mutation, data generation, or API behavior change
 is planned.
@@ -128,7 +128,7 @@ specs/004-aitraf-api-deployment/
 ```text
 .github/
 └── workflows/
-    └── publish-train-image.yml
+    └── publish-docker-images.yml
 
 packages/
 ├── aitraf-api/
