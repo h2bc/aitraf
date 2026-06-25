@@ -227,6 +227,7 @@ name = "aitraf-core"
 version = "0.1.0"
 source = { editable = "packages/aitraf-core" }
 dependencies = [
+    { name = "av" },
     { name = "huggingface-hub" },
     { name = "kornia" },
     { name = "mlflow" },
@@ -240,6 +241,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "av", specifier = ">=16.0.1" },
     { name = "huggingface-hub" },
     { name = "kornia", specifier = ">=0.8.2" },
     { name = "mlflow" },
@@ -258,7 +260,6 @@ source = { editable = "packages/aitraf-train" }
 dependencies = [
     { name = "accelerate" },
     { name = "aitraf-core" },
-    { name = "av" },
     { name = "boto3" },
     { name = "datasets" },
     { name = "dlordinal" },
@@ -288,7 +289,6 @@ dependencies = [
 requires-dist = [
     { name = "accelerate" },
     { name = "aitraf-core", editable = "packages/aitraf-core" },
-    { name = "av", specifier = ">=16.0.1" },
     { name = "boto3" },
     { name = "datasets" },
     { name = "dlordinal", specifier = ">=2.6.0" },
