@@ -24,3 +24,9 @@ tasks:
     desc: Run ruff formatting 
     cmds: 
       - uv run ruff format . {{.CLI_ARGS}}
+
+  docker:build:
+    desc: Build local aitraf-api and aitraf-train Docker images
+    cmds:
+      - docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:local . {{.CLI_ARGS}}
+      - docker build -f packages/aitraf-train/Dockerfile -t aitraf-train:local . {{.CLI_ARGS}}

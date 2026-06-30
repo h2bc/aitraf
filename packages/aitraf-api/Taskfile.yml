@@ -18,3 +18,9 @@ tasks:
     dir: "{{.TASKFILE_DIR}}/../.."
     cmds:
       - "uv run ruff check packages/aitraf-api/src/aitraf_api packages/aitraf-api/tests {{.CLI_ARGS}}"
+
+  docker:build:
+    desc: Build the local aitraf-api Docker image
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "docker build -f packages/aitraf-api/Dockerfile -t {{.IMAGE | default \"aitraf-api:local\"}} . {{.CLI_ARGS}}"

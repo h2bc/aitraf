@@ -36,3 +36,9 @@ tasks:
     dir: "{{.TASKFILE_DIR}}/../.."
     cmds:
       - "uv run python {{.TASKFILE_DIR}}/scripts/train_eval.py {{.CLI_ARGS}}"
+
+  docker:build:
+    desc: Build the local aitraf-train Docker image
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "docker build -f packages/aitraf-train/Dockerfile -t {{.IMAGE | default \"aitraf-train:local\"}} . {{.CLI_ARGS}}"

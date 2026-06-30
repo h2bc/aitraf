@@ -8,6 +8,7 @@ version = "0.1.0"
 requires-python = ">=3.10,<3.14"
 dependencies = [
     "aitraf-core",
+    "boto3",
     "fastapi",
     "mlflow",
     "pydantic",
