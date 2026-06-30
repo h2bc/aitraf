@@ -29,14 +29,26 @@ class MlflowTorchModel:
     metadata: Mapping[str, Any] | None = None
 
 
+def _mlflow_transformers_device(device: str) -> int:
+    if device == "cpu":
+        return -1
+    if device == "cuda":
+        return 0
+    raise RuntimeError(f"Unsupported MLflow transformers device: {device}")
+
+
 @lru_cache(maxsize=4)
 def load_mlflow_transformers_model(
     model_uri: str,
+    *,
+    device: str,
 ) -> MlflowTransformersModel:
     components = mlflow_transformers.load_model(
         model_uri,
         return_type="components",
+        device=_mlflow_transformers_device(device),
     )
+    components["model"].to(device)
     model_info = mlflow.models.get_model_info(model_uri)
     run = MlflowClient().get_run(model_info.run_id)
 
@@ -51,8 +63,11 @@ def load_mlflow_transformers_model(
 @lru_cache(maxsize=4)
 def load_mlflow_torch_model(
     model_uri: str,
+    *,
+    device: str,
 ) -> MlflowTorchModel:
-    model = mlflow.pytorch.load_model(model_uri)
+    model = mlflow.pytorch.load_model(model_uri, map_location=device)
+    model.to(device)
     model_info = mlflow.models.get_model_info(model_uri)
     run = MlflowClient().get_run(model_info.run_id)
 

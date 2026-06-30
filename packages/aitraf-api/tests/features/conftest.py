@@ -57,6 +57,7 @@ def settings(tmp_path: Path, video_id: str) -> Settings:
 
     return Settings(
         api_token="test-token",
+        device="cpu",
         clips_dir=clips_dir,
         classification=TrickClassificationConfig(
             model_uri="models:/classification/test",

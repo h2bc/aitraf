@@ -8,6 +8,7 @@ Required at app startup:
 
 - `AITRAF_CLASSIFICATION_MODEL_URI`: MLflow model URI for trick classification, for example `models:/aitraf-trick-classification@infant`.
 - `AITRAF_AQA_MODEL_URI`: MLflow model URI for temporal-fusion trick AQA, for example `models:/aitraf-trick-aqa-temporal-fusion@infant`.
+- `AITRAF_API_DEVICE`: inference device policy: `auto`, `cpu`, or `cuda`.
 - `AITRAF_DATA_PATH`: repo data directory; manifests are derived from this.
 - `AITRAF_STORAGE_PATH`: repo storage directory; clips and VideoMAE features are derived from this.
 
@@ -59,6 +60,7 @@ docker run --rm -p 8000:8000 \
   -e AITRAF_API_TOKEN="$AITRAF_API_TOKEN" \
   -e AITRAF_CLASSIFICATION_MODEL_URI="$AITRAF_CLASSIFICATION_MODEL_URI" \
   -e AITRAF_AQA_MODEL_URI="$AITRAF_AQA_MODEL_URI" \
+  -e AITRAF_API_DEVICE="$AITRAF_API_DEVICE" \
   -e AITRAF_DATA_PATH=/workspace/data \
   -e AITRAF_STORAGE_PATH=/workspace/storage \
   -e MLFLOW_TRACKING_URI="$MLFLOW_TRACKING_URI" \

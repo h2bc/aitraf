@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
 
+import torch
 from dotenv import load_dotenv
 
 
@@ -46,9 +47,21 @@ class TrickAssessmentPreProcessingConfig:
 @dataclass(frozen=True)
 class Settings:
     api_token: str | None
+    device: str
     clips_dir: Path
     classification: TrickClassificationConfig
     aqa: TrickAssessmentConfig
+
+
+def resolve_api_device(value: str) -> str:
+    device = value.strip().lower()
+    if device not in {"auto", "cpu", "cuda"}:
+        raise RuntimeError("AITRAF_API_DEVICE must be one of: auto, cpu, cuda.")
+    if device == "auto":
+        return "cuda" if torch.cuda.is_available() else "cpu"
+    if device == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("AITRAF_API_DEVICE=cuda but CUDA is not available.")
+    return device
 
 
 def load_settings(
@@ -58,6 +71,7 @@ def load_settings(
 ) -> Settings:
     load_dotenv(root / ".env", override=False)
 
+    device = resolve_api_device(env["AITRAF_API_DEVICE"])
     data_dir = Path(env["AITRAF_DATA_PATH"])
     storage_dir = Path(env["AITRAF_STORAGE_PATH"])
 
@@ -67,6 +81,7 @@ def load_settings(
 
     return Settings(
         api_token=env["AITRAF_API_TOKEN"],
+        device=device,
         clips_dir=storage_dir / CLIPS_DIR,
         classification=TrickClassificationConfig(
             model_uri=env["AITRAF_CLASSIFICATION_MODEL_URI"],
@@ -88,4 +103,5 @@ __all__ = [
     "TrickAssessmentPreProcessingConfig",
     "TrickClassificationConfig",
     "load_settings",
+    "resolve_api_device",
 ]

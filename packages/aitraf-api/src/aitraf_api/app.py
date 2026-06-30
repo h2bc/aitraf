@@ -27,10 +27,12 @@ def create_app(
 ) -> FastAPI:
     classification_model = load_mlflow_transformers_model(
         settings.classification.model_uri,
+        device=settings.device,
     )
 
     aqa_model = load_mlflow_torch_model(
         settings.aqa.model_uri,
+        device=settings.device,
     )
     aqa_params = aqa_model.run_params
     aqa_num_clips = int(aqa_params["num_clips"])
@@ -67,7 +69,7 @@ def create_app(
     aqa_feature_extractor = load_huggingface_model(
         model_name=aqa_pre_processing.backbone,
         model_cache_dir=settings.aqa.model_cache_dir,
-        device="cpu",
+        device=settings.device,
         config_kwargs={"num_frames": aqa_pre_processing.sample_frames},
     )
 
