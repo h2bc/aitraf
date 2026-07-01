@@ -12,7 +12,7 @@ from aitraf_core.loading import (
     load_mlflow_torch_model,
     load_mlflow_transformers_model,
 )
-from aitraf_core.pre_processing import video_feature_cache_dir
+from aitraf_core.pre_processing.paths import video_feature_cache_dir
 from aitraf_api.config import (
     Settings,
     TrickAssessmentPreProcessingConfig,

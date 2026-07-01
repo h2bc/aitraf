@@ -11,26 +11,11 @@ import torch
 from aitraf_core.inference.models import video_mae as video_mae_inference
 from aitraf_core.cache import with_file_cache
 from aitraf_core.loading import HuggingFaceModel
+from aitraf_core.pre_processing.paths import video_feature_cache_dir
 from aitraf_core.processing.models import video_mae as video_mae_processing
 from aitraf_core.processing.sampling import sample_frame_indices
 from aitraf_core.processing.video import decode_video_frames
-from aitraf_core.utils.huggingface import hf_model_cache_dir_name
 from torchcodec.decoders import VideoDecoder
-
-
-def video_feature_cache_dir(
-    *,
-    features_dir: Path | str,
-    backbone: str,
-    num_clips: int,
-    sample_frames: int,
-    sampling_dist: str,
-) -> Path:
-    return (
-        Path(features_dir)
-        / hf_model_cache_dir_name(backbone)
-        / f"clips_{num_clips}_frames_{sample_frames}_sampling_{sampling_dist}"
-    )
 
 
 def split_into_segments(
