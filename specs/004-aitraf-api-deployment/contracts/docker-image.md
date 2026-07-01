@@ -6,7 +6,6 @@ The API image is built from the repository root with the API package Dockerfile.
 
 ```bash
 docker build \
-  --build-context aitraf_clips=storage/data/clips \
   -f packages/aitraf-api/Dockerfile \
   -t aitraf-api:local \
   .
@@ -18,8 +17,6 @@ docker build \
 - `aitraf-core` package source and installed distribution
 - Root `pyproject.toml` and `uv.lock` inputs used during build
 - Repo `data/` directory for manifests and vocabularies
-- Demo clips selected from the classification and AQA test manifests, copied
-  from the `aitraf_clips` build context into `/workspace/storage/data/clips`
 - Runtime system dependencies required by the API/core video path, including
   `ffmpeg`
 
@@ -54,4 +51,5 @@ Expected runtime behavior:
 - Valid runtime inputs allow the API process to start and expose `/health`.
 - Missing runtime inputs fail explicitly.
 - Missing model/storage artifacts fail explicitly.
-- The image does not create or repair missing storage contents.
+- The image does not bundle clips. Demo clips may be hydrated at runtime through
+  the explicit API demo clip download setting.

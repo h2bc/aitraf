@@ -19,12 +19,15 @@ from aitraf_api.config import (
     load_settings,
 )
 from aitraf_api.features import router
+from aitraf_api.features.demo_videos.download import hydrate_demo_clips
 
 
 def create_app(
     *,
     settings: Settings,
 ) -> FastAPI:
+    hydrate_demo_clips(settings)
+
     classification_model = load_mlflow_transformers_model(
         settings.classification.model_uri,
         device=settings.device,

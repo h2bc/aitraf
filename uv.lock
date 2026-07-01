@@ -190,7 +190,6 @@ version = "0.1.0"
 source = { editable = "packages/aitraf-api" }
 dependencies = [
     { name = "aitraf-core" },
-    { name = "boto3" },
     { name = "fastapi" },
     { name = "mlflow" },
     { name = "pydantic" },
@@ -210,7 +209,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aitraf-core", editable = "packages/aitraf-core" },
-    { name = "boto3" },
     { name = "fastapi" },
     { name = "httpx", marker = "extra == 'dev'" },
     { name = "mlflow" },
@@ -230,6 +228,7 @@ version = "0.1.0"
 source = { editable = "packages/aitraf-core" }
 dependencies = [
     { name = "av" },
+    { name = "boto3" },
     { name = "huggingface-hub" },
     { name = "kornia" },
     { name = "mlflow" },
@@ -244,6 +243,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "av", specifier = ">=16.0.1" },
+    { name = "boto3" },
     { name = "huggingface-hub" },
     { name = "kornia", specifier = ">=0.8.2" },
     { name = "mlflow" },

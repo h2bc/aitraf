@@ -8,6 +8,7 @@ version = "0.1.0"
 requires-python = ">=3.10,<3.14"
 dependencies = [
     "av>=16.0.1",
+    "boto3",
     "huggingface-hub",
     "kornia>=0.8.2",
     "mlflow",

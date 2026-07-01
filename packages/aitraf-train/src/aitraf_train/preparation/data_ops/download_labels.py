@@ -11,10 +11,10 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from aitraf_core.cache import with_file_cache
+from aitraf_core.storage.s3 import build_s3_client, iter_keys, load_s3_settings
 from aitraf_train.logging import logger
 from aitraf_train.preparation.data_ops.schema import LabelsSchema
 from aitraf_train.preparation.data_ops.utils import apply_dtypes, apply_processors
-from aitraf_train.utils.s3_utils import build_s3_client, iter_keys, load_s3_settings
 
 
 @dataclass

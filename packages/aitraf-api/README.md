@@ -21,6 +21,12 @@ Required before registered model inference can run:
 - `MLFLOW_TRACKING_URI`: MLflow tracking server URI.
 - Any MLflow credentials needed by the target deployment.
 
+Optional for demo clip hydration at startup:
+
+- `AITRAF_API_DEMO_CLIPS_DOWNLOAD`: set to `1`, `true`, `yes`, or `on` to download the currently selected demo clips into `AITRAF_STORAGE_PATH/data/clips` before the API finishes startup.
+- `AITRAF_API_DEMO_CLIPS_FORCE_DOWNLOAD`: set to `1`, `true`, `yes`, or `on` to re-download demo clips even when they already exist locally.
+- `AWS_ENDPOINT_URL`, `AWS_DEFAULT_REGION`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY`: required when demo clip download is enabled.
+
 
 ## Run Locally
 
@@ -45,21 +51,14 @@ Endpoint tests mock model prediction and are split by feature under
 Build the production API image from the repository root:
 
 ```bash
-docker build \
-  --build-context aitraf_clips=storage/data/clips \
-  -f packages/aitraf-api/Dockerfile \
-  -t aitraf-api:local \
-  .
+docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:local .
 ```
 
-The image installs `aitraf-api` and `aitraf-core`, includes the small repo
-`data/` directory for manifests and vocabularies, and copies only the demo clip
-subset selected from the classification and AQA test manifests into
-`/workspace/storage/data/clips`. It does not include train package code,
-committed secrets, model artifacts, feature caches, or full storage contents.
-
-The selected demo clips must exist in local `storage/data/clips` before build.
-Run the existing data pipeline first if local clips are not present.
+The image installs `aitraf-api` and `aitraf-core` and includes the small repo
+`data/` directory for manifests and vocabularies. It does not include train
+package code, committed secrets, model artifacts, feature caches, clips, or full
+storage contents; the root `.dockerignore` keeps `storage/` out of the build
+context. Demo clips can be hydrated at runtime with `AITRAF_API_DEMO_CLIPS_DOWNLOAD=1`.
 
 Run with explicit runtime settings and mounted storage:
 

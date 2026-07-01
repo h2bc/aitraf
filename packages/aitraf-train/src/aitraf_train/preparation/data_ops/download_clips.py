@@ -5,14 +5,17 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
-from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
-from aitraf_core.cache import with_file_cache
+from aitraf_core.storage.clips import (
+    ClipDownloadRequest,
+    ClipDownloadResult,
+    download_clips as download_core_clips,
+)
+from aitraf_core.storage.s3 import build_s3_client, load_s3_settings, parse_s3_uri
 from aitraf_train.logging import logger
 from aitraf_train.preparation.data_ops import schema
 from aitraf_train.preparation.data_ops.utils import strip_clips_prefix
-from aitraf_train.utils.s3_utils import build_s3_client, load_s3_settings, parse_s3_uri
 
 
 @dataclass
@@ -32,16 +35,8 @@ def download_clips(config: ClipDownloadConfig) -> None:
     """Download every unique clip referenced in the labels JSONL file."""
     load_dotenv()
 
-    labels_path = config.labels_path
-
-    if not labels_path.exists():
-        raise RuntimeError(f"Labels file not found: {labels_path}")
-
-    clip_uris = pd.read_json(labels_path, lines=True)[
-        schema.LabelsSchema.video_col
-    ].astype(str)
-    total_clips = len(clip_uris)
-
+    requests = build_clip_download_requests_from_labels(config.labels_path)
+    total_clips = len(requests)
     output_dir = config.output_dir
     settings = load_s3_settings(require_bucket=False)
     s3_client = build_s3_client(settings)
@@ -50,33 +45,51 @@ def download_clips(config: ClipDownloadConfig) -> None:
 
     progress_step = max(1, total_clips // 10)
 
-    for idx, uri in enumerate(clip_uris, start=1):
-        bucket, key = parse_s3_uri(uri)
-        relative_key = strip_clips_prefix(Path(key))
-        destination = output_dir / relative_key
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            with_file_cache(
-                path=destination,
-                force=config.force,
-                compute=lambda: s3_client.download_file(bucket, key, str(destination)),
-                on_cache_hit=lambda _: counts.update(skipped=1),
-                on_cache_write=lambda _: counts.update(downloaded=1),
-            )
-        except ClientError as exc:
-            counts.update(failed=1)
-            logger.warning("Failed to download {}: {}", uri, exc)
-
+    def on_result(result: ClipDownloadResult, idx: int, total: int) -> None:
+        if result.status == "skipped-existing":
+            counts.update(skipped=1)
+        else:
+            counts.update(downloaded=1)
         if idx == total_clips or idx % progress_step == 0:
             pct = (idx / total_clips) * 100
             logger.info(
                 "Clip download progress: {}/{} ({:.1f}%)", idx, total_clips, pct
             )
 
+    download_core_clips(
+        requests,
+        clips_dir=output_dir,
+        force=config.force,
+        s3_client=s3_client,
+        on_result=on_result,
+    )
+
     logger.info(
-        "Clip download summary: {} downloaded, {} skipped, {} failed (total {})",
+        "Clip download summary: {} downloaded, {} skipped (total {})",
         counts["downloaded"],
         counts["skipped"],
-        counts["failed"],
         total_clips,
+    )
+
+
+def build_clip_download_requests_from_labels(
+    labels_path: Path | str,
+) -> list[ClipDownloadRequest]:
+    labels_path = Path(labels_path)
+    if not labels_path.exists():
+        raise RuntimeError(f"Labels file not found: {labels_path}")
+
+    clip_uris = pd.read_json(labels_path, lines=True)[
+        schema.LabelsSchema.video_col
+    ].astype(str)
+    return [clip_download_request_from_uri(uri) for uri in clip_uris]
+
+
+def clip_download_request_from_uri(uri: str) -> ClipDownloadRequest:
+    _bucket, key = parse_s3_uri(uri)
+    relative_key = strip_clips_prefix(Path(key))
+    return ClipDownloadRequest(
+        video_id=relative_key.as_posix(),
+        source_uri=uri,
+        relative_path=relative_key,
     )

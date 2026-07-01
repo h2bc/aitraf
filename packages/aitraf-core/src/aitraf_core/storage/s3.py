@@ -1,10 +1,10 @@
-"""Shared S3 helpers used by data and labeling operations."""
+"""Shared S3 helpers."""
 
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Iterator
 from urllib.parse import urlparse
 
 import boto3
@@ -22,11 +22,11 @@ class S3Settings:
 
 def load_s3_settings(*, require_bucket: bool) -> S3Settings:
     settings = {
-        "AWS_ENDPOINT_URL": os.getenv("AWS_ENDPOINT_URL"),
-        "AWS_DEFAULT_REGION": os.getenv("AWS_DEFAULT_REGION"),
-        "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
-        "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
-        "AWS_BUCKET": os.getenv("AWS_BUCKET"),
+        "AWS_ENDPOINT_URL": _read_env_value("AWS_ENDPOINT_URL"),
+        "AWS_DEFAULT_REGION": _read_env_value("AWS_DEFAULT_REGION"),
+        "AWS_ACCESS_KEY_ID": _read_env_value("AWS_ACCESS_KEY_ID"),
+        "AWS_SECRET_ACCESS_KEY": _read_env_value("AWS_SECRET_ACCESS_KEY"),
+        "AWS_BUCKET": _read_env_value("AWS_BUCKET"),
     }
 
     required = [
@@ -51,6 +51,16 @@ def load_s3_settings(*, require_bucket: bool) -> S3Settings:
         secret_key=str(settings["AWS_SECRET_ACCESS_KEY"]),
         bucket=settings["AWS_BUCKET"],
     )
+
+
+def _read_env_value(name: str) -> str | None:
+    value = os.getenv(name)
+    if value is None:
+        return None
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        return value[1:-1]
+    return value
 
 
 def build_s3_client(settings: S3Settings):

@@ -8,8 +8,8 @@ from pathlib import Path
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
+from aitraf_core.storage.s3 import build_s3_client, load_s3_settings, object_exists
 from aitraf_train.logging import logger
-from aitraf_train.utils.s3_utils import build_s3_client, load_s3_settings, object_exists
 
 
 @dataclass

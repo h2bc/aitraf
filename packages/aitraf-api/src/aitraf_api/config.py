@@ -45,12 +45,19 @@ class TrickAssessmentPreProcessingConfig:
 
 
 @dataclass(frozen=True)
+class DemoClipsConfig:
+    download_enabled: bool = False
+    force_download: bool = False
+
+
+@dataclass(frozen=True)
 class Settings:
     api_token: str | None
     device: str
     clips_dir: Path
     classification: TrickClassificationConfig
     aqa: TrickAssessmentConfig
+    demo_clips: DemoClipsConfig = DemoClipsConfig()
 
 
 def resolve_api_device(value: str) -> str:
@@ -62,6 +69,19 @@ def resolve_api_device(value: str) -> str:
     if device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("AITRAF_API_DEVICE=cuda but CUDA is not available.")
     return device
+
+
+def resolve_env_flag(env: Mapping[str, str], name: str) -> bool:
+    value = env.get(name)
+    if value is None or not value.strip():
+        return False
+
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise RuntimeError(f"{name} must be one of: 1, 0, true, false, yes, no, on, off.")
 
 
 def load_settings(
@@ -94,14 +114,20 @@ def load_settings(
             frame_cache_dir=frame_cache_dir,
             model_cache_dir=model_cache_dir,
         ),
+        demo_clips=DemoClipsConfig(
+            download_enabled=resolve_env_flag(env, "AITRAF_API_DEMO_CLIPS_DOWNLOAD"),
+            force_download=resolve_env_flag(env, "AITRAF_API_DEMO_CLIPS_FORCE_DOWNLOAD"),
+        ),
     )
 
 
 __all__ = [
+    "DemoClipsConfig",
     "Settings",
     "TrickAssessmentConfig",
     "TrickAssessmentPreProcessingConfig",
     "TrickClassificationConfig",
     "load_settings",
     "resolve_api_device",
+    "resolve_env_flag",
 ]

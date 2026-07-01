@@ -35,24 +35,20 @@ If API tests fail in GitHub Actions, the API image must not publish.
 
 ```bash
 docker build \
-  --build-context aitraf_clips=storage/data/clips \
   -f packages/aitraf-api/Dockerfile \
   -t aitraf-api:local \
   .
 ```
 
 Expected outcome: the image builds without installing `aitraf-train`, copies
-repo `data/`, and copies only the demo clips selected from the classification
-and AQA test manifests into `/workspace/storage/data/clips`. If a selected demo
-clip is missing from local `storage/data/clips`, run the existing data pipeline
-first and rebuild.
+repo `data/`, and does not require local `storage/data/clips` or an
+`aitraf_clips` build context.
 
 ## Run A Runtime Smoke Check
 
-Use real deployment-compatible model inputs. The image includes repo `data/` and
-the selected demo clips, so `AITRAF_DATA_PATH` may point at the copied image data
-path and `AITRAF_STORAGE_PATH` may point at `/workspace/storage` unless a
-deployment mounts a replacement.
+Use real deployment-compatible model inputs. The image includes repo `data/`, so
+`AITRAF_DATA_PATH` may point at the copied image data path. Clips remain runtime
+storage and can be mounted or hydrated at startup.
 
 ```bash
 docker run --rm -p 8000:8000 \

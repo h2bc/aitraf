@@ -12,7 +12,7 @@ from torchcodec.decoders import VideoDecoder
 
 from aitraf_core.processing.sampling import sample_frame_indices
 from aitraf_core.processing.video import decode_video_frames
-from aitraf_train.utils.s3_utils import (
+from aitraf_core.storage.s3 import (
     build_s3_client,
     load_s3_settings,
     presign_s3_uri,
