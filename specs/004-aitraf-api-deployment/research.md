@@ -34,21 +34,24 @@ not part of the API image.
   because it bloats the serving image and violates the requested dependency
   boundary.
 
-## Decision: Copy `data/` into the API image but keep `storage/` external
+## Decision: Copy `data/` and filtered demo clips into the API image but keep full `storage/` external
 
 **Rationale**: Local inspection shows `data/` is small and contains manifests and
-vocabularies needed by API demo selection, while `storage/` is very large and
-contains runtime artifacts such as clips, feature caches, and model cache/state.
-The API image should include the small versioned data inputs and require
-`AITRAF_STORAGE_PATH` to point at mounted or externally available runtime
-storage.
+vocabularies needed by API demo selection, while full `storage/` is very large
+and contains runtime artifacts such as all clips, feature caches, and model
+cache/state. The API image should include the small versioned data inputs and
+only the demo clips selected by the API demo-video filter. `AITRAF_STORAGE_PATH`
+still points at image-bundled or mounted runtime storage.
 
 **Alternatives considered**:
 
-- Copy both `data/` and `storage/` into the image. Rejected because `storage/` is
-  large runtime state and would make builds slow, fragile, and unreproducible.
+- Copy both `data/` and full `storage/` into the image. Rejected because
+  `storage/` is large runtime state and would make builds slow, fragile, and
+  unreproducible.
 - Copy neither `data/` nor `storage/`. Rejected because manifests/vocabularies in
   `data/` are small repo-owned inputs and useful for reproducible demo behavior.
+- Create a separate committed `data/demo-clips` directory. Rejected because it
+  duplicates clips already produced under `storage/data/clips`.
 
 ## Decision: Extend the existing image workflow instead of adding a new workflow
 

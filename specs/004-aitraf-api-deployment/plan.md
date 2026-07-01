@@ -15,9 +15,9 @@ The API Dockerfile should reuse the existing train image conventions where they
 fit: CUDA runtime base, `uv`, frozen workspace install, root build context, and
 GHCR metadata tags. It must diverge where serving scope differs: install only
 `aitraf-api` and its `aitraf-core` dependency, copy the small repo `data/`
-directory into the image for manifests/vocabularies, keep `storage/` and model
-artifacts external, and start the API server rather than a long-running shell
-placeholder.
+directory into the image for manifests/vocabularies, copy only the filtered demo
+clip subset into the image, keep full `storage/` and model artifacts external,
+and start the API server rather than a long-running shell placeholder.
 
 The existing image workflow should become the shared Docker-image publishing
 workflow. Train publishing remains independent. API publishing must run API tests
@@ -33,10 +33,13 @@ from continuing.
 `aitraf-core`, `uv`, Docker Buildx, GitHub Actions, GHCR
 
 **Storage**: Copy repo `data/` into the API image for manifests and vocabularies
-(`data/` is small, about 1.8 MB locally). Do not copy repo `storage/` into the
-image (`storage/` is external runtime state and very large locally). Runtime
-`AITRAF_STORAGE_PATH` continues to point at mounted or externally available
-clips, feature caches, model caches, and MLflow/model inputs.
+(`data/` is small, about 1.8 MB locally). Do not copy full repo `storage/` into
+the image (`storage/` is external runtime state and very large locally). The API
+image build receives local `storage/data/clips` as a named build context and
+copies only the demo clips selected by the API demo-video filter into
+`/workspace/storage/data/clips`. Runtime `AITRAF_STORAGE_PATH` continues to
+point at storage for bundled demo clips, externally mounted clips, feature
+caches, model caches, and MLflow/model inputs.
 
 **Testing**: Run `task api:test` or equivalent `uv run pytest
 packages/aitraf-api/tests` before API publishing. Validate the Dockerfile with a
@@ -53,16 +56,18 @@ wheels through the workspace configuration.
 surfaces.
 
 **Performance Goals**: Keep the API image scoped to serving needs by excluding
-`aitraf-train`, notebooks, generated runs, and `storage/`; API image build should
-complete using GitHub Actions cache and fail before publish if API tests fail.
+`aitraf-train`, notebooks, generated runs, and full `storage/`; API image build
+should complete using GitHub Actions cache and fail before publish if API tests
+fail.
 No serving latency or model-throughput target is introduced by this deployment
 planning feature.
 
 **Constraints**: Preserve package-by-feature ownership. Reuse existing train
 Dockerfile/workflow conventions where applicable. API image installs only
 `aitraf-api` plus `aitraf-core` transitively, not `aitraf-train`. Copy `data/`
-but not `storage/`. Do not commit secrets. Missing runtime env vars, model refs,
-storage paths, model artifacts, or workflow permissions must fail explicitly.
+and filtered demo clips, but not full `storage/`. Do not commit secrets. Missing
+runtime env vars, model refs, storage paths, model artifacts, or workflow
+permissions must fail explicitly.
 
 **Scale/Scope**: One new `packages/aitraf-api/Dockerfile`, updates to the
 existing `.github/workflows/publish-docker-images.yml` image publishing workflow,
@@ -153,8 +158,8 @@ data/
 because the deployment artifact belongs to the API surface. Keep the existing
 workflow file and extend it to publish both images, preserving its GHCR
 conventions. Copy only the package code needed for API serving (`aitraf-api` and
-`aitraf-core`) plus root workspace metadata and `data/`; do not copy
-`aitraf-train`, notebooks, runs, models, or `storage/`.
+`aitraf-core`) plus root workspace metadata, `data/`, and the filtered demo clip
+subset; do not copy `aitraf-train`, notebooks, runs, models, or full `storage/`.
 
 ## Complexity Tracking
 

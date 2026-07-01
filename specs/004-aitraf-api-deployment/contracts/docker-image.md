@@ -6,6 +6,7 @@ The API image is built from the repository root with the API package Dockerfile.
 
 ```bash
 docker build \
+  --build-context aitraf_clips=storage/data/clips \
   -f packages/aitraf-api/Dockerfile \
   -t aitraf-api:local \
   .
@@ -17,13 +18,15 @@ docker build \
 - `aitraf-core` package source and installed distribution
 - Root `pyproject.toml` and `uv.lock` inputs used during build
 - Repo `data/` directory for manifests and vocabularies
+- Demo clips selected from the classification and AQA test manifests, copied
+  from the `aitraf_clips` build context into `/workspace/storage/data/clips`
 - Runtime system dependencies required by the API/core video path, including
   `ffmpeg`
 
 ## Prohibited Image Contents
 
 - `packages/aitraf-train`
-- `storage/`
+- Full `storage/`
 - Local `.env` files or secrets
 - Notebooks, generated runs, local models, local virtual environments, and cache
   directories

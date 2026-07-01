@@ -45,13 +45,21 @@ Endpoint tests mock model prediction and are split by feature under
 Build the production API image from the repository root:
 
 ```bash
-docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:local .
+docker build \
+  --build-context aitraf_clips=storage/data/clips \
+  -f packages/aitraf-api/Dockerfile \
+  -t aitraf-api:local \
+  .
 ```
 
 The image installs `aitraf-api` and `aitraf-core`, includes the small repo
-`data/` directory for manifests and vocabularies, and keeps `storage/` external.
-It does not include train package code, committed secrets, model artifacts, or
-generated storage contents.
+`data/` directory for manifests and vocabularies, and copies only the demo clip
+subset selected from the classification and AQA test manifests into
+`/workspace/storage/data/clips`. It does not include train package code,
+committed secrets, model artifacts, feature caches, or full storage contents.
+
+The selected demo clips must exist in local `storage/data/clips` before build.
+Run the existing data pipeline first if local clips are not present.
 
 Run with explicit runtime settings and mounted storage:
 
@@ -64,7 +72,6 @@ docker run --rm -p 8000:8000 \
   -e AITRAF_DATA_PATH=/workspace/data \
   -e AITRAF_STORAGE_PATH=/workspace/storage \
   -e MLFLOW_TRACKING_URI="$MLFLOW_TRACKING_URI" \
-  -v "$AITRAF_STORAGE_PATH:/workspace/storage:ro" \
   aitraf-api:local
 ```
 

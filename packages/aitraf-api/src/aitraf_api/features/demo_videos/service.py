@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import HTTPException
 
 from aitraf_api.config import Settings
+from aitraf_api.features.demo_videos.filter import filter_demo_video_ids
 from aitraf_api.manifests import read_jsonl_manifest
 from aitraf_api.schemas import DemoVideo
 
@@ -14,17 +15,20 @@ from aitraf_api.schemas import DemoVideo
 def list_demo_videos(settings: Settings) -> list[DemoVideo]:
     classification_rows = read_jsonl_manifest(settings.classification.manifest_path)
     aqa_rows = read_jsonl_manifest(settings.aqa.manifest_path)
-    aqa_ids = {str(row["video_id"]) for row in aqa_rows}
+    demo_video_ids = filter_demo_video_ids(
+        classification_rows=classification_rows,
+        aqa_rows=aqa_rows,
+    )
 
-    videos: list[DemoVideo] = []
-    seen: set[str] = set()
+    classification_rows_by_id: dict[str, dict[str, Any]] = {}
     for row in classification_rows:
         video_id = str(row["video_id"])
-        if video_id not in aqa_ids or video_id in seen:
-            continue
-        videos.append(demo_video_from_row(row))
-        seen.add(video_id)
+        classification_rows_by_id.setdefault(video_id, row)
 
+    videos = [
+        demo_video_from_row(classification_rows_by_id[video_id])
+        for video_id in demo_video_ids
+    ]
     if not videos:
         raise HTTPException(
             status_code=503,

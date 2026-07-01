@@ -13,8 +13,10 @@ Represents the versioned build definition for the API serving image.
 - `package_target`: `aitraf-api`
 - `included_packages`: `packages/aitraf-api`, `packages/aitraf-core`
 - `included_repo_data`: `data/`
-- `excluded_surfaces`: `packages/aitraf-train`, `storage/`, notebooks, generated
-  runs, local models, secrets, local virtual environments
+- `included_demo_clips`: filtered clip subset copied from the `aitraf_clips`
+  build context
+- `excluded_surfaces`: `packages/aitraf-train`, full `storage/`, notebooks,
+  generated runs, local models, secrets, local virtual environments
 - `entrypoint`: API server factory entrypoint for `aitraf_api.app:create_app_from_env`
 - `dependency_install`: frozen, non-dev, non-editable package-scoped workspace
   install
@@ -23,7 +25,8 @@ Represents the versioned build definition for the API serving image.
 
 - Must build from the repository root context.
 - Must not install `aitraf-train`.
-- Must not copy `storage/` or committed secrets.
+- Must not copy full `storage/` or committed secrets.
+- Selected demo clips must exist in the local clips build context.
 - Must fail during build if required package metadata or lockfile inputs are
   missing.
 

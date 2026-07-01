@@ -41,7 +41,7 @@
 
 - [x] T005 Confirm the API image dependency boundary from `packages/aitraf-api/pyproject.toml` and `packages/aitraf-core/pyproject.toml`: `aitraf-api` may depend on `aitraf-core`, but must not install `aitraf-train`
 - [x] T006 Confirm runtime config requirements in `packages/aitraf-api/src/aitraf_api/config.py`: required env vars remain explicit and no Dockerfile defaults hide missing `AITRAF_*` or `MLFLOW_*` inputs
-- [x] T007 [P] Confirm repo data/storage sizes and contents with `data/` and `storage/` so the API image copies only `data/` and keeps `storage/` external
+- [x] T007 [P] Confirm repo data/storage sizes and contents with `data/` and `storage/` so the API image copies `data/` and only filtered demo clips while keeping full `storage/` external
 - [x] T008 [P] Confirm current API tests pass locally with `task api:test` for `packages/aitraf-api/tests` before workflow gating is added
 
 **Checkpoint**: Foundation ready. The API Dockerfile and workflow tasks can now proceed.
@@ -52,18 +52,18 @@
 
 **Goal**: Provide a production Dockerfile for `aitraf-api` that builds a serving image from repository sources with only API/core runtime code and small repo data.
 
-**Independent Test**: Build the image with `docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:local .`, inspect that train/storage are absent, and run the documented smoke command with explicit runtime inputs.
+**Independent Test**: Build the image with `docker build --build-context aitraf_clips=storage/data/clips -f packages/aitraf-api/Dockerfile -t aitraf-api:local .`, inspect that train/full storage are absent, and run the documented smoke command with explicit runtime inputs.
 
 ### Validation for User Story 1
 
 - [x] T009 [P] [US1] Add or update the local API image build command and expected outcome in `specs/004-aitraf-api-deployment/quickstart.md`
 - [x] T010 [P] [US1] Add or update API Docker runtime smoke instructions and required env vars in `packages/aitraf-api/README.md`
-- [x] T011 [US1] Run `docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:local .` against `packages/aitraf-api/Dockerfile` and record any build blockers in `specs/004-aitraf-api-deployment/quickstart.md`
+- [x] T011 [US1] Run `docker build --build-context aitraf_clips=storage/data/clips -f packages/aitraf-api/Dockerfile -t aitraf-api:local .` against `packages/aitraf-api/Dockerfile` and record any build blockers in `specs/004-aitraf-api-deployment/quickstart.md`
 
 ### Implementation for User Story 1
 
 - [x] T012 [US1] Create `packages/aitraf-api/Dockerfile` by reusing the `packages/aitraf-train/Dockerfile` pattern with CUDA runtime, uv, frozen package-scoped install, and API-specific working directory
-- [x] T013 [US1] In `packages/aitraf-api/Dockerfile`, copy root `pyproject.toml`, `uv.lock`, `packages/aitraf-core`, `packages/aitraf-api`, and `data/` while excluding `packages/aitraf-train` and `storage/`
+- [x] T013 [US1] In `packages/aitraf-api/Dockerfile`, copy root `pyproject.toml`, `uv.lock`, `packages/aitraf-core`, `packages/aitraf-api`, `data/`, and filtered demo clips while excluding `packages/aitraf-train` and full `storage/`
 - [x] T014 [US1] In `packages/aitraf-api/Dockerfile`, install only the API package path with `uv sync --frozen --no-dev --no-editable --package aitraf-api`
 - [x] T015 [US1] In `packages/aitraf-api/Dockerfile`, set the production command to start `aitraf_api.app:create_app_from_env` through Uvicorn on `0.0.0.0:8000`
 - [x] T016 [US1] Validate the built `aitraf-api:local` image does not contain `packages/aitraf-train` or `/workspace/storage` using a container inspection command against `packages/aitraf-api/Dockerfile`
@@ -105,9 +105,9 @@
 - [x] T027 [P] Update `packages/aitraf-api/README.md` with the final image name, local build command, required runtime env vars, and storage mounting expectations
 - [x] T028 [P] Update `specs/004-aitraf-api-deployment/quickstart.md` if implementation changes the final Docker build, run, or workflow validation commands
 - [x] T029 Run final API validation with `task api:test` for `packages/aitraf-api/tests`
-- [x] T030 Run final Docker validation with `docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:local .` for `packages/aitraf-api/Dockerfile`
+- [x] T030 Run final Docker validation with `docker build --build-context aitraf_clips=storage/data/clips -f packages/aitraf-api/Dockerfile -t aitraf-api:local .` for `packages/aitraf-api/Dockerfile`
 - [x] T031 Run final workflow review on `.github/workflows/publish-docker-images.yml` and confirm image names, job dependencies, permissions, tags, and Buildx cache match `specs/004-aitraf-api-deployment/contracts/github-workflow.md`
-- [x] T032 Verify no secrets, `.env*`, `storage/`, local models, notebooks, or generated cache directories are introduced into `packages/aitraf-api/Dockerfile`, `.github/workflows/publish-docker-images.yml`, or committed docs
+- [x] T032 Verify no secrets, `.env*`, full `storage/`, local models, notebooks, or generated cache directories are introduced into `packages/aitraf-api/Dockerfile`, `.github/workflows/publish-docker-images.yml`, or committed docs
 
 ---
 
@@ -190,5 +190,5 @@ After Foundational:
 - [P] tasks use different files or are command-only validations that do not depend on incomplete edits.
 - [US1] maps to Create API Dockerfile.
 - [US2] maps to Publish API Image From GitHub Workflow.
-- Keep `storage/` external and do not commit secrets.
+- Keep full `storage/` external and do not commit secrets.
 - API test failure must block only API image publishing; train publishing must remain independent.

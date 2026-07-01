@@ -35,19 +35,23 @@ If API tests fail in GitHub Actions, the API image must not publish.
 
 ```bash
 docker build \
+  --build-context aitraf_clips=storage/data/clips \
   -f packages/aitraf-api/Dockerfile \
   -t aitraf-api:local \
   .
 ```
 
-Expected outcome: the image builds without installing `aitraf-train` and without
-copying `storage/`. The Dockerfile is expected at
-`packages/aitraf-api/Dockerfile` and should copy repo `data/` into the image.
+Expected outcome: the image builds without installing `aitraf-train`, copies
+repo `data/`, and copies only the demo clips selected from the classification
+and AQA test manifests into `/workspace/storage/data/clips`. If a selected demo
+clip is missing from local `storage/data/clips`, run the existing data pipeline
+first and rebuild.
 
 ## Run A Runtime Smoke Check
 
-Use real deployment-compatible model and storage inputs. The image includes repo
-`data/`, so `AITRAF_DATA_PATH` may point at the copied image data path unless a
+Use real deployment-compatible model inputs. The image includes repo `data/` and
+the selected demo clips, so `AITRAF_DATA_PATH` may point at the copied image data
+path and `AITRAF_STORAGE_PATH` may point at `/workspace/storage` unless a
 deployment mounts a replacement.
 
 ```bash
@@ -55,10 +59,10 @@ docker run --rm -p 8000:8000 \
   -e AITRAF_API_TOKEN="$AITRAF_API_TOKEN" \
   -e AITRAF_CLASSIFICATION_MODEL_URI="$AITRAF_CLASSIFICATION_MODEL_URI" \
   -e AITRAF_AQA_MODEL_URI="$AITRAF_AQA_MODEL_URI" \
+  -e AITRAF_API_DEVICE="$AITRAF_API_DEVICE" \
   -e AITRAF_DATA_PATH=/workspace/data \
   -e AITRAF_STORAGE_PATH=/workspace/storage \
   -e MLFLOW_TRACKING_URI="$MLFLOW_TRACKING_URI" \
-  -v "$AITRAF_STORAGE_PATH:/workspace/storage:ro" \
   aitraf-api:local
 ```
 
