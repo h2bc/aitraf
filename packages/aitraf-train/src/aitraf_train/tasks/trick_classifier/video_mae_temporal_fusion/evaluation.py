@@ -13,7 +13,7 @@ from mlflow.data import from_huggingface
 from transformers import Trainer, TrainingArguments
 
 from aitraf_core.loading import load_mlflow_torch_model
-from aitraf_core.pre_processing import video_feature_cache_dir
+from aitraf_core.pre_processing.paths import video_feature_cache_dir
 from aitraf_train.logging import logger
 from aitraf_train.metrics import (
     EvalModel,

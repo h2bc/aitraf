@@ -23,7 +23,7 @@ from transformers import (
 
 from aitraf_train.logging import logger
 from aitraf_train.metrics import calc_metrics, compute_pred_ids
-from aitraf_core.pre_processing import video_feature_cache_dir
+from aitraf_core.pre_processing.paths import video_feature_cache_dir
 from aitraf_train.data.labels import (
     build_class_weights,
     build_label_transform,

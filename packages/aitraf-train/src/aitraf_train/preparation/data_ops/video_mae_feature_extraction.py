@@ -7,10 +7,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from aitraf_core.loading import load_huggingface_model
-from aitraf_core.pre_processing import (
+from aitraf_core.pre_processing.models import (
     predict_segment_feature_vectors_with_cache,
-    video_feature_cache_dir,
 )
+from aitraf_core.pre_processing.paths import video_feature_cache_dir
 from aitraf_train.logging import logger
 from aitraf_train.preparation.data_ops.utils import list_clip_files
 
