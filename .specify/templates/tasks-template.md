@@ -71,9 +71,10 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T004 Extend helpers in the owning package, or shared package only when multiple feature surfaces need them
 - [ ] T005 [P] Add or update config wiring and task/model dispatch paths
 - [ ] T006 [P] Add explicit error handling for invalid config, data, or unsupported states
-- [ ] T007 Define reusable data/model/metric interfaces as functional helpers with explicit inputs and outputs
+- [ ] T007 Define reusable data/model/metric interfaces as functional helpers with explicit inputs, outputs, and one required type/schema per boundary
 - [ ] T008 Configure logging, tracking, or artifact outputs required across stories
 - [ ] T009 Document reproducibility inputs and command surfaces
+- [ ] T010 Remove obsolete paths, aliases, shims, deprecated parameters, compatibility layers, and dead code made obsolete by this feature
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -89,17 +90,17 @@ Examples of foundational tasks (adjust based on your project):
 
 > **NOTE**: Define validation before implementation. Add automated tests when practical and always add at least one smoke validation command.
 
-- [ ] T010 [P] [US1] Add unit/integration coverage in `tests/` for the changed helper or pipeline behavior
-- [ ] T011 [P] [US1] Add a smoke validation command and expected outcome for the user journey
+- [ ] T011 [P] [US1] Add unit/integration coverage in `tests/` for the changed helper or pipeline behavior
+- [ ] T012 [P] [US1] Add a smoke validation command and expected outcome for the user journey
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Add or extend decomposed helper functions in the owning package/feature module
-- [ ] T013 [P] [US1] Update the relevant package/task/model/config wiring without introducing parallel architecture
-- [ ] T014 [US1] Implement the user-facing behavior in the appropriate package route/service/script/task surface
-- [ ] T015 [US1] Add explicit failure handling for invalid or unsupported states
-- [ ] T016 [US1] Add tracking/logging/artifact output changes required for verification
-- [ ] T017 [US1] Update docs/spec references for the new command/config behavior
+- [ ] T013 [P] [US1] Add or extend decomposed helper functions in the owning package/feature module
+- [ ] T014 [P] [US1] Update the relevant package/task/model/config wiring without introducing parallel architecture
+- [ ] T015 [US1] Implement the user-facing behavior in the appropriate package route/service/script/task surface
+- [ ] T016 [US1] Add explicit failure handling for invalid or unsupported states
+- [ ] T017 [US1] Add tracking/logging/artifact output changes required for verification
+- [ ] T018 [US1] Update docs/spec references for the new command/config behavior
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -113,15 +114,15 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Validation for User Story 2 ⚠️
 
-- [ ] T018 [P] [US2] Add unit/integration coverage in `tests/` for the changed helper or pipeline behavior
-- [ ] T019 [P] [US2] Add a smoke validation command and expected outcome for the user journey
+- [ ] T019 [P] [US2] Add unit/integration coverage in `tests/` for the changed helper or pipeline behavior
+- [ ] T020 [P] [US2] Add a smoke validation command and expected outcome for the user journey
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Add or extend decomposed helper functions in the owning package/feature module
-- [ ] T021 [US2] Update the relevant task/model/config wiring without duplicating existing logic
-- [ ] T022 [US2] Implement the user-facing pipeline behavior in the appropriate repo surface
-- [ ] T023 [US2] Integrate through shared components instead of story-specific parallel paths
+- [ ] T021 [P] [US2] Add or extend decomposed helper functions in the owning package/feature module
+- [ ] T022 [US2] Update the relevant task/model/config wiring without duplicating existing logic
+- [ ] T023 [US2] Implement the user-facing pipeline behavior in the appropriate repo surface
+- [ ] T024 [US2] Integrate through shared components instead of story-specific parallel paths
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -135,14 +136,14 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Validation for User Story 3 ⚠️
 
-- [ ] T024 [P] [US3] Add unit/integration coverage in `tests/` for the changed helper or pipeline behavior
-- [ ] T025 [P] [US3] Add a smoke validation command and expected outcome for the user journey
+- [ ] T025 [P] [US3] Add unit/integration coverage in `tests/` for the changed helper or pipeline behavior
+- [ ] T026 [P] [US3] Add a smoke validation command and expected outcome for the user journey
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Add or extend decomposed helper functions in the owning package/feature module
-- [ ] T027 [US3] Update the relevant task/model/config wiring without duplicating existing logic
-- [ ] T028 [US3] Implement the user-facing pipeline behavior in the appropriate repo surface
+- [ ] T027 [P] [US3] Add or extend decomposed helper functions in the owning package/feature module
+- [ ] T028 [US3] Update the relevant task/model/config wiring without duplicating existing logic
+- [ ] T029 [US3] Implement the user-facing pipeline behavior in the appropriate repo surface
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -161,6 +162,8 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Performance optimization across all stories
 - [ ] TXXX [P] Additional validation coverage in `tests/unit/`, `tests/integration/`, or `tests/smoke/`
 - [ ] TXXX Remove duplicated logic or architecture drift discovered during implementation
+- [ ] TXXX Remove any remaining legacy compatibility scaffolding introduced or exposed by the change
+- [ ] TXXX Remove defensive multi-type normalization, broad unions, and fallback conversion branches introduced or exposed by the change
 - [ ] TXXX Run documented smoke commands and verify expected artifacts/logs
 
 ---
@@ -255,6 +258,10 @@ With multiple developers:
 - Prefer package-by-feature ownership over adding new parallel structure
 - Prefer functional programming: small, pure helpers with explicit inputs and outputs
 - Ensure invalid states fail explicitly instead of relying on fallback behavior
+- Remove obsolete callers, aliases, compatibility shims, deprecated parameters,
+  and dead code instead of preserving legacy behavior
+- Require one explicit type/schema at each boundary; reject alternate shapes
+  instead of accepting many forms and normalizing them defensively
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence

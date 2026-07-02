@@ -1,7 +1,7 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/005-demo-clip-download/plan.md
+at specs/005-api-precomputed-predictions/plan.md
 <!-- SPECKIT END -->
 
 ## Repository Conventions
@@ -18,6 +18,15 @@ at specs/005-demo-clip-download/plan.md
   cross-module side effects, and broad procedural flows.
 - Prefer simple, modular code that is easy to extend. Implement the most basic
   working version first and add complexity only when the task requires it.
+- Prefer required types over defensive normalization. Define the single expected
+  type or schema at each boundary, validate it, and fail when inputs do not
+  match. Do not accept multiple shapes, broad unions, stringified structured
+  data, scalar-or-list variants, or path-or-dict variants just to unify them
+  with fallback conversion logic.
+- Do not preserve legacy compatibility. When behavior, APIs, configs, or
+  schemas change, update callers and tests to the new shape directly. Remove
+  obsolete paths, shims, aliases, compatibility layers, deprecation scaffolding,
+  and dead code instead of leaving them behind.
 - Keep comments minimal and useful. Add them only when the code is not obvious.
 - Read the existing project context and the specific file before editing it.
 

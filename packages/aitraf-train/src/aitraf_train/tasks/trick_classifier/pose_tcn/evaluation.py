@@ -23,6 +23,7 @@ from aitraf_train.metrics import (
     accuracy,
     f1_macro,
     compute_dummy_classification_pred_ids,
+    compute_pred_confidences,
     compute_pred_ids,
     flatten_metrics_report,
     get_confusion_matrix_figure,
@@ -31,7 +32,13 @@ from aitraf_train.metrics import (
     get_top_k_worst_misses,
     metrics_to_df,
 )
-from aitraf_train.tracking import build_training_params, params_to_df
+from aitraf_train.tracking import (
+    build_prediction_rows,
+    build_training_params,
+    log_test_predictions,
+    log_train_predictions,
+    params_to_df,
+)
 from aitraf_train.models.pose_tcn import TCNClassifier
 from aitraf_train.data.labels import (
     build_label_transform,
@@ -131,7 +138,9 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
         pred_ids = compute_pred_ids(logits)
         return logits, pred_ids, label_ids
 
-    _, train_pred_ids, train_label_ids = predict_ids_and_labels(train_dataloader)
+    train_logits, train_pred_ids, train_label_ids = predict_ids_and_labels(
+        train_dataloader
+    )
     test_logits, test_pred_ids, test_label_ids = predict_ids_and_labels(test_dataloader)
 
     metrics_report = calc_metrics_for_models(
@@ -202,6 +211,25 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
         mlflow.log_metrics(all_metrics)
         metrics_df = metrics_to_df(metrics_report)
         mlflow.log_table(metrics_df, "metrics_table.json")
+        log_train_predictions(
+            build_prediction_rows(
+                pd.DataFrame(train_dataset.manifest_rows()),
+                predictions=train_pred_ids,
+                labels=train_label_ids,
+                id2label=id2label,
+                confidences=compute_pred_confidences(train_logits),
+            )
+        )
+        test_examples_df = pd.DataFrame(test_dataset.manifest_rows())
+        log_test_predictions(
+            build_prediction_rows(
+                test_examples_df,
+                predictions=test_pred_ids,
+                labels=test_label_ids,
+                id2label=id2label,
+                confidences=compute_pred_confidences(test_logits),
+            )
+        )
 
         dist_fig = get_target_distribution_figure(
             test_pred_ids,
@@ -217,7 +245,6 @@ def run_evaluation(config: PoseTcnTrickClassificationEvalCfg) -> None:
         f1_fig = get_per_class_f1_figure(test_pred_ids, test_label_ids, label_names)
         mlflow.log_figure(f1_fig, "per_class_f1.png")
 
-        test_examples_df = pd.DataFrame(test_dataset.manifest_rows())
         all_misses = get_top_k_worst_misses(
             test_logits,
             test_label_ids,

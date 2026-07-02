@@ -74,6 +74,10 @@
 - How does the system fail when a task/model combination is unsupported?
 - What happens when schema, label vocabulary, or metric assumptions change?
 - How is ambiguous or partial pipeline state surfaced without silent fallback?
+- Which obsolete paths, configs, aliases, or compatibility behaviors are removed
+  instead of preserved?
+- What single input type/schema is accepted at each boundary, and how are wrong
+  types or alternate shapes rejected?
 
 ## Requirements *(mandatory)*
 
@@ -99,6 +103,13 @@
 - **AR-005**: Business logic MUST prefer functional programming practices where
   practical: pure helpers, explicit inputs and outputs, and localized mutable
   state at framework boundaries.
+- **AR-006**: The feature MUST update callers, tests, docs, and validation
+  commands to the new behavior directly and remove obsolete paths, aliases,
+  shims, deprecated parameters, compatibility layers, and dead code.
+- **AR-007**: The feature MUST define one required type/schema for each changed
+  boundary and reject alternate shapes instead of accepting broad unions,
+  stringified structured data, scalar-or-list variants, path-or-dict variants,
+  or recursive coercion branches.
 
 ### Validation And Reproducibility Requirements *(mandatory)*
 
@@ -126,6 +137,8 @@
 
 - **Touched Surfaces**: [Which packages, configs, scripts, modules, routes, services, or trackers the feature changes]
 - **Shared Helpers To Add Or Extend**: [List reusable functions/modules instead of duplicating logic]
+- **Legacy Surfaces Removed**: [Obsolete paths, configs, aliases, shims, deprecated parameters, or compatibility layers removed by this change]
+- **Required Input Shapes**: [Single accepted schemas/types at changed boundaries and how mismatches fail]
 - **Data Or Artifact Impact**: [Manifests, labels, vocab, metrics, MLflow artifacts, storage paths]
 - **Reproducibility Inputs**: [Configs, commands, seeds, environment assumptions, model/data references]
 

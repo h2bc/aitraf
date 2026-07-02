@@ -17,6 +17,7 @@ from aitraf_train.metrics import (
     EvalModel,
     EvalSet,
     calc_metrics_for_models,
+    compute_pred_confidences,
     compute_pred_ids,
     flatten_metrics_report,
     get_confusion_matrix_figure,
@@ -24,7 +25,13 @@ from aitraf_train.metrics import (
     get_target_distribution_figure,
     metrics_to_df,
 )
-from aitraf_train.tracking import build_training_params, params_to_df
+from aitraf_train.tracking import (
+    build_prediction_rows,
+    build_training_params,
+    log_test_predictions,
+    log_train_predictions,
+    params_to_df,
+)
 from aitraf_train.data.labels import (
     build_label_transform,
     load_target_label_mappings,
@@ -138,9 +145,29 @@ def run_evaluation(config: VideoMaeScorePredictionOrdinalEvalCfg) -> None:
 
         train_pred_logits, train_label_ids, _ = trainer.predict(train_dataset)
         train_video_mae_pred_ids = compute_pred_ids(train_pred_logits)
+        log_train_predictions(
+            build_prediction_rows(
+                train_dataset.to_pandas(),
+                predictions=train_video_mae_pred_ids,
+                labels=train_label_ids,
+                id2label=id2label,
+                confidences=compute_pred_confidences(train_pred_logits),
+            )
+        )
 
         test_pred_logits, test_label_ids, _ = trainer.predict(test_dataset)
         test_video_mae_pred_ids = compute_pred_ids(test_pred_logits)
+        test_examples_df = test_dataset.to_pandas()
+
+        log_test_predictions(
+            build_prediction_rows(
+                test_examples_df,
+                predictions=test_video_mae_pred_ids,
+                labels=test_label_ids,
+                id2label=id2label,
+                confidences=compute_pred_confidences(test_pred_logits),
+            )
+        )
 
         train_dummy_pred_ids = compute_constant_median_pred_ids(
             train_label_ids,
@@ -214,7 +241,7 @@ def run_evaluation(config: VideoMaeScorePredictionOrdinalEvalCfg) -> None:
         worst_misses = get_top_k_worst_ordinal_errors(
             test_video_mae_pred_ids,
             test_label_ids,
-            test_dataset.to_pandas(),
+            test_examples_df,
             id2label,
             top_k=config.top_k_worst,
         )
