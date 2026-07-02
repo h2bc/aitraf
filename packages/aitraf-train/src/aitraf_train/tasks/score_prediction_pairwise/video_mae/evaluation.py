@@ -27,7 +27,13 @@ from aitraf_train.metrics import (
     precision,
     recall,
 )
-from aitraf_train.tracking import build_training_params, params_to_df
+from aitraf_train.tracking import (
+    build_prediction_rows,
+    build_training_params,
+    log_test_predictions,
+    log_train_predictions,
+    params_to_df,
+)
 from aitraf_train.data.labels import (
     build_label_transform,
     load_target_label_mappings,
@@ -85,7 +91,7 @@ def run_evaluation(config: VideoMaeScorePredictionPairwiseEvalCfg) -> None:
     if len(test_dataset) == 0:
         raise RuntimeError("No test pairs found for score_prediction_pairwise.")
 
-    _, label2id, _ = load_target_label_mappings(config.vocab_path, "pair_label")
+    _, label2id, id2label = load_target_label_mappings(config.vocab_path, "pair_label")
 
     loaded_model = load_mlflow_transformers_model(config.model_uri)
     scorer = loaded_model.model.to(config.device)
@@ -145,10 +151,30 @@ def run_evaluation(config: VideoMaeScorePredictionPairwiseEvalCfg) -> None:
         train_pair_logits, train_label_ids, _ = trainer.predict(train_dataset)
         train_labels = np.asarray(train_label_ids).reshape(-1).astype(int)
         train_video_mae_pred_labels = compute_pairwise_pred_labels(train_pair_logits)
+        log_train_predictions(
+            build_prediction_rows(
+                pd.DataFrame(train_dataset.manifest_rows()),
+                predictions=train_video_mae_pred_labels,
+                labels=train_labels,
+                id2label=id2label,
+                confidences=1
+                / (1 + np.exp(-np.abs(np.asarray(train_pair_logits).reshape(-1)))),
+            )
+        )
 
         test_pair_logits, test_label_ids, _ = trainer.predict(test_dataset)
         test_labels = np.asarray(test_label_ids).reshape(-1).astype(int)
         test_video_mae_pred_labels = compute_pairwise_pred_labels(test_pair_logits)
+        log_test_predictions(
+            build_prediction_rows(
+                pd.DataFrame(test_dataset.manifest_rows()),
+                predictions=test_video_mae_pred_labels,
+                labels=test_labels,
+                id2label=id2label,
+                confidences=1
+                / (1 + np.exp(-np.abs(np.asarray(test_pair_logits).reshape(-1)))),
+            )
+        )
 
         metrics_report = calc_metrics_for_models(
             eval_models=[

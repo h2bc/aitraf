@@ -26,7 +26,7 @@
 
 **Performance Goals**: [NEEDS CLARIFICATION: expected runtime, memory, throughput, or experiment-turnaround targets]
 
-**Constraints**: Preserve package-by-feature architecture, avoid excessive fallbacks, keep behavior reproducible and reviewable
+**Constraints**: Preserve package-by-feature architecture, avoid excessive fallbacks, require one explicit type/schema per boundary, remove legacy compatibility paths, keep behavior reproducible and reviewable
 
 **Scale/Scope**: Task/model pipelines, shared processing utilities, manifests, metrics, and experiment tracking
 
@@ -47,6 +47,12 @@
   framework-managed state localized and justified?
 - **Reproducibility**: Are config changes, manifests, seeds, command surfaces, and
   run artifacts sufficient for another developer to rerun the change?
+- **No Legacy Compatibility**: Does the design update callers/tests/docs directly
+  and remove obsolete paths, aliases, shims, deprecated parameters,
+  compatibility layers, and dead code instead of preserving old behavior?
+- **Required Types Over Defensive Normalization**: Does each boundary accept one
+  explicit type/schema and reject other shapes instead of accepting multiple
+  forms and unifying them with coercion or fallback conversion branches?
 
 ## Project Structure
 

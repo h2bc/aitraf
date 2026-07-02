@@ -28,7 +28,12 @@ from aitraf_train.metrics import (
     r2,
     rmse,
 )
-from aitraf_train.tracking import build_training_params, params_to_df
+from aitraf_train.tracking import (
+    build_training_params,
+    log_test_predictions,
+    log_train_predictions,
+    params_to_df,
+)
 from aitraf_core.processing.models.video_mae import process_sample
 from aitraf_train.data.collate import build_collate
 from aitraf_core.loading import load_mlflow_transformers_model
@@ -126,10 +131,22 @@ def run_evaluation(config: VideoMaeScorePredictionEvalCfg) -> None:
         train_pred_logits, train_label_values, _ = trainer.predict(train_dataset)
         train_predictions = np.asarray(train_pred_logits).reshape(-1)
         train_labels = np.asarray(train_label_values).reshape(-1)
+        train_prediction_rows = train_dataset.to_pandas()
+        train_prediction_rows["pred_id"] = train_predictions
+        train_prediction_rows["label"] = train_predictions
+        train_prediction_rows["actual_id"] = train_labels
+        train_prediction_rows["actual_label"] = train_labels
+        log_train_predictions(train_prediction_rows)
 
         test_pred_logits, test_label_values, _ = trainer.predict(test_dataset)
         test_predictions = np.asarray(test_pred_logits).reshape(-1)
         test_labels = np.asarray(test_label_values).reshape(-1)
+        test_examples_df = test_dataset.to_pandas()
+        test_examples_df["pred_id"] = test_predictions
+        test_examples_df["label"] = test_predictions
+        test_examples_df["actual_id"] = test_labels
+        test_examples_df["actual_label"] = test_labels
+        log_test_predictions(test_examples_df)
 
         metrics_report = calc_metrics_for_models(
             eval_models=[
@@ -194,7 +211,7 @@ def run_evaluation(config: VideoMaeScorePredictionEvalCfg) -> None:
         worst_misses = get_top_k_worst_errors(
             test_predictions,
             test_labels,
-            test_dataset.to_pandas(),
+            test_examples_df,
             top_k=config.top_k_worst,
         )
 

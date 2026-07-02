@@ -20,6 +20,7 @@ from aitraf_train.metrics import (
     EvalModel,
     EvalSet,
     calc_metrics_for_models,
+    compute_pred_confidences,
     compute_pred_ids,
     flatten_metrics_report,
     get_confusion_matrix_figure,
@@ -41,7 +42,13 @@ from aitraf_train.tasks.score_prediction_ordinal.metrics import (
     mmae,
     qwk,
 )
-from aitraf_train.tracking import build_training_params, params_to_df
+from aitraf_train.tracking import (
+    build_prediction_rows,
+    build_training_params,
+    log_test_predictions,
+    log_train_predictions,
+    params_to_df,
+)
 from aitraf_train.tracking.models.pose_tcn import TRAINING_PARAM_MAP
 
 
@@ -116,7 +123,7 @@ def run_evaluation(config: PoseTcnScorePredictionOrdinalEvalCfg) -> None:
 
     def predict_ids_and_labels(
         dataloader: DataLoader,
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         logits_list: list[np.ndarray] = []
         label_ids_list: list[np.ndarray] = []
 
@@ -131,10 +138,12 @@ def run_evaluation(config: PoseTcnScorePredictionOrdinalEvalCfg) -> None:
         logits = np.concatenate(logits_list, axis=0)
         label_ids = np.concatenate(label_ids_list, axis=0)
         pred_ids = compute_pred_ids(logits)
-        return pred_ids, label_ids
+        return logits, pred_ids, label_ids
 
-    train_pred_ids, train_label_ids = predict_ids_and_labels(train_dataloader)
-    test_pred_ids, test_label_ids = predict_ids_and_labels(test_dataloader)
+    train_logits, train_pred_ids, train_label_ids = predict_ids_and_labels(
+        train_dataloader
+    )
+    test_logits, test_pred_ids, test_label_ids = predict_ids_and_labels(test_dataloader)
 
     train_dummy_pred_ids = compute_constant_median_pred_ids(
         train_label_ids,
@@ -208,6 +217,25 @@ def run_evaluation(config: PoseTcnScorePredictionOrdinalEvalCfg) -> None:
         mlflow.log_metrics(all_metrics)
         metrics_df = metrics_to_df(metrics_report)
         mlflow.log_table(metrics_df, "metrics_table.json")
+        log_train_predictions(
+            build_prediction_rows(
+                pd.DataFrame(train_dataset.manifest_rows()),
+                predictions=train_pred_ids,
+                labels=train_label_ids,
+                id2label=id2label,
+                confidences=compute_pred_confidences(train_logits),
+            )
+        )
+        test_examples_df = pd.DataFrame(test_dataset.manifest_rows())
+        log_test_predictions(
+            build_prediction_rows(
+                test_examples_df,
+                predictions=test_pred_ids,
+                labels=test_label_ids,
+                id2label=id2label,
+                confidences=compute_pred_confidences(test_logits),
+            )
+        )
 
         dist_fig = get_target_distribution_figure(
             test_pred_ids,
@@ -223,7 +251,7 @@ def run_evaluation(config: PoseTcnScorePredictionOrdinalEvalCfg) -> None:
         worst_misses = get_top_k_worst_ordinal_errors(
             test_pred_ids,
             test_label_ids,
-            pd.DataFrame(test_dataset.manifest_rows()),
+            test_examples_df,
             id2label,
             top_k=config.top_k_worst,
         )

@@ -1,4 +1,4 @@
-"""FastAPI response schemas for the demo inference API."""
+"""FastAPI response schemas for the demo predictions API."""
 
 from __future__ import annotations
 
@@ -11,37 +11,27 @@ class HealthResponse(BaseModel):
     status: Literal["ok"]
 
 
-class DemoVideo(BaseModel):
-    id: str
-    video_id: str
-    s3_path: str | None = None
-    person: str | None = None
-    trick: str | None = None
-    execution_score: str | int | float | None = None
+class GroundTruth(BaseModel):
+    trick: str
+    execution_score: str
 
 
-class DemoVideosResponse(BaseModel):
-    videos: list[DemoVideo]
-
-
-class PredictionResult(BaseModel):
+class TaskPrediction(BaseModel):
     label: str
     confidence: float = Field(ge=0.0, le=1.0)
 
 
-class DisplayResult(BaseModel):
-    label: str
+class TaskPredictions(BaseModel):
+    trick_classification: TaskPrediction
+    trick_aqa: TaskPrediction
 
 
-class ModelInfo(BaseModel):
-    kind: str = Field(min_length=1)
-
-
-class InferenceResult(BaseModel):
+class DemoPrediction(BaseModel):
     video_id: str
-    prediction: PredictionResult
-    ground_truth: DisplayResult
-    model: ModelInfo
+    s3_path: str
+    person: str
+    ground_truth: GroundTruth
+    predictions: TaskPredictions
 
 
 class ErrorResponse(BaseModel):
@@ -49,12 +39,10 @@ class ErrorResponse(BaseModel):
 
 
 __all__ = [
-    "DemoVideo",
-    "DemoVideosResponse",
-    "DisplayResult",
+    "DemoPrediction",
     "ErrorResponse",
+    "GroundTruth",
     "HealthResponse",
-    "InferenceResult",
-    "ModelInfo",
-    "PredictionResult",
+    "TaskPrediction",
+    "TaskPredictions",
 ]

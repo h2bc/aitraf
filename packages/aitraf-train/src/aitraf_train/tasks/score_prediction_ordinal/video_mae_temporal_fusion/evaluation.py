@@ -19,6 +19,7 @@ from aitraf_train.metrics import (
     EvalModel,
     EvalSet,
     calc_metrics_for_models,
+    compute_pred_confidences,
     compute_pred_ids,
     flatten_metrics_report,
     get_confusion_matrix_figure,
@@ -41,7 +42,13 @@ from aitraf_train.tasks.score_prediction_ordinal.metrics import (
     mmae,
     qwk,
 )
-from aitraf_train.tracking import build_training_params, params_to_df
+from aitraf_train.tracking import (
+    build_prediction_rows,
+    build_training_params,
+    log_test_predictions,
+    log_train_predictions,
+    params_to_df,
+)
 from aitraf_train.tracking.models.video_mae_temporal_fusion import TRAINING_PARAM_MAP
 
 
@@ -140,6 +147,27 @@ def run_evaluation(config: VideoMaeTemporalFusionScorePredictionOrdinalEvalCfg) 
         test_logits, test_labels, _ = trainer.predict(test_dataset)
         train_pred_ids = compute_pred_ids(train_logits)
         test_pred_ids = compute_pred_ids(test_logits)
+        test_examples_df = test_dataset.to_pandas()
+
+        log_train_predictions(
+            build_prediction_rows(
+                train_dataset.to_pandas(),
+                predictions=train_pred_ids,
+                labels=train_labels,
+                id2label=id2label,
+                confidences=compute_pred_confidences(train_logits),
+            )
+        )
+
+        log_test_predictions(
+            build_prediction_rows(
+                test_examples_df,
+                predictions=test_pred_ids,
+                labels=test_labels,
+                id2label=id2label,
+                confidences=compute_pred_confidences(test_logits),
+            )
+        )
 
         metrics_report = calc_metrics_for_models(
             eval_models=[
@@ -199,7 +227,7 @@ def run_evaluation(config: VideoMaeTemporalFusionScorePredictionOrdinalEvalCfg) 
         misses = get_top_k_worst_ordinal_errors(
             test_pred_ids,
             test_labels,
-            test_dataset.to_pandas(),
+            test_examples_df,
             id2label,
             top_k=config.top_k_worst,
         )

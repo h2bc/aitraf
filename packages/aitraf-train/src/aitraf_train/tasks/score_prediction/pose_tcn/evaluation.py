@@ -31,7 +31,12 @@ from aitraf_train.metrics import (
     r2,
     rmse,
 )
-from aitraf_train.tracking import build_training_params, params_to_df
+from aitraf_train.tracking import (
+    build_training_params,
+    log_test_predictions,
+    log_train_predictions,
+    params_to_df,
+)
 from aitraf_train.models.pose_tcn import TCNRegressor
 from aitraf_core.processing.models.pose_tcn import process_sample
 from aitraf_train.data.collate import build_collate
@@ -186,6 +191,18 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
         mlflow.log_metrics(all_metrics)
         metrics_df = metrics_to_df(metrics_report)
         mlflow.log_table(metrics_df, "metrics_table.json")
+        train_prediction_rows = pd.DataFrame(train_dataset.manifest_rows())
+        train_prediction_rows["pred_id"] = train_predictions
+        train_prediction_rows["label"] = train_predictions
+        train_prediction_rows["actual_id"] = train_labels
+        train_prediction_rows["actual_label"] = train_labels
+        log_train_predictions(train_prediction_rows)
+        test_examples_df = pd.DataFrame(test_dataset.manifest_rows())
+        test_examples_df["pred_id"] = test_predictions
+        test_examples_df["label"] = test_predictions
+        test_examples_df["actual_id"] = test_labels
+        test_examples_df["actual_label"] = test_labels
+        log_test_predictions(test_examples_df)
         scatter_fig = get_predicted_vs_actual_scatter_figure(
             test_predictions, test_labels
         )
@@ -202,7 +219,7 @@ def run_evaluation(config: PoseTcnScorePredictionEvalCfg) -> None:
         worst_misses = get_top_k_worst_errors(
             test_predictions,
             test_labels,
-            pd.DataFrame(test_dataset.manifest_rows()),
+            test_examples_df,
             top_k=config.top_k_worst,
         )
 

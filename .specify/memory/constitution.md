@@ -1,17 +1,18 @@
 <!--
 Sync Impact Report
-Version change: 1.0.0 -> 1.1.0
+Version change: 1.2.0 -> 1.3.0
 Modified principles:
-- II. Preserve Repository Architecture -> II. Package By Feature
-- IV. Functional Style Preferred -> IV. Functional Programming Preferred
-Added sections:
 - None
+Added sections:
+- VII. Required Types Over Defensive Normalization
 Removed sections:
 - None
 Templates requiring updates:
 - ✅ .specify/templates/plan-template.md
 - ✅ .specify/templates/spec-template.md
 - ✅ .specify/templates/tasks-template.md
+Runtime guidance requiring updates:
+- ✅ AGENTS.md
 Follow-up TODOs:
 - None
 -->
@@ -62,6 +63,25 @@ configs, manifests, seeds where applicable, and logged artifacts. Notebook
 exploration is allowed, but production behavior MUST live in versioned modules
 and command surfaces that can be rerun by another developer.
 
+### VI. No Legacy Compatibility
+The repository does not maintain legacy compatibility contracts. When behavior,
+APIs, configs, schemas, command surfaces, or artifact formats change, the change
+MUST update in-repository callers, tests, docs, specs, and validation commands to
+the new shape directly. Implementations MUST remove obsolete paths, aliases,
+shims, compatibility layers, deprecated parameters, dual-read or dual-write
+bridges, and dead code in the same change instead of preserving old and new
+behavior side by side.
+
+### VII. Required Types Over Defensive Normalization
+Code MUST require one explicit representation at each boundary. Function
+signatures, schemas, configs, and artifact readers MUST declare the single
+accepted type and shape, then reject anything else with a clear error.
+Implementations MUST NOT accept broad unions, `Any`/`object`, alternate field
+spellings, scalar-or-list variants, path-or-dict variants, stringified structured
+data, or recursive coercion just to be defensive. Parsing external input into
+the required schema at the boundary is allowed; accepting multiple alternative
+schemas and reconciling them through fallback conversion branches is not.
+
 ## Repository Constraints
 
 - Pipeline behavior MUST be expressed through repository-managed code and
@@ -72,7 +92,11 @@ and command surfaces that can be rerun by another developer.
   documented storage locations or registered tracking systems, not ad hoc paths.
 - Feature work that changes package boundaries, manifests, labels,
   preprocessing, or metrics MUST document the affected inputs, outputs, and
-  compatibility assumptions in the feature spec and implementation plan.
+  migration and removal assumptions in the feature spec and implementation plan.
+- Feature work MUST remove superseded behavior instead of leaving compatibility
+  scaffolding, deprecation layers, or unused alternatives behind.
+- Feature work MUST define required input and artifact shapes explicitly and
+  reject unexpected types instead of normalizing many possible representations.
 - Notebooks MAY be used for analysis, but any relied-on production logic MUST be
   migrated into the owning package, command, config, or other versioned repo
   surface.
@@ -83,12 +107,15 @@ and command surfaces that can be rerun by another developer.
   preserves package-by-feature ownership while avoiding excessive fallbacks.
 - Every implementation plan MUST include a constitution check covering fallback
   behavior, package-by-feature architecture fit, function decomposition,
-  functional-programming and state decisions, and reproducibility impact.
+  functional-programming and state decisions, reproducibility impact, and
+  removal of legacy compatibility paths, and avoidance of defensive
+  multi-type normalization.
 - Every task list MUST include validation work. Automated tests SHOULD be added
   when practical, and command-level smoke validation is REQUIRED for pipeline
   changes even when full tests are not feasible.
 - Code review MUST reject changes that add duplicate pipeline branches, hidden
-  defaulting behavior, notebook-only production logic, or unreproducible run
+  defaulting behavior, compatibility shims, deprecated aliases, defensive
+  multi-type unification, notebook-only production logic, or unreproducible run
   paths without explicit justification.
 - Documentation updates are REQUIRED whenever a change alters command usage,
   configuration surfaces, architecture boundaries, or reproducibility assumptions.
@@ -110,4 +137,4 @@ The implementation plan, generated tasks, and review process MUST treat
 constitution violations as blockers unless the plan records a specific, reviewed
 exception and explains why the simpler compliant alternative was rejected.
 
-**Version**: 1.1.0 | **Ratified**: 2026-06-19 | **Last Amended**: 2026-06-19
+**Version**: 1.3.0 | **Ratified**: 2026-06-19 | **Last Amended**: 2026-07-02

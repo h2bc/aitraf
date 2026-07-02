@@ -1,32 +1,31 @@
 # aitraf-api
 
-FastAPI inference surface for the AITRAF demo frontend.
+FastAPI demo API that serves precomputed AITRAF predictions from MLflow
+artifacts. The API does not load models or run live inference.
 
 ## Environment
 
 Required at app startup:
 
-- `AITRAF_CLASSIFICATION_MODEL_URI`: MLflow model URI for trick classification, for example `models:/aitraf-trick-classification@infant`.
-- `AITRAF_AQA_MODEL_URI`: MLflow model URI for temporal-fusion trick AQA, for example `models:/aitraf-trick-aqa-temporal-fusion@infant`.
-- `AITRAF_API_DEVICE`: inference device policy: `auto`, `cpu`, or `cuda`.
-- `AITRAF_DATA_PATH`: repo data directory; manifests are derived from this.
-- `AITRAF_STORAGE_PATH`: repo storage directory; clips and VideoMAE features are derived from this.
-
-Required for protected endpoints:
-
-- `AITRAF_API_TOKEN`: bearer token expected from the frontend.
-
-Required before registered model inference can run:
-
+- `AITRAF_API_TOKEN`: bearer token for protected endpoints.
+- `AITRAF_CLASSIFICATION_PREDICTIONS_RUN_ID`: MLflow run containing classification `test_predictions.json`.
+- `AITRAF_AQA_PREDICTIONS_RUN_ID`: MLflow run containing AQA `test_predictions.json`.
 - `MLFLOW_TRACKING_URI`: MLflow tracking server URI.
-- Any MLflow credentials needed by the target deployment.
+- Any MLflow credentials required by the deployment.
+- S3-compatible artifact store credentials required by MLflow artifact download,
+  such as `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ENDPOINT_URL`, and
+  `AWS_DEFAULT_REGION`. For S3-compatible artifact stores, pass
+  `MLFLOW_S3_ENDPOINT_URL="${AWS_ENDPOINT_URL}"` as well.
 
-Optional for demo clip hydration at startup:
+Validation run IDs:
 
-- `AITRAF_API_DEMO_CLIPS_DOWNLOAD`: set to `1`, `true`, `yes`, or `on` to download the currently selected demo clips into `AITRAF_STORAGE_PATH/data/clips` before the API finishes startup.
-- `AITRAF_API_DEMO_CLIPS_FORCE_DOWNLOAD`: set to `1`, `true`, `yes`, or `on` to re-download demo clips even when they already exist locally.
-- `AWS_ENDPOINT_URL`, `AWS_DEFAULT_REGION`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY`: required when demo clip download is enabled.
+```bash
+export AITRAF_CLASSIFICATION_PREDICTIONS_RUN_ID="2b2208e417e34e2198bb108e4f683cf9"
+export AITRAF_AQA_PREDICTIONS_RUN_ID="da6a8082c5e646448c7a79cd124b8e09"
+```
 
+The artifact path is fixed in code as `test_predictions.json`; do not configure
+artifact paths through environment variables.
 
 ## Run Locally
 
@@ -34,69 +33,56 @@ Optional for demo clip hydration at startup:
 task api:run
 ```
 
-FastAPI serves interactive Swagger docs at `http://localhost:8000/docs` and
-OpenAPI JSON at `http://localhost:8000/openapi.json`.
+On startup the API downloads both prediction artifacts, matches rows by
+`video_id`, and stores the final response in memory.
+
+## Endpoint
+
+```bash
+curl --fail \
+  -H "Authorization: Bearer ${AITRAF_API_TOKEN}" \
+  http://localhost:8000/demo-predictions
+```
+
+The response is a JSON array. Each item contains demo video metadata plus:
+
+- `predictions.trick_classification`
+- `predictions.trick_aqa`
 
 ## Test
 
 ```bash
-task api:test
+uv run --package aitraf-api pytest packages/aitraf-api/tests/features/demo_predictions
 ```
 
-Endpoint tests mock model prediction and are split by feature under
-`packages/aitraf-api/tests`.
+The endpoint tests cover the successful response shape and missing
+authentication.
 
 ## Docker Image
 
-Build the production API image from the repository root:
+Build from the repository root:
 
 ```bash
-docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:local .
+docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:precomputed .
 ```
 
-The image installs `aitraf-api` and `aitraf-core` and includes the small repo
-`data/` directory for manifests and vocabularies. It does not include train
-package code, committed secrets, model artifacts, feature caches, clips, or full
-storage contents; the root `.dockerignore` keeps `storage/` out of the build
-context. Demo clips can be hydrated at runtime with `AITRAF_API_DEMO_CLIPS_DOWNLOAD=1`.
-
-Run with explicit runtime settings and mounted storage:
+Run with MLflow credentials and prediction run IDs:
 
 ```bash
 docker run --rm -p 8000:8000 \
-  -e AITRAF_API_TOKEN="$AITRAF_API_TOKEN" \
-  -e AITRAF_CLASSIFICATION_MODEL_URI="$AITRAF_CLASSIFICATION_MODEL_URI" \
-  -e AITRAF_AQA_MODEL_URI="$AITRAF_AQA_MODEL_URI" \
-  -e AITRAF_API_DEVICE="$AITRAF_API_DEVICE" \
-  -e AITRAF_DATA_PATH=/workspace/data \
-  -e AITRAF_STORAGE_PATH=/workspace/storage \
-  -e MLFLOW_TRACKING_URI="$MLFLOW_TRACKING_URI" \
-  aitraf-api:local
+  -e AITRAF_API_TOKEN="${AITRAF_API_TOKEN}" \
+  -e MLFLOW_TRACKING_URI="${MLFLOW_TRACKING_URI}" \
+  -e MLFLOW_TRACKING_USERNAME="${MLFLOW_TRACKING_USERNAME}" \
+  -e MLFLOW_TRACKING_PASSWORD="${MLFLOW_TRACKING_PASSWORD}" \
+  -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+  -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+  -e AWS_ENDPOINT_URL="${AWS_ENDPOINT_URL}" \
+  -e MLFLOW_S3_ENDPOINT_URL="${AWS_ENDPOINT_URL}" \
+  -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
+  -e AITRAF_CLASSIFICATION_PREDICTIONS_RUN_ID="2b2208e417e34e2198bb108e4f683cf9" \
+  -e AITRAF_AQA_PREDICTIONS_RUN_ID="da6a8082c5e646448c7a79cd124b8e09" \
+  aitraf-api:precomputed
 ```
 
-## Temporal-Fusion Trick AQA Smoke
-
-Fetch demo videos, then use one returned `id` for trick AQA:
-
-```bash
-curl -H "Authorization: Bearer $AITRAF_API_TOKEN" \
-  http://localhost:8000/demo-videos
-
-curl -X POST -H "Authorization: Bearer $AITRAF_API_TOKEN" \
-  "http://localhost:8000/inference/trick-aqa/{id}"
-```
-
-Expected response shape:
-
-```json
-{
-  "video_id": "{id}",
-  "prediction": {"label": "3", "confidence": 0.72},
-  "ground_truth": {"label": "3"},
-  "model": {"kind": "video_mae_temporal_fusion"}
-}
-```
-
-## Architecture Boundary
-
-Runtime video/frame processing is delegated to `aitraf-core`.
+The image is CPU-only and does not install `aitraf-core`, Torch, Transformers,
+CUDA dependencies, or ffmpeg.
