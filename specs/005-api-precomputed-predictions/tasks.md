@@ -55,7 +55,7 @@
 ### Implementation for User Story 1
 
 - [X] T018 [US1] Implement startup preparation of the final demo predictions response in `packages/aitraf-api/src/aitraf_api/app.py` by downloading artifacts, matching classification/AQA rows by `video_id`, and storing the response in app state
-- [X] T019 [US1] Implement matching and response construction helpers in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/service.py`
+- [X] T019 [US1] Implement startup loading, matching, and response construction helpers in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/loader.py`
 - [X] T020 [US1] Implement authenticated `GET /demo-predictions` in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/route.py`
 - [X] T021 [US1] Export the `demo_predictions` router in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/__init__.py`
 - [X] T022 [US1] Update route registration in `packages/aitraf-api/src/aitraf_api/features/__init__.py` to include `demo_predictions` and keep `health`

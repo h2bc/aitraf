@@ -13,19 +13,13 @@ router = APIRouter(
 )
 
 
-def get_demo_predictions(request: Request) -> list[DemoPrediction]:
-    return request.app.state.demo_predictions
-
-
 @router.get(
     "",
     response_model=list[DemoPrediction],
     dependencies=[Depends(require_app_token)],
 )
-def list_demo_predictions(
-    response: list[DemoPrediction] = Depends(get_demo_predictions),
-) -> list[DemoPrediction]:
-    return response
+def list_demo_predictions(request: Request) -> list[DemoPrediction]:
+    return request.app.state.demo_predictions
 
 
 __all__ = ["router"]

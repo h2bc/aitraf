@@ -9,33 +9,14 @@ from fastapi import FastAPI
 
 from aitraf_api.config import Settings, load_settings
 from aitraf_api.features import router
-from aitraf_api.features.demo_predictions.artifacts import (
-    PredictionArtifactSource,
-    download_prediction_rows,
-)
-from aitraf_api.features.demo_predictions.service import build_demo_predictions_response
+from aitraf_api.features.demo_predictions.loader import load_demo_predictions
 
 
 def create_app(
     *,
     settings: Settings,
 ) -> FastAPI:
-    classification_rows = download_prediction_rows(
-        PredictionArtifactSource(
-            task="trick_classification",
-            run_id=settings.classification_predictions_run_id,
-        )
-    )
-    aqa_rows = download_prediction_rows(
-        PredictionArtifactSource(
-            task="trick_aqa",
-            run_id=settings.aqa_predictions_run_id,
-        )
-    )
-    demo_predictions = build_demo_predictions_response(
-        classification_rows=classification_rows,
-        aqa_rows=aqa_rows,
-    )
+    demo_predictions = load_demo_predictions(settings)
 
     app = FastAPI(title="AITRAF Demo Predictions API", version="0.1.0")
     app.state.settings = settings
