@@ -6,9 +6,9 @@ The API uses precomputed prediction artifacts from MLflow. It does not load
 models, decode videos, run feature extraction, or perform live inference at
 request time.
 
-At startup, the app loads configured prediction artifacts, prepares demo
-prediction records in memory, and uses API-owned S3 configuration to generate
-browser-playable presigned video URLs.
+At startup, the app loads configured prediction artifacts and prepares demo
+prediction records in memory. When serving those records, it uses API-owned S3
+configuration to generate browser-playable presigned video URLs.
 
 ## Configuration
 

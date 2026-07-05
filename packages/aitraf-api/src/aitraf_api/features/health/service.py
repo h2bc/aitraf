@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from aitraf_api.schemas import HealthResponse
+from aitraf_api.features.health.schemas import HealthResponse
 
 
 def get_health() -> HealthResponse:

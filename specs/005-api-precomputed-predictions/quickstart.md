@@ -89,8 +89,8 @@ docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:precomputed .
 After implementation, run the built image with supplied run IDs that contain
 full prediction artifacts. This is the end-to-end validation path: the API
 container must download both `test_predictions.json` artifacts from MLflow at
-startup, match them by `video_id`, cache the final response in memory, and serve
-that response from `GET /demo-predictions`.
+startup, match them by `video_id`, cache the matched records in memory, and
+serve `GET /demo-predictions`.
 
 Do not copy prediction artifacts into the image or mount local prediction files
 for this smoke test. The only prediction inputs are the two MLflow run IDs:

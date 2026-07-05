@@ -1,37 +1,8 @@
-"""FastAPI response schemas for the demo predictions API."""
+"""Shared FastAPI response schemas."""
 
 from __future__ import annotations
 
-from typing import Literal
-
-from pydantic import BaseModel, Field
-
-
-class HealthResponse(BaseModel):
-    status: Literal["ok"]
-
-
-class GroundTruth(BaseModel):
-    trick: str
-    execution_score: str
-
-
-class TaskPrediction(BaseModel):
-    label: str
-    confidence: float = Field(ge=0.0, le=1.0)
-
-
-class TaskPredictions(BaseModel):
-    trick_classification: TaskPrediction
-    trick_aqa: TaskPrediction
-
-
-class DemoPrediction(BaseModel):
-    video_id: str
-    video_url: str
-    person: str
-    ground_truth: GroundTruth
-    predictions: TaskPredictions
+from pydantic import BaseModel
 
 
 class ErrorResponse(BaseModel):
@@ -39,10 +10,5 @@ class ErrorResponse(BaseModel):
 
 
 __all__ = [
-    "DemoPrediction",
     "ErrorResponse",
-    "GroundTruth",
-    "HealthResponse",
-    "TaskPrediction",
-    "TaskPredictions",
 ]

@@ -9,6 +9,8 @@ from typing import Any
 
 import mlflow
 
+from aitraf_api.config import Settings
+
 TEST_PREDICTIONS_ARTIFACT = "test_predictions.json"
 
 
@@ -25,6 +27,24 @@ class PredictionArtifactSource:
 def download_prediction_rows(source: PredictionArtifactSource) -> list[dict[str, Any]]:
     path = download_prediction_artifact(source)
     return read_prediction_rows(path)
+
+
+def download_demo_prediction_rows(
+    settings: Settings,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    classification_rows = download_prediction_rows(
+        PredictionArtifactSource(
+            task="trick_classification",
+            run_id=settings.classification_predictions_run_id,
+        )
+    )
+    aqa_rows = download_prediction_rows(
+        PredictionArtifactSource(
+            task="trick_aqa",
+            run_id=settings.aqa_predictions_run_id,
+        )
+    )
+    return classification_rows, aqa_rows
 
 
 def download_prediction_artifact(source: PredictionArtifactSource) -> Path:
@@ -66,6 +86,7 @@ __all__ = [
     "PredictionArtifactError",
     "PredictionArtifactSource",
     "TEST_PREDICTIONS_ARTIFACT",
+    "download_demo_prediction_rows",
     "download_prediction_artifact",
     "download_prediction_rows",
     "read_prediction_rows",

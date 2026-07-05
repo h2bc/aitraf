@@ -22,7 +22,8 @@ One row from a downloaded prediction artifact.
 - `video_id`: video identifier used for filtering.
 - `label`: predicted label or score display value.
 - `confidence`: optional confidence value when the artifact provides it.
-- `s3_path`: internal S3 video path used by the API to generate `video_url`.
+- `s3_path`: artifact source path converted by the API into an internal S3
+  object key for URL signing.
 - `person`: display metadata when present.
 - `trick`: ground-truth trick label when present.
 - `execution_score`: ground-truth AQA score when present.
@@ -65,8 +66,9 @@ Response from `GET /demo-predictions`.
   - `predictions.trick_aqa.confidence`
 
 **Rules**:
-- Response is built at startup by matching the two downloaded prediction row
-  lists by `video_id`.
+- Internal records are built at startup by matching the two downloaded
+  prediction row lists by `video_id`; `video_url` is generated while serving
+  `GET /demo-predictions`.
 - Raw artifact `s3_path` values are not returned publicly.
 - Task prediction objects do not repeat video metadata or raw artifact metadata;
   shared display fields live on the demo prediction record.

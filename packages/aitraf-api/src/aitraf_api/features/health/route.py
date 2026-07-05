@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from aitraf_api.features.health.schemas import HealthResponse
 from aitraf_api.features.health.service import get_health
-from aitraf_api.schemas import HealthResponse
 
 router = APIRouter()
 

@@ -27,10 +27,12 @@ def create_video_url_presigner(
     )
 
     def presign_video_url(s3_path: str) -> str:
-        key = urlparse(s3_path).path.removeprefix("/")
         return s3_client.generate_presigned_url(
             "get_object",
-            Params={"Bucket": aws_bucket, "Key": key},
+            Params={
+                "Bucket": aws_bucket,
+                "Key": urlparse(s3_path).path.removeprefix("/"),
+            },
             ExpiresIn=VIDEO_URL_EXPIRATION_SECONDS,
             HttpMethod="GET",
         )

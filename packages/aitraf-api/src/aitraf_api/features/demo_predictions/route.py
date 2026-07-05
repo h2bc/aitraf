@@ -5,7 +5,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Request
 
 from aitraf_api.auth import require_app_token
-from aitraf_api.schemas import DemoPrediction
+from aitraf_api.features.demo_predictions.schemas import DemoPrediction
+from aitraf_api.features.demo_predictions.service import build_demo_predictions_response
 
 router = APIRouter(
     prefix="/demo-predictions",
@@ -19,7 +20,11 @@ router = APIRouter(
     dependencies=[Depends(require_app_token)],
 )
 def list_demo_predictions(request: Request) -> list[DemoPrediction]:
-    return request.app.state.demo_predictions
+    return build_demo_predictions_response(
+        classification_rows=request.app.state.classification_prediction_rows,
+        aqa_rows=request.app.state.aqa_prediction_rows,
+        presign_video_url=request.app.state.presign_video_url,
+    )
 
 
 __all__ = ["router"]

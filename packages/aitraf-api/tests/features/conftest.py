@@ -6,12 +6,6 @@ from fastapi.testclient import TestClient
 
 from aitraf_api.config import Settings
 from aitraf_api.features import router
-from aitraf_api.schemas import (
-    DemoPrediction,
-    GroundTruth,
-    TaskPrediction,
-    TaskPredictions,
-)
 
 
 @pytest.fixture()
@@ -31,34 +25,54 @@ def settings() -> Settings:
 
 
 @pytest.fixture()
-def demo_predictions_response(video_id: str) -> list[DemoPrediction]:
+def classification_prediction_rows(video_id: str) -> list[dict]:
     return [
-        DemoPrediction(
-            video_id=video_id,
-            video_url=f"https://s3.example.test/aitraf/clips/{video_id}?signed=true",
-            person="person-a",
-            ground_truth=GroundTruth(trick="mizou", execution_score="3"),
-            predictions=TaskPredictions(
-                trick_classification=TaskPrediction(
-                    label="mizou",
-                    confidence=0.91,
-                ),
-                trick_aqa=TaskPrediction(
-                    label="3",
-                    confidence=0.82,
-                ),
-            ),
-        )
+        {
+            "video_id": video_id,
+            "s3_path": f"s3://aitraf/clips/{video_id}",
+            "person": "person-a",
+            "trick": "mizou",
+            "execution_score": "3",
+            "pred_id": 2,
+            "label": "mizou",
+            "confidence": 0.91,
+        }
+    ]
+
+
+@pytest.fixture()
+def aqa_prediction_rows(video_id: str) -> list[dict]:
+    return [
+        {
+            "video_id": video_id,
+            "s3_path": f"s3://aitraf/clips/{video_id}",
+            "person": "person-a",
+            "trick": "mizou",
+            "execution_score": "3",
+            "pred_id": 1,
+            "label": "3",
+            "confidence": 0.82,
+        }
     ]
 
 
 @pytest.fixture()
 def client(
     settings: Settings,
-    demo_predictions_response: list[DemoPrediction],
+    classification_prediction_rows: list[dict],
+    aqa_prediction_rows: list[dict],
 ) -> TestClient:
+    presign_count = 0
+
+    def presign_video_url(s3_path: str) -> str:
+        nonlocal presign_count
+        presign_count += 1
+        return f"https://s3.example.test/{s3_path.removeprefix('s3://')}?signed={presign_count}"
+
     app = FastAPI()
     app.state.settings = settings
-    app.state.demo_predictions = demo_predictions_response
+    app.state.classification_prediction_rows = classification_prediction_rows
+    app.state.aqa_prediction_rows = aqa_prediction_rows
+    app.state.presign_video_url = presign_video_url
     app.include_router(router)
     return TestClient(app)
