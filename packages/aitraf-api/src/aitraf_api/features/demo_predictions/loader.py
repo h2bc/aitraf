@@ -10,6 +10,10 @@ from aitraf_api.features.demo_predictions.artifacts import (
     PredictionArtifactSource,
     download_prediction_rows,
 )
+from aitraf_api.features.demo_predictions.videos import (
+    VideoUrlPresigner,
+    create_video_url_presigner,
+)
 from aitraf_api.schemas import (
     DemoPrediction,
     GroundTruth,
@@ -29,6 +33,10 @@ class PredictionRecord(TypedDict):
 
 
 def load_demo_predictions(settings: Settings) -> list[DemoPrediction]:
+    presign_video_url = create_video_url_presigner(
+        aws_endpoint_url=settings.aws_endpoint_url,
+        aws_bucket=settings.aws_bucket,
+    )
     classification_rows = download_prediction_rows(
         PredictionArtifactSource(
             task="trick_classification",
@@ -44,6 +52,7 @@ def load_demo_predictions(settings: Settings) -> list[DemoPrediction]:
     return build_demo_predictions_response(
         classification_rows=classification_rows,
         aqa_rows=aqa_rows,
+        presign_video_url=presign_video_url,
     )
 
 
@@ -51,6 +60,7 @@ def build_demo_predictions_response(
     *,
     classification_rows: list[PredictionRecord],
     aqa_rows: list[PredictionRecord],
+    presign_video_url: VideoUrlPresigner,
 ) -> list[DemoPrediction]:
     aqa_by_video_id = {row["video_id"]: row for row in aqa_rows}
 
@@ -64,7 +74,7 @@ def build_demo_predictions_response(
         predictions.append(
             DemoPrediction(
                 video_id=video_id,
-                s3_path=row["s3_path"],
+                video_url=presign_video_url(row["s3_path"]),
                 person=row["person"],
                 ground_truth=GroundTruth(
                     trick=row["trick"],

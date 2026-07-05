@@ -1,88 +1,52 @@
 # aitraf-api
 
-FastAPI demo API that serves precomputed AITRAF predictions from MLflow
-artifacts. The API does not load models or run live inference.
+FastAPI package for serving the AITRAF demo API.
 
-## Environment
+The API uses precomputed prediction artifacts from MLflow. It does not load
+models, decode videos, run feature extraction, or perform live inference at
+request time.
 
-Required at app startup:
+At startup, the app loads configured prediction artifacts, prepares demo
+prediction records in memory, and uses API-owned S3 configuration to generate
+browser-playable presigned video URLs.
 
-- `AITRAF_API_TOKEN`: bearer token for protected endpoints.
-- `AITRAF_CLASSIFICATION_PREDICTIONS_RUN_ID`: MLflow run containing classification `test_predictions.json`.
-- `AITRAF_AQA_PREDICTIONS_RUN_ID`: MLflow run containing AQA `test_predictions.json`.
-- `MLFLOW_TRACKING_URI`: MLflow tracking server URI.
-- Any MLflow credentials required by the deployment.
-- S3-compatible artifact store credentials required by MLflow artifact download,
-  such as `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ENDPOINT_URL`, and
-  `AWS_DEFAULT_REGION`. For S3-compatible artifact stores, pass
-  `MLFLOW_S3_ENDPOINT_URL="${AWS_ENDPOINT_URL}"` as well.
+## Configuration
 
-Validation run IDs:
+Runtime configuration is environment-based. See the root `.env.example` for the
+current variable names.
 
-```bash
-export AITRAF_CLASSIFICATION_PREDICTIONS_RUN_ID="2b2208e417e34e2198bb108e4f683cf9"
-export AITRAF_AQA_PREDICTIONS_RUN_ID="da6a8082c5e646448c7a79cd124b8e09"
-```
+Required configuration categories:
 
-The artifact path is fixed in code as `test_predictions.json`; do not configure
-artifact paths through environment variables.
+- API authentication token
+- MLflow tracking URI and credentials
+- classification and AQA prediction run IDs
+- S3-compatible endpoint, bucket, region, and credentials
 
-## Run Locally
+S3 credentials stay in the API runtime. Clients receive presigned HTTP(S) video
+URLs rather than raw S3 paths or credentials.
+
+## Package Layout
+
+- `src/aitraf_api/app.py`: FastAPI app factory and startup wiring
+- `src/aitraf_api/config.py`: environment-backed settings
+- `src/aitraf_api/auth.py`: bearer-token authentication
+- `src/aitraf_api/schemas.py`: public response schemas
+- `src/aitraf_api/features/health/`: health route
+- `src/aitraf_api/features/demo_predictions/`: prediction artifact loading,
+  response preparation, and route registration
+
+## Development
+
+Run the API through the repository task:
 
 ```bash
 task api:run
 ```
 
-On startup the API downloads both prediction artifacts, matches rows by
-`video_id`, and stores the final response in memory.
-
-## Endpoint
+Build the API image from the repository root:
 
 ```bash
-curl --fail \
-  -H "Authorization: Bearer ${AITRAF_API_TOKEN}" \
-  http://localhost:8000/demo-predictions
+docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:local .
 ```
 
-The response is a JSON array. Each item contains demo video metadata plus:
-
-- `predictions.trick_classification`
-- `predictions.trick_aqa`
-
-## Test
-
-```bash
-uv run --package aitraf-api pytest packages/aitraf-api/tests/features/demo_predictions
-```
-
-The endpoint tests cover the successful response shape and missing
-authentication.
-
-## Docker Image
-
-Build from the repository root:
-
-```bash
-docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:precomputed .
-```
-
-Run with MLflow credentials and prediction run IDs:
-
-```bash
-docker run --rm -p 8000:8000 \
-  -e AITRAF_API_TOKEN="${AITRAF_API_TOKEN}" \
-  -e MLFLOW_TRACKING_URI="${MLFLOW_TRACKING_URI}" \
-  -e MLFLOW_TRACKING_USERNAME="${MLFLOW_TRACKING_USERNAME}" \
-  -e MLFLOW_TRACKING_PASSWORD="${MLFLOW_TRACKING_PASSWORD}" \
-  -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
-  -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
-  -e AWS_ENDPOINT_URL="${AWS_ENDPOINT_URL}" \
-  -e MLFLOW_S3_ENDPOINT_URL="${AWS_ENDPOINT_URL}" \
-  -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
-  -e AITRAF_CLASSIFICATION_PREDICTIONS_RUN_ID="2b2208e417e34e2198bb108e4f683cf9" \
-  -e AITRAF_AQA_PREDICTIONS_RUN_ID="da6a8082c5e646448c7a79cd124b8e09" \
-  aitraf-api:precomputed
-```
-
-The image is CPU-only and does not install `aitraf-core`, Torch, Transformers,
-CUDA dependencies, or ffmpeg.
+The image is CPU-only and does not include live inference dependencies.

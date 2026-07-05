@@ -11,10 +11,11 @@ def test_demo_predictions_returns_prepared_response(
     response = client.get("/demo-predictions", headers=auth_headers)
 
     assert response.status_code == 200
-    assert response.json() == [
+    payload = response.json()
+    assert payload == [
         {
             "video_id": video_id,
-            "s3_path": f"s3://aitraf/clips/{video_id}",
+            "video_url": f"https://s3.example.test/aitraf/clips/{video_id}?signed=true",
             "person": "person-a",
             "ground_truth": {
                 "trick": "mizou",
@@ -32,6 +33,8 @@ def test_demo_predictions_returns_prepared_response(
             },
         }
     ]
+    assert "video_url" in payload[0]
+    assert "s3_path" not in payload[0]
 
 
 def test_demo_predictions_requires_authentication(client: TestClient) -> None:

@@ -62,16 +62,6 @@ unset AITRAF_AQA_PREDICTIONS_ARTIFACT_PATH
 uv run --package aitraf-api pytest packages/aitraf-api/tests/features/demo_predictions
 ```
 
-Expected coverage:
-
-- authenticated `/demo-predictions` returns demo prediction records with
-  matching classification and AQA prediction rows
-- unauthenticated `/demo-predictions` fails with `401`
-
-No `aitraf-train` tests are required for this API simplification. Train-side
-prediction export changes are validated by inspecting the supplied MLflow
-artifacts.
-
 ## Smoke Run
 
 ```bash
@@ -88,25 +78,11 @@ curl --fail \
   http://localhost:8000/demo-predictions
 ```
 
-Expected result:
-
-- response is a JSON array
-- each record has `predictions.trick_classification`
-- each record has `predictions.trick_aqa`
-- no model inference happens
-
 ## Docker Check
 
 ```bash
 docker build -f packages/aitraf-api/Dockerfile -t aitraf-api:precomputed .
 ```
-
-Expected result:
-
-- no CUDA base image
-- no ffmpeg install
-- no `aitraf-core` copy/install
-- no `torch` or `transformers` dependency in the API package
 
 ## Real Docker Smoke Test
 
@@ -130,6 +106,7 @@ docker run --rm -p 8000:8000 \
   -e AWS_ENDPOINT_URL="${AWS_ENDPOINT_URL}" \
   -e MLFLOW_S3_ENDPOINT_URL="${AWS_ENDPOINT_URL}" \
   -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
+  -e AWS_BUCKET="${AWS_BUCKET}" \
   -e AITRAF_CLASSIFICATION_PREDICTIONS_RUN_ID="2b2208e417e34e2198bb108e4f683cf9" \
   -e AITRAF_AQA_PREDICTIONS_RUN_ID="da6a8082c5e646448c7a79cd124b8e09" \
   aitraf-api:precomputed
@@ -143,24 +120,3 @@ curl --fail \
   -H "Authorization: Bearer ${AITRAF_API_TOKEN}" \
   http://localhost:8000/demo-predictions
 ```
-
-Expected result:
-
-- the image starts without live model config
-- the API downloads `test_predictions.json` from both configured MLflow runs
-- startup fails loudly if either artifact cannot be downloaded or parsed
-- `/demo-predictions` returns cached precomputed demo prediction records from
-  the in-memory startup result
-- no live inference dependencies or routes are required
-
-Current validation status:
-
-- Local API startup with the supplied MLflow run IDs succeeded and built a
-  matched demo response with 10 records.
-- API demo-predictions endpoint tests passed: `2 passed`.
-- Docker image build passed for `aitraf-api:precomputed`.
-- Real Docker startup downloaded both MLflow `test_predictions.json` artifacts
-  and served `/health` plus authenticated `/demo-predictions`.
-- In this workspace, the published host port returned connection refused even
-  though Docker reported the mapping, so endpoint smoke was verified through the
-  container's Docker bridge IP.

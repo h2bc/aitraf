@@ -22,7 +22,7 @@ One row from a downloaded prediction artifact.
 - `video_id`: video identifier used for filtering.
 - `label`: predicted label or score display value.
 - `confidence`: optional confidence value when the artifact provides it.
-- `s3_path`: video path used by the demo when present.
+- `s3_path`: internal S3 video path used by the API to generate `video_url`.
 - `person`: display metadata when present.
 - `trick`: ground-truth trick label when present.
 - `execution_score`: ground-truth AQA score when present.
@@ -57,6 +57,8 @@ Response from `GET /demo-predictions`.
 **Fields**:
 - Root JSON value is a list of demo prediction records.
 - Each record includes video metadata plus:
+  - `video_url`: 900-second presigned browser-playable HTTP(S) URL for the demo
+    video.
   - `predictions.trick_classification.label`
   - `predictions.trick_classification.confidence`
   - `predictions.trick_aqa.label`
@@ -65,6 +67,7 @@ Response from `GET /demo-predictions`.
 **Rules**:
 - Response is built at startup by matching the two downloaded prediction row
   lists by `video_id`.
+- Raw artifact `s3_path` values are not returned publicly.
 - Task prediction objects do not repeat video metadata or raw artifact metadata;
   shared display fields live on the demo prediction record.
 - No live inference fields or model runtime state are exposed.

@@ -14,6 +14,8 @@ class Settings:
     api_token: str
     classification_predictions_run_id: str
     aqa_predictions_run_id: str
+    aws_endpoint_url: str
+    aws_bucket: str
 
 
 def load_settings(
@@ -29,6 +31,8 @@ def load_settings(
             "AITRAF_CLASSIFICATION_PREDICTIONS_RUN_ID"
         ],
         aqa_predictions_run_id=env["AITRAF_AQA_PREDICTIONS_RUN_ID"],
+        aws_endpoint_url=env["AWS_ENDPOINT_URL"],
+        aws_bucket=env["AWS_BUCKET"],
     )
 
 

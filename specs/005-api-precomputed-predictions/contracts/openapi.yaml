@@ -53,15 +53,16 @@ components:
       type: object
       required:
         - video_id
-        - s3_path
+        - video_url
         - person
         - ground_truth
         - predictions
       properties:
         video_id:
           type: string
-        s3_path:
+        video_url:
           type: string
+          format: uri
         person:
           type: string
         ground_truth:

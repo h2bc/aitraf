@@ -25,6 +25,8 @@ def settings() -> Settings:
         api_token="test-token",
         classification_predictions_run_id="classification-run",
         aqa_predictions_run_id="aqa-run",
+        aws_endpoint_url="https://s3.example.test",
+        aws_bucket="aitraf",
     )
 
 
@@ -33,7 +35,7 @@ def demo_predictions_response(video_id: str) -> list[DemoPrediction]:
     return [
         DemoPrediction(
             video_id=video_id,
-            s3_path=f"s3://aitraf/clips/{video_id}",
+            video_url=f"https://s3.example.test/aitraf/clips/{video_id}?signed=true",
             person="person-a",
             ground_truth=GroundTruth(trick="mizou", execution_score="3"),
             predictions=TaskPredictions(
