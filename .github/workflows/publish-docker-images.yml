@@ -115,7 +115,7 @@ jobs:
         run: |
           commit_title="$(git log -1 --pretty=%s "$GITHUB_SHA")"
           short_sha="${GITHUB_SHA::7}"
-          echo "name=${commit_title} (${short_sha})" >> "$GITHUB_OUTPUT"
+          echo "name=aitraf-demo: ${commit_title} (${short_sha})" >> "$GITHUB_OUTPUT"
           echo "backend_image=${REGISTRY}/${IMAGE_NAME}:sha-${short_sha}" >> "$GITHUB_OUTPUT"
 
       - name: Trigger deploy
