@@ -110,10 +110,22 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Prepare deploy metadata
+        id: deploy
+        run: |
+          commit_title="$(git log -1 --pretty=%s "$GITHUB_SHA")"
+          short_sha="${GITHUB_SHA::7}"
+          echo "name=${commit_title} (${short_sha})" >> "$GITHUB_OUTPUT"
+          echo "backend_image=${REGISTRY}/${IMAGE_NAME}:sha-${short_sha}" >> "$GITHUB_OUTPUT"
+
       - name: Trigger deploy
         env:
           GH_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
+          DEPLOY_NAME: ${{ steps.deploy.outputs.name }}
+          BACKEND_IMAGE: ${{ steps.deploy.outputs.backend_image }}
         run: |
           gh workflow run deploy.yml \
             --repo h2bc/aitraf-deploy \
-            --ref main
+            --ref main \
+            --field name="$DEPLOY_NAME" \
+            --field backend_image="$BACKEND_IMAGE"
