@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
 
 from aitraf_train.preparation.data_ops import download_clips as download_module
@@ -12,11 +13,11 @@ from aitraf_train.preparation.data_ops.download_clips import (
 
 class FakeS3Client:
     def __init__(self) -> None:
-        self.downloads: list[tuple[str, str, str]] = []
+        self.downloads: list[tuple[str, str]] = []
 
-    def download_file(self, bucket: str, key: str, filename: str) -> None:
-        self.downloads.append((bucket, key, filename))
-        Path(filename).write_text(f"{bucket}/{key}", encoding="utf-8")
+    def get_object(self, *, Bucket: str, Key: str) -> dict[str, BytesIO]:
+        self.downloads.append((Bucket, Key))
+        return {"Body": BytesIO(f"{Bucket}/{Key}".encode())}
 
 
 def test_build_clip_download_requests_from_labels_preserves_destination_paths(
@@ -95,6 +96,4 @@ def test_download_clips_force_redownloads_existing_file(
     )
 
     assert (output_dir / "a.mp4").read_text(encoding="utf-8") == "aitraf/clips/a.mp4"
-    assert client.downloads == [
-        ("aitraf", "clips/a.mp4", str(output_dir / "a.mp4"))
-    ]
+    assert client.downloads == [("aitraf", "clips/a.mp4")]

@@ -38,7 +38,7 @@ from aitraf_train.tracking import (
     params_to_df,
 )
 from aitraf_train.models.pose_tcn import TCNRegressor
-from aitraf_core.processing.models.pose_tcn import process_sample
+from aitraf_ml_core.processing.models.pose_tcn import process_sample
 from aitraf_train.data.collate import build_collate
 from aitraf_train.tracking.models.pose_tcn import TRAINING_PARAM_MAP
 

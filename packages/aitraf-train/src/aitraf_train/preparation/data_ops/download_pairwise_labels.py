@@ -12,7 +12,12 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from aitraf_core.cache import with_file_cache
-from aitraf_core.storage.s3 import build_s3_client, iter_keys, load_s3_settings
+from aitraf_core.storage.s3 import (
+    build_s3_client,
+    download_s3_uri,
+    iter_keys,
+    load_s3_settings,
+)
 from aitraf_train.logging import logger
 from aitraf_train.preparation.data_ops.schema import PairwiseLabelsSchema
 from aitraf_train.preparation.data_ops.utils import apply_dtypes
@@ -72,7 +77,9 @@ def download_pairwise_labels(config: PairwiseLabelDownloadConfig) -> Path:
         with_file_cache(
             path=local_path,
             force=config.force,
-            compute=lambda: s3_client.download_file(bucket, key, str(local_path)),
+            compute=lambda: download_s3_uri(
+                f"s3://{bucket}/{key}", local_path, s3_client=s3_client
+            ),
             on_cache_hit=lambda _: counts.update(skipped=1),
             on_cache_write=lambda _: counts.update(downloaded=1),
         )

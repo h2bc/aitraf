@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 from mlflow.data import from_huggingface
 from transformers import Trainer, TrainingArguments
 
-from aitraf_core.loading import load_mlflow_torch_model
-from aitraf_core.pre_processing.paths import video_feature_cache_dir
+from aitraf_ml_core.loading import load_mlflow_torch_model
+from aitraf_ml_core.pre_processing.paths import video_feature_cache_dir
 from aitraf_train.logging import logger
 from aitraf_train.metrics import (
     EvalModel,
@@ -35,7 +35,7 @@ from aitraf_train.data.labels import (
     build_label_transform,
     load_target_label_mappings,
 )
-from aitraf_core.processing.models.video_mae_temporal_fusion import (
+from aitraf_ml_core.processing.models.video_mae_temporal_fusion import (
     process_temporal_fusion_feature_sample,
 )
 from aitraf_train.data.collate import build_collate

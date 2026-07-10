@@ -26,8 +26,7 @@ export AITRAF_AQA_PREDICTIONS_RUN_ID="da6a8082c5e646448c7a79cd124b8e09"
 
 Verified artifact contents:
 
-- Classification run `2b2208e417e34e2198bb108e4f683cf9`: `test_predictions.json`, 100 rows, includes `video_id`, `s3_path`, `person`, `trick`, `execution_score`, and `label`.
-- AQA run `da6a8082c5e646448c7a79cd124b8e09`: `test_predictions.json`, 100 rows, includes `video_id`, `s3_path`, `person`, `trick`, `execution_score`, and `label`.
+- Prediction artifacts include `video_id`, `s3_path`, `person`, `key_foot`, `trick`, `execution_score`, and `label`. At startup the API creates missing middle-frame JPEG thumbnails under the bucket's `thumbnails/` prefix and returns presigned thumbnail URLs.
 
 Planning-time inspected run IDs that do not contain full prediction artifacts:
 

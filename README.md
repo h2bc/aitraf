@@ -5,7 +5,8 @@ feedback.
 
 ## Packages
 
-- `packages/aitraf-core`: shared runtime processing and model-input helpers.
+- `packages/aitraf-core`: lightweight shared cache, structured-file, and S3 helpers.
+- `packages/aitraf-ml-core`: reusable model loading, inference, preprocessing, tensor, and video runtime.
 - `packages/aitraf-train`: Hydra-driven data ops, label ops, preparation,
   training, evaluation, metrics, tracking, configs, and scripts.
 - `packages/aitraf-api`: FastAPI inference service for demo video listing,
@@ -58,5 +59,6 @@ environment requirements and endpoint behavior.
 ## Package Docs
 
 - [aitraf-core](packages/aitraf-core/README.md)
+- [aitraf-ml-core](packages/aitraf-ml-core/README.md)
 - [aitraf-train](packages/aitraf-train/README.md)
 - [aitraf-api](packages/aitraf-api/README.md)

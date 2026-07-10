@@ -22,7 +22,7 @@ from functools import partial
 
 from aitraf_train.logging import logger
 from aitraf_train.metrics import build_regression_metrics
-from aitraf_core.processing.models.video_mae import process_sample
+from aitraf_ml_core.processing.models.video_mae import process_sample
 from aitraf_train.data.collate import build_collate
 
 

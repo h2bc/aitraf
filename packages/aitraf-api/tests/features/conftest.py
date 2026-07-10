@@ -30,7 +30,9 @@ def classification_prediction_rows(video_id: str) -> list[dict]:
         {
             "video_id": video_id,
             "s3_path": f"s3://aitraf/clips/{video_id}",
+            "thumbnail_s3_path": f"s3://aitraf/thumbnails/{video_id.removesuffix('.mp4')}.jpg",
             "person": "person-a",
+            "key_foot": "right",
             "trick": "mizou",
             "execution_score": "3",
             "pred_id": 2,
@@ -46,7 +48,9 @@ def aqa_prediction_rows(video_id: str) -> list[dict]:
         {
             "video_id": video_id,
             "s3_path": f"s3://aitraf/clips/{video_id}",
+            "thumbnail_s3_path": f"s3://aitraf/thumbnails/{video_id.removesuffix('.mp4')}.jpg",
             "person": "person-a",
+            "key_foot": "right",
             "trick": "mizou",
             "execution_score": "3",
             "pred_id": 1,
@@ -64,7 +68,7 @@ def client(
 ) -> TestClient:
     presign_count = 0
 
-    def presign_video_url(s3_path: str) -> str:
+    def presign_asset_url(s3_path: str) -> str:
         nonlocal presign_count
         presign_count += 1
         return f"https://s3.example.test/{s3_path.removeprefix('s3://')}?signed={presign_count}"
@@ -73,6 +77,6 @@ def client(
     app.state.settings = settings
     app.state.classification_prediction_rows = classification_prediction_rows
     app.state.aqa_prediction_rows = aqa_prediction_rows
-    app.state.presign_video_url = presign_video_url
+    app.state.presign_asset_url = presign_asset_url
     app.include_router(router)
     return TestClient(app)

@@ -12,7 +12,7 @@ from ultralytics import YOLO
 
 from aitraf_train.logging import logger
 from aitraf_train.preparation.data_ops.utils import list_clip_files
-from aitraf_core.processing.video import get_video_rotation_deg
+from aitraf_ml_core.processing.video import get_video_rotation_deg
 
 
 @dataclass

@@ -62,8 +62,8 @@ MLflow run IDs that already contain full `test_predictions.json` artifacts.
 - Classification predictions run: `2b2208e417e34e2198bb108e4f683cf9`
 - AQA predictions run: `da6a8082c5e646448c7a79cd124b8e09`
 - Both runs were verified to contain `test_predictions.json` with 100 rows and
-  the required `video_id`, `s3_path`, `person`, `trick`, `execution_score`, and
-  `label` fields.
+  the required `video_id`, `s3_path`, `person`, `key_foot`, `trick`,
+  `execution_score`, and `label` fields.
 
 **Registered Models To Re-Evaluate**:
 - Trick classification registered model currently configured as
@@ -186,7 +186,8 @@ and [quickstart.md](./quickstart.md).
 1. Add shared `aitraf-train` full prediction export helpers and wire them into
    all evaluation scripts so each eval can log a full `test_predictions.json`
    artifact with one row per test example. Rows must include `video_id`, display
-   metadata (`s3_path`, `person`, `trick`, `execution_score` when available),
+   metadata (`s3_path`, `person`, `key_foot`, `trick`, `execution_score` when
+   available),
    predicted label, and optional confidence/metadata.
 2. Add config for two prediction run IDs:
    - `AITRAF_CLASSIFICATION_PREDICTIONS_RUN_ID`

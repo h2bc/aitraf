@@ -5,10 +5,10 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator
 from dataclasses import dataclass
+from pathlib import Path
 from urllib.parse import urlparse
 
 import boto3
-from botocore.exceptions import ClientError
 
 
 @dataclass(frozen=True)
@@ -104,6 +104,32 @@ def presign_s3_uri(
     )
 
 
+def download_s3_uri(uri: str, destination: Path, *, s3_client) -> None:
+    bucket, key = parse_s3_uri(uri)
+    body = s3_client.get_object(Bucket=bucket, Key=key)["Body"]
+    try:
+        with destination.open("wb") as output:
+            while chunk := body.read(1024 * 1024):
+                output.write(chunk)
+    finally:
+        body.close()
+
+
+def read_s3_uri(uri: str, *, s3_client) -> bytes:
+    bucket, key = parse_s3_uri(uri)
+    body = s3_client.get_object(Bucket=bucket, Key=key)["Body"]
+    try:
+        return body.read()
+    finally:
+        body.close()
+
+
+def upload_s3_uri(source: Path, uri: str, *, s3_client) -> None:
+    bucket, key = parse_s3_uri(uri)
+    with source.open("rb") as body:
+        s3_client.put_object(Bucket=bucket, Key=key, Body=body)
+
+
 def iter_keys(s3_client, *, bucket: str, prefix: str) -> Iterator[str]:
     paginator = s3_client.get_paginator("list_objects_v2")
     for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
@@ -114,23 +140,19 @@ def iter_keys(s3_client, *, bucket: str, prefix: str) -> Iterator[str]:
 
 
 def object_exists(s3_client, *, bucket: str, key: str) -> bool:
-    try:
-        s3_client.head_object(Bucket=bucket, Key=key)
-    except ClientError as exc:
-        code = str(exc.response.get("Error", {}).get("Code", ""))
-        if code in {"404", "NoSuchKey", "NotFound"}:
-            return False
-        raise
-    else:
-        return True
+    response = s3_client.list_objects_v2(Bucket=bucket, Prefix=key, MaxKeys=1)
+    return any(item.get("Key") == key for item in response.get("Contents", []))
 
 
 __all__ = [
     "S3Settings",
     "build_s3_client",
+    "download_s3_uri",
     "iter_keys",
     "load_s3_settings",
     "object_exists",
     "parse_s3_uri",
     "presign_s3_uri",
+    "read_s3_uri",
+    "upload_s3_uri",
 ]

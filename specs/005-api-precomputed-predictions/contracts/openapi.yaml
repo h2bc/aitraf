@@ -54,7 +54,9 @@ components:
       required:
         - video_id
         - video_url
+        - thumbnail_url
         - person
+        - key_foot
         - ground_truth
         - predictions
       properties:
@@ -63,7 +65,12 @@ components:
         video_url:
           type: string
           format: uri
+        thumbnail_url:
+          type: string
+          format: uri
         person:
+          type: string
+        key_foot:
           type: string
         ground_truth:
           $ref: "#/components/schemas/GroundTruth"

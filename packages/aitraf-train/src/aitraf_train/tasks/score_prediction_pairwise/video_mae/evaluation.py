@@ -39,7 +39,7 @@ from aitraf_train.data.labels import (
     load_target_label_mappings,
 )
 from aitraf_train.data.collate import build_collate
-from aitraf_core.loading import load_mlflow_transformers_model
+from aitraf_ml_core.loading import load_mlflow_transformers_model
 from aitraf_train.tracking.models.video_mae import TRAINING_PARAM_MAP
 from ..dataset import ScorePredictionPairwiseDataset
 from ..metrics import compute_pairwise_pred_labels

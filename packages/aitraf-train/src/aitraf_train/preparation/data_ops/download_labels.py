@@ -11,7 +11,12 @@ import pandas as pd
 from dotenv import load_dotenv
 
 from aitraf_core.cache import with_file_cache
-from aitraf_core.storage.s3 import build_s3_client, iter_keys, load_s3_settings
+from aitraf_core.storage.s3 import (
+    build_s3_client,
+    iter_keys,
+    load_s3_settings,
+    read_s3_uri,
+)
 from aitraf_train.logging import logger
 from aitraf_train.preparation.data_ops.schema import LabelsSchema
 from aitraf_train.preparation.data_ops.utils import apply_dtypes, apply_processors
@@ -73,7 +78,7 @@ def _download_labels(config: LabelDownloadConfig) -> Path:
     progress_step = max(1, len(keys) // 10)
 
     for idx, key in enumerate(keys, start=1):
-        body = s3_client.get_object(Bucket=bucket, Key=key)["Body"].read()
+        body = read_s3_uri(f"s3://{bucket}/{key}", s3_client=s3_client)
         text = body.decode("utf-8")
         rows.append(_flatten_labels_annotation(json.loads(text)))
 

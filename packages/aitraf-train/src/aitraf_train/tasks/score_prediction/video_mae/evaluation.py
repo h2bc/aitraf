@@ -34,9 +34,9 @@ from aitraf_train.tracking import (
     log_train_predictions,
     params_to_df,
 )
-from aitraf_core.processing.models.video_mae import process_sample
+from aitraf_ml_core.processing.models.video_mae import process_sample
 from aitraf_train.data.collate import build_collate
-from aitraf_core.loading import load_mlflow_transformers_model
+from aitraf_ml_core.loading import load_mlflow_transformers_model
 from aitraf_train.logging import logger
 from aitraf_train.tracking.models.video_mae import TRAINING_PARAM_MAP
 

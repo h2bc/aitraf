@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 from dotenv import load_dotenv
 
-from aitraf_core.storage.clips import (
+from aitraf_train.storage.clips import (
     ClipDownloadRequest,
     ClipDownloadResult,
     download_clips as download_core_clips,

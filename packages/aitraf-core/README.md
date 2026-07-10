@@ -1,23 +1,22 @@
 # aitraf-core
 
-`aitraf-core` owns reusable runtime processing and model-loading helpers shared
-by training and serving surfaces.
+`aitraf-core` contains lightweight behavior shared by the API, ML runtime, and
+training surfaces without pulling in the ML dependency stack.
 
-Owned code:
+Public surfaces:
 
-- `aitraf_core.pre_processing`: video-to-model-input helpers shared by data
-  pipelines and serving, including VideoMAE temporal-fusion feature extraction
-  utilities.
-- `aitraf_core.processing`: video frame loading/sampling, label transforms,
-  collate helpers, and model-input preparation.
-- `aitraf_core.processing.models`: reusable processors/wrappers for Pose TCN,
-  VideoMAE, and VideoMAE temporal-fusion inputs.
-- `aitraf_core.inference`: shared prediction helpers for decoding logits and
-  running VideoMAE inference.
-- `aitraf_core.loading`: model loaders grouped by artifact source, including
-  MLflow-trained artifacts and HuggingFace base components.
-- `aitraf_core.utils.huggingface` and `aitraf_core.utils.jsonl`: shared helper
-  code used by train-side workflows and the API.
+- `aitraf_core.cache`: generic file-cache control.
+- `aitraf_core.utils`: strict JSON and JSONL object readers.
+- `aitraf_core.storage.s3`: shared S3 settings, client creation, URI parsing,
+  object existence, key iteration, and URL presigning.
 
-Runtime outputs such as sampled frames, pose outputs, and feature tensors may be
-used by training and serving surfaces.
+Boto3 is the package's only third-party runtime dependency. Model loading,
+inference, tensors, video decoding, and model preprocessing belong to
+`aitraf-ml-core`. Clip-download orchestration belongs to `aitraf-train`.
+
+Missing settings, invalid URIs, missing files, and invalid structured-file shapes
+raise explicit errors; callers must not rely on fallback input representations.
+
+```bash
+uv run pytest packages/aitraf-core/tests
+```

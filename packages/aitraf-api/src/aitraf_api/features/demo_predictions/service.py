@@ -11,14 +11,30 @@ from aitraf_api.features.demo_predictions.schemas import (
     TaskPrediction,
     TaskPredictions,
 )
-from aitraf_api.features.demo_predictions.videos import VideoUrlPresigner
+from aitraf_api.features.demo_predictions.videos import AssetUrlPresigner
+
+
+def match_prediction_rows(
+    classification_rows: list[dict[str, Any]],
+    aqa_rows: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    aqa_by_video_id = {row["video_id"]: row for row in aqa_rows}
+    matched_classification = [
+        row for row in classification_rows if row["video_id"] in aqa_by_video_id
+    ]
+    if not matched_classification:
+        raise PredictionArtifactError(
+            "Classification and AQA prediction artifacts have no matching video_id rows"
+        )
+    matched_aqa = [aqa_by_video_id[row["video_id"]] for row in matched_classification]
+    return matched_classification, matched_aqa
 
 
 def build_demo_predictions_response(
     *,
     classification_rows: list[dict[str, Any]],
     aqa_rows: list[dict[str, Any]],
-    presign_video_url: VideoUrlPresigner,
+    presign_asset_url: AssetUrlPresigner,
 ) -> list[DemoPrediction]:
     aqa_by_video_id = {row["video_id"]: row for row in aqa_rows}
 
@@ -32,8 +48,10 @@ def build_demo_predictions_response(
         predictions.append(
             DemoPrediction(
                 video_id=video_id,
-                video_url=presign_video_url(row["s3_path"]),
+                video_url=presign_asset_url(row["s3_path"]),
+                thumbnail_url=presign_asset_url(row["thumbnail_s3_path"]),
                 person=row["person"],
+                key_foot=row["key_foot"],
                 ground_truth=GroundTruth(
                     trick=row["trick"],
                     execution_score=row["execution_score"],
@@ -59,4 +77,4 @@ def build_demo_predictions_response(
     return predictions
 
 
-__all__ = ["build_demo_predictions_response"]
+__all__ = ["build_demo_predictions_response", "match_prediction_rows"]

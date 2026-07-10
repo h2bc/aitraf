@@ -9,12 +9,13 @@ ENV UV_PROJECT_ENVIRONMENT=/workspace/.venv \
 COPY --from=ghcr.io/astral-sh/uv:0.9.5 /uv /uvx /usr/local/bin/
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates \
+    && apt-get install -y --no-install-recommends ca-certificates ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 
 COPY pyproject.toml uv.lock ./
+COPY packages/aitraf-core ./packages/aitraf-core
 COPY packages/aitraf-api/pyproject.toml ./packages/aitraf-api/pyproject.toml
 COPY packages/aitraf-api/src ./packages/aitraf-api/src
 

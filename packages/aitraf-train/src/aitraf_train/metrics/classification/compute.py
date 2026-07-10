@@ -7,7 +7,7 @@ from typing import List
 import numpy as np
 import torch
 
-from aitraf_core.inference.classification import (
+from aitraf_ml_core.inference.classification import (
     classification_confidences_from_logits,
     classification_ids_from_logits,
 )

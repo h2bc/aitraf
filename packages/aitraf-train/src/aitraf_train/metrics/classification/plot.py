@@ -10,8 +10,8 @@ from matplotlib.figure import Figure
 from sklearn.metrics import ConfusionMatrixDisplay, f1_score
 from torchcodec.decoders import VideoDecoder
 
-from aitraf_core.processing.sampling import sample_frame_indices
-from aitraf_core.processing.video import decode_video_frames
+from aitraf_ml_core.processing.sampling import sample_frame_indices
+from aitraf_ml_core.processing.video import decode_video_frames
 from aitraf_core.storage.s3 import (
     build_s3_client,
     load_s3_settings,

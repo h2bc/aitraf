@@ -21,6 +21,7 @@ WORKDIR /workspace
 
 COPY pyproject.toml uv.lock ./
 COPY packages/aitraf-core ./packages/aitraf-core
+COPY packages/aitraf-ml-core ./packages/aitraf-ml-core
 COPY packages/aitraf-train ./packages/aitraf-train
 
 RUN --mount=type=cache,target=/root/.cache/uv \

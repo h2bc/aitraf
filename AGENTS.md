@@ -1,14 +1,15 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/005-api-precomputed-predictions/plan.md
+at specs/006-split-core-ml-core/plan.md
 <!-- SPECKIT END -->
 
 ## Repository Conventions
 
 - Package by feature. Put feature-owned code in the package that owns the
   product surface: `packages/aitraf-api` for serving/API behavior,
-  `packages/aitraf-core` for reusable runtime processing, and
+  `packages/aitraf-core` for lightweight shared helpers,
+  `packages/aitraf-ml-core` for reusable ML runtime processing, and
   `packages/aitraf-train` for offline data, training, evaluation, metrics,
   tracking, Hydra configs, and scripts. Only promote code to shared packages
   when multiple feature surfaces genuinely need it.

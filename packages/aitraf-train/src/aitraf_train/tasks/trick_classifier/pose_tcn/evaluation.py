@@ -44,7 +44,7 @@ from aitraf_train.data.labels import (
     build_label_transform,
     load_target_label_mappings,
 )
-from aitraf_core.processing.models.pose_tcn import process_sample
+from aitraf_ml_core.processing.models.pose_tcn import process_sample
 from aitraf_train.data.collate import build_collate
 from aitraf_train.tracking.models.pose_tcn import TRAINING_PARAM_MAP
 

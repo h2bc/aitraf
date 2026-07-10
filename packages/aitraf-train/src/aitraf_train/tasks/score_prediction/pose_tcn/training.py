@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader, Subset
 
 from aitraf_train.data.datasets import PoseTCNDataset
 from aitraf_train.models.pose_tcn import TCNRegressor
-from aitraf_core.processing.models.pose_tcn import process_sample
+from aitraf_ml_core.processing.models.pose_tcn import process_sample
 from aitraf_train.data.collate import build_collate
 from aitraf_train.metrics.regression import build_regression_metrics
 

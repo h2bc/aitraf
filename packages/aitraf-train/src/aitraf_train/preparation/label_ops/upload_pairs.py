@@ -5,10 +5,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
-from aitraf_core.storage.s3 import build_s3_client, load_s3_settings, object_exists
+from aitraf_core.storage.s3 import (
+    build_s3_client,
+    load_s3_settings,
+    object_exists,
+    upload_s3_uri,
+)
 from aitraf_train.logging import logger
 
 
@@ -71,8 +75,8 @@ def upload_pairs(config: PairUploadConfig) -> int:
             continue
 
         try:
-            s3_client.upload_file(str(path), bucket, key)
-        except ClientError as exc:  # pragma: no cover - log only
+            upload_s3_uri(path, f"s3://{bucket}/{key}", s3_client=s3_client)
+        except Exception as exc:  # noqa: BLE001  # pragma: no cover - log only
             failed += 1
             logger.warning(
                 "Failed to upload {} -> s3://{}/{}: {}", path, bucket, key, exc

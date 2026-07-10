@@ -4,10 +4,10 @@
 label ops, training, evaluation, metrics, tracking, Hydra configs, and operator
 scripts.
 
-Shared runtime processing is imported from `aitraf_core`; it is not duplicated in
+Shared ML runtime processing is imported from `aitraf_ml_core`; it is not duplicated in
 train modules. For example, train-side feature extraction uses
-`aitraf_core.pre_processing`, `aitraf_core.processing.video`, and
-`aitraf_core.processing.models`.
+`aitraf_ml_core.pre_processing`, `aitraf_ml_core.processing.video`, and
+`aitraf_ml_core.processing.models`.
 
 ## Tasks
 
@@ -104,7 +104,7 @@ task train_eval -- task=score_prediction_ordinal model=video_mae_temporal_fusion
 - Download pairwise labels into one JSONL file.
 - Extract and cache VideoMAE features into `storage/data/video_mae_features/`.
   Temporal-fusion feature extraction delegates frame-to-pixel processing and
-  VideoMAE feature extraction to `aitraf_core.pre_processing`.
+  VideoMAE feature extraction to `aitraf_ml_core.pre_processing`.
 
 ### Prepare
 
@@ -177,8 +177,8 @@ task train:train_eval -- -m task=trick_classification,score_prediction_ordinal m
 ## Validation
 
 ```bash
-uv run python -m compileall -q packages/aitraf-core/src packages/aitraf-train/src packages/aitraf-api/src packages/aitraf-train/scripts
-uv run python -c "import aitraf_core, aitraf_train, aitraf_api"
+uv run python -m compileall -q packages/aitraf-core/src packages/aitraf-ml-core/src packages/aitraf-train/src packages/aitraf-api/src packages/aitraf-train/scripts
+uv run python -c "import aitraf_core, aitraf_ml_core, aitraf_train, aitraf_api"
 task --list
 ```
 

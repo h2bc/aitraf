@@ -8,7 +8,7 @@ from typing import Any, Callable
 import torch
 from transformers import VideoMAEImageProcessor
 
-from aitraf_core.processing.models.video_mae import process_video
+from aitraf_ml_core.processing.models.video_mae import process_video
 
 
 def process_pair_sample(

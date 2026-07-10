@@ -23,7 +23,9 @@ class TaskPredictions(BaseModel):
 class DemoPrediction(BaseModel):
     video_id: str
     video_url: str
+    thumbnail_url: str
     person: str
+    key_foot: str
     ground_truth: GroundTruth
     predictions: TaskPredictions
 
