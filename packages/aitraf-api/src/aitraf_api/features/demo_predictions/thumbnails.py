@@ -135,8 +135,6 @@ def generate_thumbnail(video_path: Path, thumbnail_path: Path) -> None:
                 str(video_path),
                 "-frames:v",
                 "1",
-                "-vf",
-                "scale=640:360:force_original_aspect_ratio=decrease",
                 "-q:v",
                 "3",
                 "-y",

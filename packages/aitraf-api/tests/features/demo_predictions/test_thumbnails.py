@@ -94,6 +94,27 @@ def test_ensure_prediction_thumbnails_generates_missing_object(
     assert client.uploads == [("aitraf", "thumbnails/sample.jpg")]
 
 
+def test_generate_thumbnail_preserves_source_dimensions(
+    monkeypatch: Any,
+    tmp_path: Path,
+) -> None:
+    command: list[str] = []
+
+    def run(args: list[str], **_kwargs: Any) -> None:
+        command.extend(args)
+        Path(args[-1]).write_bytes(b"jpeg")
+
+    monkeypatch.setattr(thumbnails.subprocess, "run", run)
+
+    thumbnails.generate_thumbnail(
+        tmp_path / "sample.mp4",
+        tmp_path / "thumbnail.jpg",
+    )
+
+    assert "-vf" not in command
+    assert not any(argument.startswith("scale=") for argument in command)
+
+
 def _settings() -> Any:
     return type(
         "Settings",
