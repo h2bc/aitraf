@@ -1,7 +1,7 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/006-split-core-ml-core/plan.md
+at specs/007-publish-demo-assets/plan.md
 <!-- SPECKIT END -->
 
 ## Repository Conventions
