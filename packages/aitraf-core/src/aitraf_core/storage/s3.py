@@ -144,10 +144,26 @@ def object_exists(s3_client, *, bucket: str, key: str) -> bool:
     return any(item.get("Key") == key for item in response.get("Contents", []))
 
 
+def copy_s3_object(
+    s3_client,
+    *,
+    source_bucket: str,
+    source_key: str,
+    destination_bucket: str,
+    destination_key: str,
+) -> None:
+    s3_client.copy_object(
+        Bucket=destination_bucket,
+        Key=destination_key,
+        CopySource={"Bucket": source_bucket, "Key": source_key},
+    )
+
+
 __all__ = [
     "S3Settings",
     "build_s3_client",
     "download_s3_uri",
+    "copy_s3_object",
     "iter_keys",
     "load_s3_settings",
     "object_exists",

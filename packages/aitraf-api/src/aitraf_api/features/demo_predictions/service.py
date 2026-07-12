@@ -11,7 +11,6 @@ from aitraf_api.features.demo_predictions.schemas import (
     TaskPrediction,
     TaskPredictions,
 )
-from aitraf_api.features.demo_predictions.videos import AssetUrlPresigner
 
 
 def match_prediction_rows(
@@ -34,7 +33,6 @@ def build_demo_predictions_response(
     *,
     classification_rows: list[dict[str, Any]],
     aqa_rows: list[dict[str, Any]],
-    presign_asset_url: AssetUrlPresigner,
 ) -> list[DemoPrediction]:
     aqa_by_video_id = {row["video_id"]: row for row in aqa_rows}
 
@@ -48,8 +46,8 @@ def build_demo_predictions_response(
         predictions.append(
             DemoPrediction(
                 video_id=video_id,
-                video_url=presign_asset_url(row["s3_path"]),
-                thumbnail_url=presign_asset_url(row["thumbnail_s3_path"]),
+                video_url=row["video_url"],
+                thumbnail_url=row["thumbnail_url"],
                 person=row["person"],
                 key_foot=row["key_foot"],
                 ground_truth=GroundTruth(

@@ -16,7 +16,7 @@ class Settings:
     aqa_predictions_run_id: str
     aws_endpoint_url: str
     aws_bucket: str
-
+    public_asset_bucket: str
 
 def load_settings(
     env: Mapping[str, str],
@@ -33,6 +33,7 @@ def load_settings(
         aqa_predictions_run_id=env["AITRAF_AQA_PREDICTIONS_RUN_ID"],
         aws_endpoint_url=env["AWS_ENDPOINT_URL"],
         aws_bucket=env["AWS_BUCKET"],
+        public_asset_bucket=env["AITRAF_PUBLIC_ASSET_BUCKET"],
     )
 
 

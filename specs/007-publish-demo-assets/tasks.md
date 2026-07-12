@@ -23,9 +23,9 @@ verified as distinct increments.
 **Purpose**: Establish the single required public-bucket configuration and
 document the runtime boundary before publication logic is introduced.
 
-- [ ] T001 Add required `public_asset_bucket: str` loading from `AITRAF_PUBLIC_ASSET_BUCKET` and strict source/public bucket validation in `packages/aitraf-api/src/aitraf_api/config.py`
-- [ ] T002 [P] Add `AITRAF_PUBLIC_ASSET_BUCKET` beside the existing shared endpoint, credentials, and private `AWS_BUCKET` in `.env.example`
-- [ ] T003 [P] Update API settings fixtures and missing/invalid public-bucket coverage in `packages/aitraf-api/tests/test_config.py` and `packages/aitraf-api/tests/features/conftest.py`
+- [x] T001 Add required `public_asset_bucket: str` loading from `AITRAF_PUBLIC_ASSET_BUCKET` and strict source/public bucket validation in `packages/aitraf-api/src/aitraf_api/config.py`
+- [x] T002 [P] Add `AITRAF_PUBLIC_ASSET_BUCKET` beside the existing shared endpoint, credentials, and private `AWS_BUCKET` in `.env.example`
+- [x] T003 [P] Update API settings fixtures and missing/invalid public-bucket coverage in `packages/aitraf-api/tests/test_config.py` and `packages/aitraf-api/tests/features/conftest.py`
 
 ---
 
@@ -36,10 +36,10 @@ story.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T004 Add exact object metadata inspection and same-client server-side bucket copy primitives with explicit not-found versus access/error behavior in `packages/aitraf-core/src/aitraf_core/storage/s3.py` and exports in `packages/aitraf-core/src/aitraf_core/storage/__init__.py`
-- [ ] T005 [P] Add core storage tests for metadata inspection, missing-object classification, copy arguments, and propagated permission/network failures in `packages/aitraf-core/tests/test_storage_s3.py`
-- [ ] T006 Define immutable selected/public demo asset types plus strict `video_id`, source URI, public-key, percent-encoded URL, provenance, deduplication, and collision helpers in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/assets.py`
-- [ ] T007 [P] Add pure-helper tests for `videos/<video_id>`, `thumbnails/<video-stem>.jpg`, endpoint slash normalization, URL encoding, cross-bucket rejection, invalid IDs, duplicate collapse, and conflicting mappings in `packages/aitraf-api/tests/features/demo_predictions/test_assets.py`
+- [x] T004 Use exact-key existence checks and add a same-client server-side bucket copy primitive in `packages/aitraf-core/src/aitraf_core/storage/s3.py` and `packages/aitraf-core/src/aitraf_core/storage/__init__.py`
+- [x] T005 [P] Add core storage tests for exact-key existence and copy arguments in `packages/aitraf-core/tests/test_storage_s3.py`
+- [x] T006 Define immutable selected/public demo asset types plus strict `video_id`, source URI, public-key, percent-encoded URL, deduplication, and collision helpers in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/assets.py`
+- [x] T007 [P] Add pure-helper tests for `videos/<video_id>`, `thumbnails/<video-stem>.jpg`, endpoint slash normalization, URL encoding, cross-bucket rejection, invalid IDs, duplicate collapse, and conflicting mappings in `packages/aitraf-api/tests/features/demo_predictions/test_assets.py`
 
 **Checkpoint**: Configuration, storage primitives, and deterministic asset
 contracts are ready for story implementation.
@@ -58,17 +58,17 @@ without any signing query parameters.
 
 ### Validation for User Story 1 ⚠️
 
-- [ ] T008 [P] [US1] Replace video/presigner tests with missing-video copy, existing-video reuse, public URL, and storage failure coverage in `packages/aitraf-api/tests/features/demo_predictions/test_videos.py`
-- [ ] T009 [P] [US1] Refactor thumbnail tests for public-bucket keys, missing-only source download/generation/upload, existing-thumbnail reuse, and explicit FFmpeg/upload failure in `packages/aitraf-api/tests/features/demo_predictions/test_thumbnails.py`
-- [ ] T010 [P] [US1] Replace signed-link response tests with exact constant public video/thumbnail URLs across repeated requests and zero request-time storage behavior in `packages/aitraf-api/tests/features/demo_predictions/test_demo_predictions.py`
+- [x] T008 [P] [US1] Replace video/presigner tests with missing-video copy, existing-video reuse, public URL, and storage failure coverage in `packages/aitraf-api/tests/features/demo_predictions/test_videos.py`
+- [x] T009 [P] [US1] Refactor thumbnail tests for public-bucket keys, missing-only source download/generation/upload, existing-thumbnail reuse, and explicit FFmpeg/upload failure in `packages/aitraf-api/tests/features/demo_predictions/test_thumbnails.py`
+- [x] T010 [P] [US1] Replace signed-link response tests with exact constant public video/thumbnail URLs across repeated requests and zero request-time storage behavior in `packages/aitraf-api/tests/features/demo_predictions/test_demo_predictions.py`
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Implement public video inspection, provenance validation, and missing-only private-to-public copy in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/assets.py`
-- [ ] T012 [US1] Refactor thumbnail preparation to generate and upload only missing public thumbnails and return provenance-validated public asset results in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/thumbnails.py`
-- [ ] T013 [US1] Replace the old startup video-download/thumbnail/presigner sequence with matched-asset preparation and prepared URL rows in `packages/aitraf-api/src/aitraf_api/app.py`
-- [ ] T014 [US1] Remove the presigner callback from response construction and map required prepared `video_url` and `thumbnail_url` fields directly in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/service.py` and `packages/aitraf-api/src/aitraf_api/features/demo_predictions/route.py`
-- [ ] T015 [US1] Delete `VIDEO_URL_EXPIRATION_SECONDS`, `AssetUrlPresigner`, `create_asset_url_presigner`, presigning imports, and obsolete download orchestration from `packages/aitraf-api/src/aitraf_api/features/demo_predictions/videos.py`, removing the file if no focused behavior remains
+- [x] T011 [US1] Implement public video inspection, and missing-only private-to-public copy in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/assets.py`
+- [x] T012 [US1] Refactor thumbnail preparation to generate and upload only missing public thumbnails and return public asset results in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/thumbnails.py`
+- [x] T013 [US1] Replace the old startup video-download/thumbnail/presigner sequence with matched-asset preparation and prepared URL rows in `packages/aitraf-api/src/aitraf_api/app.py`
+- [x] T014 [US1] Remove the presigner callback from response construction and map required prepared `video_url` and `thumbnail_url` fields directly in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/service.py` and `packages/aitraf-api/src/aitraf_api/features/demo_predictions/route.py`
+- [x] T015 [US1] Delete `VIDEO_URL_EXPIRATION_SECONDS`, `AssetUrlPresigner`, `create_asset_url_presigner`, presigning imports, and obsolete download orchestration from `packages/aitraf-api/src/aitraf_api/features/demo_predictions/videos.py`, removing the file if no focused behavior remains
 
 **Checkpoint**: The API serves one successfully published demo asset through
 stable public URLs and contains no temporary-link serving path.
@@ -86,13 +86,13 @@ unique matched asset and never for unmatched or unrelated videos.
 
 ### Validation for User Story 2 ⚠️
 
-- [ ] T016 [P] [US2] Add application-factory integration coverage for matched-subset-only publication, unmatched-row exclusion, duplicate collapse, and added-row-only writes in `packages/aitraf-api/tests/test_app.py`
-- [ ] T017 [P] [US2] Add service coverage proving only prepared matched rows can produce responses and raw artifact thumbnail/source paths are never returned in `packages/aitraf-api/tests/features/demo_predictions/test_demo_predictions.py`
+- [x] T016 [P] [US2] Add application-factory integration coverage for matched-subset-only publication, unmatched-row exclusion, duplicate collapse, and added-row-only writes in `packages/aitraf-api/tests/test_app.py`
+- [x] T017 [P] [US2] Add service coverage proving only prepared matched rows can produce responses and raw artifact thumbnail/source paths are never returned in `packages/aitraf-api/tests/features/demo_predictions/test_demo_predictions.py`
 
 ### Implementation for User Story 2
 
-- [ ] T018 [US2] Integrate selected-asset derivation immediately after `match_prediction_rows` and perform one deduplicated preparation pass in `packages/aitraf-api/src/aitraf_api/app.py`
-- [ ] T019 [US2] Require the single prepared-row media shape and remove `thumbnail_s3_path` mutation or artifact-provided thumbnail selection from `packages/aitraf-api/src/aitraf_api/features/demo_predictions/thumbnails.py` and `packages/aitraf-api/src/aitraf_api/features/demo_predictions/service.py`
+- [x] T018 [US2] Integrate selected-asset derivation immediately after `match_prediction_rows` and perform one deduplicated preparation pass in `packages/aitraf-api/src/aitraf_api/app.py`
+- [x] T019 [US2] Require the single prepared-row media shape and remove `thumbnail_s3_path` mutation or artifact-provided thumbnail selection from `packages/aitraf-api/src/aitraf_api/features/demo_predictions/thumbnails.py` and `packages/aitraf-api/src/aitraf_api/features/demo_predictions/service.py`
 
 **Checkpoint**: Unmatched and unrelated source objects are outside the
 publication path while User Story 1 behavior remains intact.
@@ -102,7 +102,7 @@ publication path while User Story 1 behavior remains intact.
 ## Phase 5: User Story 3 - Restart Safely And Predictably (Priority: P3)
 
 **Goal**: Make repeated startup zero-write and fail before readiness on missing
-sources, permissions, races, or existing-object provenance conflicts without
+sources, permissions, races, or missing required source objects without
 overwriting or deleting production objects.
 
 **Independent Test**: Run preparation twice with identical inputs and assert the
@@ -112,13 +112,13 @@ asset while existing and unselected objects remain unchanged.
 
 ### Validation for User Story 3 ⚠️
 
-- [ ] T020 [P] [US3] Add idempotent second-start, same-source race reuse, missing/mismatched provenance, missing source, denied access, and no-delete assertions in `packages/aitraf-api/tests/features/demo_predictions/test_assets.py`
-- [ ] T021 [P] [US3] Add application readiness failure tests for copy, source download, thumbnail generation, upload, and public object conflict errors in `packages/aitraf-api/tests/test_app.py`
+- [x] T020 [P] [US3] Add idempotent second-start, missing source, denied access, and no-delete assertions in `packages/aitraf-api/tests/features/demo_predictions/test_assets.py`
+- [x] T021 [P] [US3] Add application readiness failure tests for copy, source download, thumbnail generation, upload, and public object conflict errors in `packages/aitraf-api/tests/test_app.py`
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Complete provenance metadata creation/comparison and post-race destination reinspection so only the same source identity is reused in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/assets.py`
-- [ ] T023 [US3] Add contextual startup errors and publication summary logging for copied, generated, reused, and conflicting assets without fallback or cleanup behavior in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/assets.py` and `packages/aitraf-api/src/aitraf_api/app.py`
+- [x] T022 [US3] Keep existing public objects unchanged and publish only absent exact keys in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/assets.py`
+- [x] T023 [US3] Add contextual startup errors and publication summary logging for copied, generated, reused, and conflicting assets without fallback or cleanup behavior in `packages/aitraf-api/src/aitraf_api/features/demo_predictions/assets.py` and `packages/aitraf-api/src/aitraf_api/app.py`
 
 **Checkpoint**: All three stories are independently covered and startup cannot
 report readiness with missing, conflicting, or partially prepared media.
@@ -130,11 +130,11 @@ report readiness with missing, conflicting, or partially prepared media.
 **Purpose**: Remove all superseded API behavior, align documentation, and prove
 the real bucket works anonymously and idempotently.
 
-- [ ] T024 [P] Rewrite public demo media configuration, startup behavior, stable URL semantics, and anonymous-access expectations in `packages/aitraf-api/README.md`
-- [ ] T025 [P] Update architecture references from private thumbnails and presigned API media to startup-published public assets in `packages/aitraf-core/README.md` and any current root documentation that describes the API media flow
-- [ ] T026 Remove every remaining API presigner symbol, expiration constant, app-state field, callback, signed-link fixture/test, compatibility branch, obsolete import, and dead module path under `packages/aitraf-api/`
-- [ ] T027 Run `uv run pytest packages/aitraf-core/tests packages/aitraf-api/tests -q` and record the results in `specs/007-publish-demo-assets/validation.md`
-- [ ] T028 Run the API presigning-removal `rg` scan from `specs/007-publish-demo-assets/quickstart.md`, verify no API runtime/test/doc matches while the train-only generic core consumer remains valid, and record the result in `specs/007-publish-demo-assets/validation.md`
+- [x] T024 [P] Rewrite public demo media configuration, startup behavior, stable URL semantics, and anonymous-access expectations in `packages/aitraf-api/README.md`
+- [x] T025 [P] Update architecture references from private thumbnails and presigned API media to startup-published public assets in `packages/aitraf-core/README.md` and any current root documentation that describes the API media flow
+- [x] T026 Remove every remaining API presigner symbol, expiration constant, app-state field, callback, signed-link fixture/test, compatibility branch, obsolete import, and dead module path under `packages/aitraf-api/`
+- [x] T027 Run `uv run pytest packages/aitraf-core/tests packages/aitraf-api/tests -q` and record the results in `specs/007-publish-demo-assets/validation.md`
+- [x] T028 Run the API presigning-removal `rg` scan from `specs/007-publish-demo-assets/quickstart.md`, verify no API runtime/test/doc matches while the train-only generic core consumer remains valid, and record the result in `specs/007-publish-demo-assets/validation.md`
 - [ ] T029 Execute the configured startup and authenticated `/demo-predictions` smoke test, anonymously GET every returned video and thumbnail, restart unchanged to verify identical URLs and zero writes, and record inputs/results without secrets in `specs/007-publish-demo-assets/validation.md`
 
 ---
@@ -210,7 +210,7 @@ Task T017: Add prepared matched-row response tests in test_demo_predictions.py
 ## Parallel Example: User Story 3
 
 ```text
-Task T020: Add idempotence/provenance tests in test_assets.py
+Task T020: Add idempotence tests in test_assets.py
 Task T021: Add readiness failure tests in test_app.py
 ```
 
@@ -232,7 +232,7 @@ Task T021: Add readiness failure tests in test_app.py
 1. Setup + Foundation establish one explicit public-asset representation.
 2. US1 replaces temporary links with stable public media.
 3. US2 proves the matched subset is the complete publication allowlist.
-4. US3 adds provenance and restart/failure guarantees without a second path.
+4. US3 adds restart/failure guarantees without a second path.
 5. Polish deletes remaining legacy references and validates the real public
    bucket anonymously.
 

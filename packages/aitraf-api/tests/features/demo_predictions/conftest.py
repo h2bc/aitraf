@@ -21,6 +21,7 @@ def settings() -> Settings:
         aqa_predictions_run_id="aqa-run",
         aws_endpoint_url="https://s3.example.test",
         aws_bucket="aitraf",
+        public_asset_bucket="aitraf-public",
     )
 
 
@@ -30,7 +31,8 @@ def classification_prediction_rows(video_id: str) -> list[dict]:
         {
             "video_id": video_id,
             "s3_path": f"s3://aitraf/clips/{video_id}",
-            "thumbnail_s3_path": f"s3://aitraf/thumbnails/{video_id.removesuffix('.mp4')}.jpg",
+            "video_url": f"https://s3.example.test/aitraf-public/videos/{video_id}",
+            "thumbnail_url": f"https://s3.example.test/aitraf-public/thumbnails/{video_id.removesuffix('.mp4')}.jpg",
             "person": "person-a",
             "key_foot": "right",
             "trick": "mizou",
@@ -48,7 +50,6 @@ def aqa_prediction_rows(video_id: str) -> list[dict]:
         {
             "video_id": video_id,
             "s3_path": f"s3://aitraf/clips/{video_id}",
-            "thumbnail_s3_path": f"s3://aitraf/thumbnails/{video_id.removesuffix('.mp4')}.jpg",
             "person": "person-a",
             "key_foot": "right",
             "trick": "mizou",
@@ -66,17 +67,9 @@ def client(
     classification_prediction_rows: list[dict],
     aqa_prediction_rows: list[dict],
 ) -> TestClient:
-    presign_count = 0
-
-    def presign_asset_url(s3_path: str) -> str:
-        nonlocal presign_count
-        presign_count += 1
-        return f"https://s3.example.test/{s3_path.removeprefix('s3://')}?signed={presign_count}"
-
     app = FastAPI()
     app.state.settings = settings
     app.state.classification_prediction_rows = classification_prediction_rows
     app.state.aqa_prediction_rows = aqa_prediction_rows
-    app.state.presign_asset_url = presign_asset_url
     app.include_router(router)
     return TestClient(app)

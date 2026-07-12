@@ -8,7 +8,8 @@ Public surfaces:
 - `aitraf_core.cache`: generic file-cache control.
 - `aitraf_core.utils`: strict JSON and JSONL object readers.
 - `aitraf_core.storage.s3`: shared S3 settings, client creation, URI parsing,
-  object existence, key iteration, and URL presigning.
+  object inspection, server-side copying, key iteration, and URL presigning for
+  offline consumers. API demo media uses stable public URLs.
 
 Boto3 is the package's only third-party runtime dependency. Model loading,
 inference, tensors, video decoding, and model preprocessing belong to

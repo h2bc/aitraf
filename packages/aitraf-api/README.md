@@ -8,7 +8,8 @@ request time.
 
 At startup, the app loads configured prediction artifacts and prepares demo
 prediction records in memory. When serving those records, it uses API-owned S3
-configuration to generate browser-playable presigned video URLs.
+configuration to publish the selected videos and thumbnails to a publicly
+downloadable bucket before the API becomes ready.
 
 ## Configuration
 
@@ -20,10 +21,13 @@ Required configuration categories:
 - API authentication token
 - MLflow tracking URI and credentials
 - classification and AQA prediction run IDs
-- S3-compatible endpoint, bucket, region, and credentials
+- S3-compatible endpoint, private source bucket, public asset bucket, region,
+  and credentials
 
-S3 credentials stay in the API runtime. Clients receive presigned HTTP(S) video
-URLs rather than raw S3 paths or credentials.
+S3 credentials stay in the API runtime and access both `AWS_BUCKET` and
+`AITRAF_PUBLIC_ASSET_BUCKET` on `AWS_ENDPOINT_URL`. Clients receive stable
+public video and thumbnail URLs. The API has no media signing or expiration
+path.
 
 ## Package Layout
 

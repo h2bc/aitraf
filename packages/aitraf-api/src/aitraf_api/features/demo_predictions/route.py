@@ -23,7 +23,6 @@ def list_demo_predictions(request: Request) -> list[DemoPrediction]:
     return build_demo_predictions_response(
         classification_rows=request.app.state.classification_prediction_rows,
         aqa_rows=request.app.state.aqa_prediction_rows,
-        presign_asset_url=request.app.state.presign_asset_url,
     )
 
 

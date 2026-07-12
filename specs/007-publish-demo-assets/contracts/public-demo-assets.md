@@ -33,9 +33,9 @@ signature, expiry, or authentication material.
 
 1. Download and match classification and AQA prediction rows.
 2. Validate and deduplicate the selected media set.
-3. Reuse each existing public video only when provenance matches; otherwise copy
-   the missing video from its private source.
-4. Reuse each existing public thumbnail only when provenance matches; otherwise
+3. Reuse each existing public video; otherwise copy the missing video from its
+   private source.
+4. Reuse each existing public thumbnail; otherwise
    download the source video temporarily, generate the thumbnail, and upload it.
 5. Attach stable public video and thumbnail URLs to the prepared classification
    rows.
@@ -63,7 +63,6 @@ Application startup fails with the affected asset identity when:
 - the authenticated client cannot inspect either bucket;
 - a source object is absent;
 - a copy, download, thumbnail generation, or upload fails;
-- an existing public object has missing or conflicting provenance;
 - duplicate rows map one public identity to different sources.
 
 No private or signed URL is returned as a fallback.

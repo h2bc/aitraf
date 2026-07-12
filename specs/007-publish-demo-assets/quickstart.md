@@ -55,7 +55,7 @@ Automated tests must demonstrate:
 - one source download, thumbnail generation, and upload when only a thumbnail
   is missing;
 - identical URLs and zero writes on a second preparation run;
-- explicit failure for invalid config, source, provenance, storage operations,
+- explicit failure for invalid config, missing source, storage operations,
   and thumbnail generation;
 - no storage calls during repeated route requests.
 

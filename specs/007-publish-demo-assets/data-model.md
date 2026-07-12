@@ -52,19 +52,6 @@ Relationship: exactly one selected demo asset corresponds to one matched
 classification/AQA prediction pair. Duplicate identical references collapse to
 one publication decision; conflicting mappings fail before writes.
 
-## Published Object Provenance
-
-Public objects record metadata sufficient to validate reuse:
-
-- canonical source URI
-- observable source identity used by the storage service, including size and
-  entity tag when available
-- asset kind (`video` or `thumbnail`)
-- thumbnail generator identity for thumbnail objects
-
-An existing object is reusable only when required provenance agrees with the
-selected asset. Missing or different provenance is a conflict.
-
 ## Prepared Prediction Row
 
 The served classification row after successful preparation contains all current
@@ -83,7 +70,7 @@ request.
 matched prediction row
         |
         v
-selected asset --invalid/conflict--> startup failure
+selected asset --invalid/missing source--> startup failure
         |
         v
 inspect public video ----missing----> copy from private source

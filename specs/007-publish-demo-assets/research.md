@@ -61,27 +61,21 @@ mutable release manifest or additional configuration.
 - Using raw string concatenation was rejected because bucket and key segments
   require strict validation and URL encoding.
 
-## Idempotence, Copying, And Conflicts
+## Idempotence And Copying
 
-**Decision**: Inspect destination objects with object metadata requests. Missing
-videos are copied server-side from the private bucket; missing thumbnails cause
-one temporary source-video download, thumbnail generation, and upload. Published
-objects carry source-provenance metadata. Existing objects are accepted only
-when their provenance and observable source identity match; otherwise startup
-fails without deliberately overwriting the object. Duplicate public identities
-are resolved before storage calls and conflicting mappings fail.
+**Decision**: Check exact object keys for existence. Missing videos are copied
+server-side from the private bucket; missing thumbnails cause one temporary
+source-video download, thumbnail generation, and upload. Existing objects are
+reused unchanged. Duplicate public identities are resolved before storage work.
 
-**Rationale**: Server-side video copy avoids unnecessary transfer through the
-API. Provenance distinguishes an idempotent restart from a key collision and
-supports loud failure. A race is resolved by inspecting the destination after a
-copy/upload conflict and accepting only the same source provenance.
+**Rationale**: This is the smallest implementation of the agreed contract:
+publish only when absent. Server-side video copy avoids unnecessary transfer
+through the API.
 
 **Alternatives considered**:
 
-- Blindly trusting any existing key was rejected because it can serve unrelated
-  media under a valid-looking URL.
-- Unconditionally overwriting was rejected because retraining or concurrent
-  startup could damage production assets.
+- Overwriting existing keys was rejected because startup must preserve published
+  assets.
 - Downloading and re-uploading every video was rejected because the storage
   service can copy between buckets on the same endpoint.
 

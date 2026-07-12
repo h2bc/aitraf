@@ -11,7 +11,7 @@ After classification and AQA prediction rows are matched, validate and
 deduplicate the selected videos, copy missing videos from the private
 `AWS_BUCKET` to deterministic `videos/` keys in the required
 `AITRAF_PUBLIC_ASSET_BUCKET`, generate and upload only missing thumbnails under
-`thumbnails/`, validate provenance for existing objects, and enrich the in-memory
+`thumbnails/`, and enrich the in-memory
 rows with constant path-style public URLs derived from `AWS_ENDPOINT_URL`.
 Delete every API presigner, expiration, callback, state, test, and documentation
 path; retain the generic core presigner only for its unrelated offline training
@@ -28,7 +28,7 @@ thumbnail extraction
 **Storage**: One S3-compatible endpoint and authenticated client; private source
 bucket from `AWS_BUCKET`; publicly downloadable destination from required
 `AITRAF_PUBLIC_ASSET_BUCKET`; deterministic `videos/<video_id>` and
-`thumbnails/<video-stem>.jpg` objects with provenance metadata
+`thumbnails/<video-stem>.jpg` objects
 
 **Testing**: Pytest API/core unit and startup integration tests, static API
 presigning-removal scan, command-level API smoke test, and anonymous HTTP GET
@@ -48,7 +48,7 @@ missing thumbnails require temporary local download
 **Constraints**: The source and public buckets share endpoint and credentials;
 the public bucket is distinct and grants anonymous download; startup fails
 before readiness on missing config/assets, denied operations, invalid rows,
-generation failures, or provenance conflicts; no overwrite, deletion, signed
+generation failures; no overwrite, deletion, signed
 URL fallback, release cleanup, or retraining orchestration is introduced
 
 **Scale/Scope**: The matched precomputed demo subset only; API config, startup,
@@ -60,7 +60,7 @@ server-side copy helper if needed; no training/evaluation behavior changes
 *GATE: Passed before Phase 0 and re-checked after Phase 1 design.*
 
 - **No Excessive Fallbacks**: PASS. Required public bucket configuration,
-  storage access, row shapes, source objects, provenance, and generated
+  storage access, row shapes, source objects, and generated
   thumbnails all fail explicitly. Private or presigned links are never returned
   as fallback.
 - **Package By Feature**: PASS. Demo selection, publication orchestration,
@@ -70,7 +70,7 @@ server-side copy helper if needed; no training/evaluation behavior changes
   a parallel publisher.
 - **Function Decomposition**: PASS. Design separates row validation and
   derivation, public URL construction, destination inspection, video copy,
-  thumbnail materialization, provenance validation, and row enrichment.
+  thumbnail materialization, and row enrichment.
 - **Functional Programming And State**: PASS. Asset identities and URLs are
   immutable derived values. Network/filesystem state stays inside startup
   storage and thumbnail boundaries; requests consume prepared rows only.
@@ -135,7 +135,7 @@ AGENTS.md
 **Structure Decision**: Replace the mixed API `videos.py` download/presign
 surface with `assets.py`, which owns strict selected-asset derivation,
 deterministic public identity/URL construction, destination inspection,
-provenance checks, and startup publication. Keep FFmpeg extraction in
+startup publication. Keep FFmpeg extraction in
 `thumbnails.py` but remove its private-bucket row mutation and make it a focused
 generation boundary invoked only for missing public thumbnails. Add only the
 generic S3 copy/inspection primitive needed at the storage boundary to core.
@@ -146,7 +146,7 @@ directly and hold no client or callback state.
 
 See [research.md](./research.md). Decisions cover API ownership, shared endpoint
 configuration, deterministic public layout, server-side video copies,
-provenance-based idempotence and conflicts, API presigning removal scope, and
+existence-based idempotence, API presigning removal scope, and
 validation against real anonymous access.
 
 ## Phase 1: Design And Contracts
@@ -160,14 +160,14 @@ See [data-model.md](./data-model.md),
 1. Extend strict API settings and `.env.example` with required
    `AITRAF_PUBLIC_ASSET_BUCKET`; validate that endpoint and both bucket names are
    usable and that source and public buckets differ.
-2. Add focused shared storage primitives for destination metadata inspection
-   and server-side object copy while preserving existing core consumers.
+2. Use the existing exact-key existence helper and add a focused server-side
+   object copy primitive while preserving existing core consumers.
 3. Introduce immutable API selected/public asset representations plus pure
    helpers for row validation, key derivation, URL encoding, deduplication, and
    prepared-row enrichment.
 4. Replace the current startup thumbnail-first flow with one matched-subset
-   preparation pass: inspect/copy videos, inspect/generate/upload thumbnails,
-   validate provenance, then attach stable URLs.
+   preparation pass: check/copy videos, check/generate/upload thumbnails, then
+   attach stable URLs.
 5. Remove API video downloads except the temporary downloads required for
    missing thumbnails; never download already-complete public assets.
 6. Change route/service composition to read stable URL fields directly from
@@ -176,7 +176,7 @@ See [data-model.md](./data-model.md),
    expiration constants, protocols, factories, app state, callback arguments,
    signed-link tests/fixtures, and README language. Do not add aliases, feature
    flags, or fallback behavior.
-8. Replace existing video/thumbnail tests with publication, provenance,
+8. Replace existing video/thumbnail tests with publication,
    subset-only, idempotence, failure, and stable-response tests; retain the
    generic core presigning helper/tests required by offline training.
 9. Run package tests and the zero-presigning source scan, then validate the real
@@ -200,7 +200,7 @@ See [data-model.md](./data-model.md),
   current, but their implementation moves directly from expiring to public URLs;
   all old API machinery is removed.
 - **Required Types Over Defensive Normalization**: PASS. Contracts define one
-  media row, configuration, selected asset, provenance, and prepared-row shape.
+  media row, configuration, selected asset, and prepared-row shape.
 
 ## Complexity Tracking
 

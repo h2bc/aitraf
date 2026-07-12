@@ -5,7 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from aitraf_core.storage.s3 import download_s3_uri, load_s3_settings, parse_s3_uri
+from aitraf_core.storage.s3 import (
+    copy_s3_object,
+    download_s3_uri,
+    load_s3_settings,
+    parse_s3_uri,
+)
 
 
 def test_parse_s3_uri_returns_bucket_and_key() -> None:
@@ -40,6 +45,23 @@ def test_download_s3_uri_uses_get_object_without_head(tmp_path: Path) -> None:
     )
 
     assert destination.read_bytes() == b"video"
+
+
+def test_copy_s3_object_uses_server_side_copy() -> None:
+    calls: list[dict] = []
+
+    class Client:
+        def copy_object(self, **kwargs) -> None:
+            calls.append(kwargs)
+
+    copy_s3_object(
+        Client(), source_bucket="private", source_key="clips/sample.mp4",
+        destination_bucket="public", destination_key="videos/sample.mp4",
+    )
+    assert calls == [{
+        "Bucket": "public", "Key": "videos/sample.mp4",
+        "CopySource": {"Bucket": "private", "Key": "clips/sample.mp4"},
+    }]
 
 
 def test_load_s3_settings_requires_expected_environment(
