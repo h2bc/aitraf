@@ -57,6 +57,16 @@ jobs:
     name: Publish API image
     runs-on: ubuntu-latest
     environment: prod
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     permissions:
       contents: read
       packages: write
@@ -79,7 +89,7 @@ jobs:
 
       - name: Run API tests
         env:
-          AITRAF_REDIS_URL: ${{ vars.AITRAF_REDIS_URL }}
+          AITRAF_REDIS_URL: redis://localhost:6379/0
         run: uv run --package aitraf-api --extra dev pytest packages/aitraf-api/tests
 
       - name: Set up Docker Buildx
