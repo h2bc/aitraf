@@ -23,6 +23,17 @@ feedback.
 task install
 ```
 
+Run the local API and Redis as sibling containers managed by Docker Compose from
+the devcontainer:
+
+```bash
+task api:run
+```
+
+Press `Ctrl+C` to stop both services. `docker compose down` removes the local
+containers and network while preserving the visitor-count volume. The local API
+is available at `http://localhost:8001` by default.
+
 ## Workspace Commands
 
 Root commands are workspace-level only:
@@ -45,6 +56,11 @@ API workflows are exposed through the `api:` task namespace:
 task api:run
 task api:test
 ```
+
+`task api:run` builds and starts both the API and Redis through local Compose.
+It runs in the foreground, so `Ctrl+C` stops both services natively while
+preserving the Redis named volume and visitor count. API source is mounted into
+the container and reloads on changes.
 
 See [packages/aitraf-api/README.md](packages/aitraf-api/README.md) for runtime
 environment requirements and endpoint behavior.

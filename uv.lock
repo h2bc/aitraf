@@ -197,6 +197,7 @@ dependencies = [
     { name = "mlflow" },
     { name = "pydantic" },
     { name = "python-dotenv" },
+    { name = "redis" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -215,6 +216,7 @@ requires-dist = [
     { name = "pydantic" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "python-dotenv" },
+    { name = "redis", specifier = ">=5" },
     { name = "uvicorn", extras = ["standard"] },
 ]
 provides-extras = ["dev"]

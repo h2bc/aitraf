@@ -12,6 +12,7 @@ dependencies = [
     "mlflow",
     "pydantic",
     "python-dotenv",
+    "redis>=5",
     "uvicorn[standard]",
 ]
 
@@ -19,6 +20,11 @@ dependencies = [
 dev = [
     "httpx",
     "pytest",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "redis_integration: tests requiring a reachable Redis service",
 ]
 
 [tool.setuptools]

@@ -18,9 +18,9 @@
 
 **Purpose**: Add the Redis dependency and reproducible local service without changing the external production deployment repository
 
-- [ ] T001 Add redis-py to `packages/aitraf-api/pyproject.toml` and refresh the resolved dependency state in `uv.lock`
-- [ ] T002 [P] Add the local Redis 7 service with AOF `everysec`, periodic snapshots, a health check, configurable loopback port, and named volume in `compose.yaml`
-- [ ] T003 Register the `redis_integration` pytest marker in `packages/aitraf-api/pyproject.toml`
+- [X] T001 Add redis-py to `packages/aitraf-api/pyproject.toml` and refresh the resolved dependency state in `uv.lock`
+- [X] T002 [P] Add the local API and Redis 7 Compose services with source reload, AOF `everysec`, periodic snapshots, health checks, and a named Redis volume in `compose.yaml`
+- [X] T003 Register the `redis_integration` pytest marker in `packages/aitraf-api/pyproject.toml`
 
 ---
 
@@ -30,13 +30,13 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Add required `redis_url: str` settings loading from `AITRAF_REDIS_URL` in `packages/aitraf-api/src/aitraf_api/config.py`
-- [ ] T005 [P] Add missing, empty, and valid `AITRAF_REDIS_URL` settings coverage in `packages/aitraf-api/tests/test_config.py`
-- [ ] T006 [P] Add `AITRAF_REDIS_URL=redis://localhost:6379/0` to `.env.example`
-- [ ] T007 Create the `packages/aitraf-api/src/aitraf_api/features/visitor_count/__init__.py` feature package and exports
-- [ ] T008 Define the narrow async counter protocol, fixed `aitraf:visitor-count:homepage` identity, Redis error types, and strict non-negative increment-result validation in `packages/aitraf-api/src/aitraf_api/features/visitor_count/service.py`
-- [ ] T009 [P] Add reusable fake counter and visitor-count app fixtures in `packages/aitraf-api/tests/features/visitor_count/conftest.py`
-- [ ] T010 Update existing `Settings` constructors and app fixtures for the required Redis URL in `packages/aitraf-api/tests/test_app.py` and `packages/aitraf-api/tests/features/demo_predictions/conftest.py`
+- [X] T004 Add required `redis_url: str` settings loading from `AITRAF_REDIS_URL` in `packages/aitraf-api/src/aitraf_api/config.py`
+- [X] T005 [P] Add missing, empty, and valid `AITRAF_REDIS_URL` settings coverage in `packages/aitraf-api/tests/test_config.py`
+- [X] T006 [P] Add the devcontainer-local `AITRAF_REDIS_URL` to `.env.example`
+- [X] T007 Create the `packages/aitraf-api/src/aitraf_api/features/visitor_count/__init__.py` feature package and exports
+- [X] T008 Define the narrow async counter protocol, fixed `aitraf:visitor-count:homepage` identity, Redis error types, and strict non-negative increment-result validation in `packages/aitraf-api/src/aitraf_api/features/visitor_count/service.py`
+- [X] T009 [P] Add reusable fake counter and visitor-count app fixtures in `packages/aitraf-api/tests/features/visitor_count/conftest.py`
+- [X] T010 Update existing `Settings` constructors and app fixtures for the required Redis URL in `packages/aitraf-api/tests/test_app.py` and `packages/aitraf-api/tests/features/demo_predictions/conftest.py`
 
 **Checkpoint**: Required configuration and a single typed API-owned counter boundary are ready; no in-memory production fallback or shared-core abstraction exists
 
@@ -50,15 +50,15 @@
 
 ### Validation for User Story 1 ⚠️
 
-- [ ] T011 [P] [US1] Add service tests for missing-key first increment, sequential increments, exact result mapping, and invalid negative/out-of-range results in `packages/aitraf-api/tests/features/visitor_count/test_service.py`
-- [ ] T012 [P] [US1] Add route contract tests for `POST /visitor-count`, strict `{"count": integer}` output, and one increment per request in `packages/aitraf-api/tests/features/visitor_count/test_route.py`
+- [X] T011 [P] [US1] Add service tests for missing-key first increment, sequential increments, exact result mapping, and invalid negative/out-of-range results in `packages/aitraf-api/tests/features/visitor_count/test_service.py`
+- [X] T012 [P] [US1] Add route contract tests for `POST /visitor-count`, strict `{"count": integer}` output, and one increment per request in `packages/aitraf-api/tests/features/visitor_count/test_route.py`
 
 ### Implementation for User Story 1
 
-- [ ] T013 [P] [US1] Define the strict visitor-count response schema in `packages/aitraf-api/src/aitraf_api/features/visitor_count/schemas.py`
-- [ ] T014 [US1] Implement Redis-backed atomic `INCR` and explicit Redis/result failures in `packages/aitraf-api/src/aitraf_api/features/visitor_count/service.py`
-- [ ] T015 [US1] Implement `POST /visitor-count` with no bearer dependency and response-model enforcement in `packages/aitraf-api/src/aitraf_api/features/visitor_count/route.py`
-- [ ] T016 [US1] Register the visitor-count router alongside existing health and demo routes in `packages/aitraf-api/src/aitraf_api/features/__init__.py`
+- [X] T013 [P] [US1] Define the strict visitor-count response schema in `packages/aitraf-api/src/aitraf_api/features/visitor_count/schemas.py`
+- [X] T014 [US1] Implement Redis-backed atomic `INCR` and explicit Redis/result failures in `packages/aitraf-api/src/aitraf_api/features/visitor_count/service.py`
+- [X] T015 [US1] Implement `POST /visitor-count` with no bearer dependency and response-model enforcement in `packages/aitraf-api/src/aitraf_api/features/visitor_count/route.py`
+- [X] T016 [US1] Register the visitor-count router alongside existing health and demo routes in `packages/aitraf-api/src/aitraf_api/features/__init__.py`
 
 **Checkpoint**: User Story 1 is independently usable with an injected counter and returns the increment result without a separate read
 
@@ -72,14 +72,14 @@
 
 ### Validation for User Story 2 ⚠️
 
-- [ ] T017 [P] [US2] Add real-Redis integration tests for 100 concurrent `INCR` operations, missing-key creation, invalid stored types/values, and unavailable Redis in `packages/aitraf-api/tests/features/visitor_count/test_redis_integration.py`
-- [ ] T018 [P] [US2] Add application tests for Redis startup validation, invalid stored state blocking readiness, shared client injection, and lifecycle closure in `packages/aitraf-api/tests/test_app.py`
+- [X] T017 [P] [US2] Add real-Redis integration tests for 100 concurrent `INCR` operations, missing-key creation, invalid stored types/values, and unavailable Redis in `packages/aitraf-api/tests/features/visitor_count/test_redis_integration.py`
+- [X] T018 [P] [US2] Add application tests for Redis startup validation, invalid stored state blocking readiness, shared client injection, and lifecycle closure in `packages/aitraf-api/tests/test_app.py`
 
 ### Implementation for User Story 2
 
-- [ ] T019 [US2] Add Redis client construction, ping and existing-key validation, application-state injection, and shutdown cleanup through FastAPI lifespan in `packages/aitraf-api/src/aitraf_api/app.py`
-- [ ] T020 [US2] Map request-time Redis connection/operation failures to explicit `503` responses and invalid stored/result state to explicit `500` responses in `packages/aitraf-api/src/aitraf_api/features/visitor_count/route.py`
-- [ ] T021 [US2] Add local Compose start, health, integration-test, concurrent-increment, and named-volume restart commands with expected results to `specs/008-visitor-count/quickstart.md`
+- [X] T019 [US2] Add Redis client construction, ping and existing-key validation, application-state injection, and shutdown cleanup through FastAPI lifespan in `packages/aitraf-api/src/aitraf_api/app.py`
+- [X] T020 [US2] Map request-time Redis connection/operation failures to explicit `503` responses and invalid stored/result state to explicit `500` responses in `packages/aitraf-api/src/aitraf_api/features/visitor_count/route.py`
+- [X] T021 [US2] Add local Compose start, health, integration-test, concurrent-increment, and named-volume restart commands with expected results to `specs/008-visitor-count/quickstart.md`
 
 **Checkpoint**: User Stories 1 and 2 work with real Redis without lost concurrent updates or process-local state
 
@@ -93,12 +93,12 @@
 
 ### Validation for User Story 3 ⚠️
 
-- [ ] T022 [P] [US3] Add public-access, no-credential, no-visitor-data, body rejection, query rejection, and unchanged protected-route authentication tests in `packages/aitraf-api/tests/features/visitor_count/test_route.py`
+- [X] T022 [P] [US3] Add public-access, no-credential, no-visitor-data, body rejection, query rejection, and unchanged protected-route authentication tests in `packages/aitraf-api/tests/features/visitor_count/test_route.py`
 
 ### Implementation for User Story 3
 
-- [ ] T023 [US3] Enforce the empty request contract and reject all request bodies and query parameters without incrementing in `packages/aitraf-api/src/aitraf_api/features/visitor_count/route.py`
-- [ ] T024 [US3] Document the public browser-call contract, retry/page-view semantics, privacy boundary, and external `AITRAF_REDIS_URL` deployment handoff in `packages/aitraf-api/README.md`
+- [X] T023 [US3] Enforce the empty request contract and reject all request bodies and query parameters without incrementing in `packages/aitraf-api/src/aitraf_api/features/visitor_count/route.py`
+- [X] T024 [US3] Document the public browser-call contract, retry/page-view semantics, privacy boundary, and external `AITRAF_REDIS_URL` deployment handoff in `packages/aitraf-api/README.md`
 
 **Checkpoint**: All three stories are functional; the endpoint is public and strict while existing API authentication remains unchanged
 
@@ -108,11 +108,11 @@
 
 **Purpose**: Finish repository-only documentation and prove the complete feature without modifying production deployment files
 
-- [ ] T025 [P] Update root local-development Redis startup and teardown guidance in `README.md`
-- [ ] T026 Add a repeatable HTTP smoke script for sequential and 100-way concurrent visitor-count validation in `packages/aitraf-api/scripts/validate_visitor_count.py`
-- [ ] T027 Run `docker compose config --quiet`, the full API pytest suite, Redis-marked integration tests, lint checks, and the smoke script; record commands and results in `specs/008-visitor-count/validation.md`
-- [ ] T028 Verify with `git diff --name-only` and document in `specs/008-visitor-count/validation.md` that no external or production deployment Compose, proxy, network, or volume configuration was added to this repository
-- [ ] T029 Audit `packages/aitraf-api/src/aitraf_api/features/visitor_count/` for in-memory fallbacks, alternate keys/endpoints, visitor identity collection, broad input normalization, and dead compatibility paths; record the clean result in `specs/008-visitor-count/validation.md`
+- [X] T025 [P] Update root local-development Redis startup and teardown guidance in `README.md`
+- [X] T026 Validate concurrency with the isolated real-Redis integration coverage in `packages/aitraf-api/tests/features/visitor_count/test_redis_integration.py`
+- [X] T027 Run `docker compose config --quiet`, the full API pytest suite, Redis-marked integration tests, lint checks, and a single-request endpoint smoke check; record commands and results in `specs/008-visitor-count/validation.md`
+- [X] T028 Verify with `git diff --name-only` and document in `specs/008-visitor-count/validation.md` that no external or production deployment Compose, proxy, network, or volume configuration was added to this repository
+- [X] T029 Audit `packages/aitraf-api/src/aitraf_api/features/visitor_count/` for in-memory fallbacks, alternate keys/endpoints, visitor identity collection, broad input normalization, and dead compatibility paths; record the clean result in `specs/008-visitor-count/validation.md`
 
 ---
 

@@ -22,6 +22,7 @@ def settings() -> Settings:
         aws_endpoint_url="https://s3.example.test",
         aws_bucket="aitraf",
         public_asset_bucket="aitraf-public",
+        redis_url="redis://localhost:6379/0",
     )
 
 

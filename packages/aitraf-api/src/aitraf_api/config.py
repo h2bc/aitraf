@@ -17,6 +17,8 @@ class Settings:
     aws_endpoint_url: str
     aws_bucket: str
     public_asset_bucket: str
+    redis_url: str
+
 
 def load_settings(
     env: Mapping[str, str],
@@ -34,6 +36,7 @@ def load_settings(
         aws_endpoint_url=env["AWS_ENDPOINT_URL"],
         aws_bucket=env["AWS_BUCKET"],
         public_asset_bucket=env["AITRAF_PUBLIC_ASSET_BUCKET"],
+        redis_url=env["AITRAF_REDIS_URL"],
     )
 
 

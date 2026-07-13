@@ -107,15 +107,15 @@ of discovering missing configuration only after a public visit.
 
 ## Local Dependency And External Runtime Boundary
 
-**Decision**: Add a repository-root local Compose file containing only Redis,
-published to a configurable loopback host port for an API run directly from the
-development environment. Treat production Redis provisioning as an external
-runtime prerequisite owned by the separate deployment repository.
+**Decision**: Add a repository-root local Compose stack containing both the API
+and Redis. Mount API/core sources and enable API reload for development. Treat
+production Redis provisioning as an external runtime prerequisite owned by the
+separate deployment repository.
 
-**Rationale**: A separate dependency container provides reproducible local
-development without placing Redis inside the devcontainer or forcing API image
-rebuilds. This repository defines its required connection contract but does not
-own or change infrastructure maintained in another repository.
+**Rationale**: Compose natively owns both local service lifecycles, so one
+foreground command and `Ctrl+C` start and stop the stack. Source mounts retain a
+fast development loop. This repository defines its required connection contract
+but does not own or change infrastructure maintained in another repository.
 
 **Alternatives considered**:
 
@@ -123,6 +123,5 @@ own or change infrastructure maintained in another repository.
   dependency should have its own lifecycle and persistent volume.
 - Production-only Redis was rejected because local development and integration
   validation would not reproduce required startup behavior.
-- Adding a duplicate API service to local Compose was rejected because the
-  repository already has a direct API task and the user asked specifically how
-  to supply the local dependency.
+- Running the API in the devcontainer while Redis runs detached was rejected
+  because it splits local lifecycle ownership and requires custom cleanup.

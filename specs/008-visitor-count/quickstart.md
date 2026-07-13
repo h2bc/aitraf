@@ -12,17 +12,20 @@
 Set the required API connection value:
 
 ```bash
-export AITRAF_REDIS_URL=redis://localhost:6379/0
+export AITRAF_REDIS_URL=redis://host.docker.internal:6380/0
 ```
 
-Start the repository-managed local dependency:
+Use `redis://localhost:6380/0` instead when the API runs directly on the Docker
+host rather than in the repository devcontainer.
+
+Build and start the repository-managed local stack in the foreground:
 
 ```bash
-docker compose up -d redis
-docker compose ps redis
+task api:run
 ```
 
-The Redis service must report healthy. Validate the Compose configuration with:
+The API waits for Redis health before starting. Press `Ctrl+C` to stop both
+services. Validate the Compose configuration with:
 
 ```bash
 docker compose config --quiet
@@ -39,7 +42,7 @@ uv run --package aitraf-api pytest packages/aitraf-api/tests
 Run the Redis integration tests with the local service available:
 
 ```bash
-AITRAF_REDIS_URL=redis://localhost:6379/0 \
+AITRAF_REDIS_URL="$AITRAF_REDIS_URL" \
   uv run --package aitraf-api pytest -m redis_integration
 ```
 
@@ -58,7 +61,7 @@ task api:run
 Confirm readiness:
 
 ```bash
-curl --fail http://127.0.0.1:8000/health
+curl --fail http://127.0.0.1:8001/health
 ```
 
 ## Validate The HTTP Contract
@@ -66,8 +69,8 @@ curl --fail http://127.0.0.1:8000/health
 Record two page views without a bearer token:
 
 ```bash
-curl --fail --request POST http://127.0.0.1:8000/visitor-count
-curl --fail --request POST http://127.0.0.1:8000/visitor-count
+curl --fail --request POST http://127.0.0.1:8001/visitor-count
+curl --fail --request POST http://127.0.0.1:8001/visitor-count
 ```
 
 The second JSON `count` must be exactly one greater than the first. Requests must
@@ -77,21 +80,24 @@ Verify that protected endpoints remain protected:
 
 ```bash
 curl --output /dev/null --write-out '%{http_code}\n' \
-  http://127.0.0.1:8000/demo-predictions
+  http://127.0.0.1:8001/demo-predictions
 ```
 
 The response status must remain `401` without the existing bearer token.
 
 ## Validate Concurrency
 
-Record the current value, submit 100 concurrent POST requests, and record the
-next value using the repository smoke-validation command created during
-implementation. The final returned total must reflect exactly 101 additional
-increments: 100 concurrent requests plus the final observation, because the
-endpoint increments on every call.
+Use the real-Redis integration test, which isolates and deletes its counter key
+instead of polluting the displayed visitor count:
 
-No validation command may implement a separate read-only count path merely for
-testing.
+```bash
+AITRAF_REDIS_URL="$AITRAF_REDIS_URL" \
+  uv run --package aitraf-api pytest \
+  packages/aitraf-api/tests/features/visitor_count/test_redis_integration.py
+```
+
+The test submits 100 concurrent increments and proves there are no lost or
+duplicate resulting counts.
 
 ## Validate Restart Persistence
 

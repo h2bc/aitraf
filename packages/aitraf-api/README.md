@@ -23,11 +23,16 @@ Required configuration categories:
 - classification and AQA prediction run IDs
 - S3-compatible endpoint, private source bucket, public asset bucket, region,
   and credentials
+- Redis connection URL in `AITRAF_REDIS_URL`
 
 S3 credentials stay in the API runtime and access both `AWS_BUCKET` and
 `AITRAF_PUBLIC_ASSET_BUCKET` on `AWS_ENDPOINT_URL`. Clients receive stable
 public video and thumbnail URLs. The API has no media signing or expiration
 path.
+
+Redis stores the single lifetime homepage page-view count. Production must
+provide a reachable persistent Redis service through `AITRAF_REDIS_URL`; its
+deployment configuration is owned outside this repository.
 
 ## Package Layout
 
@@ -38,6 +43,7 @@ path.
 - `src/aitraf_api/features/health/`: health route
 - `src/aitraf_api/features/demo_predictions/`: prediction artifact loading,
   response preparation, and route registration
+- `src/aitraf_api/features/visitor_count/`: public atomic page-view counter
 
 ## Development
 
@@ -46,6 +52,23 @@ Run the API through the repository task:
 ```bash
 task api:run
 ```
+
+This builds and starts both the API and Redis as foreground Compose services.
+Press `Ctrl+C` to stop both; the Redis named volume and visitor count are
+preserved. API source is mounted into its container with reload enabled.
+
+The Compose-managed API is available at `http://localhost:8001` by default.
+
+The frontend records a page view with an unauthenticated empty request:
+
+```http
+POST /visitor-count
+```
+
+The response is `{"count": 42}`. Every successful call is one page view,
+including retries; the endpoint does not identify visitors, deduplicate calls,
+or retain visitor-level data. Existing demo prediction routes remain protected
+by `AITRAF_API_TOKEN`, which must not be exposed in browser code.
 
 Build the API image from the repository root:
 

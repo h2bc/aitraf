@@ -60,8 +60,11 @@ AITRAF_REDIS_URL=<required Redis URL>
 Local host-run API:
 
 ```text
-AITRAF_REDIS_URL=redis://localhost:6379/0
+AITRAF_REDIS_URL=redis://host.docker.internal:6380/0
 ```
+
+An API process running directly on the Docker host uses
+`redis://localhost:6380/0`.
 
 Example container address supplied by the external deployment environment:
 

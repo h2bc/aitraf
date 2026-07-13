@@ -29,10 +29,11 @@ async client, and Redis 7 Alpine for local infrastructure
 
 **Testing**: Pytest API unit/route tests with an explicit fake counter boundary,
 real-Redis integration tests for concurrent increments and restart persistence,
-Compose configuration validation, and command-level HTTP smoke validation
+Compose configuration validation, an isolated concurrency integration test, and
+a single-request command-level HTTP smoke check
 
 **Target Platform**: Linux API container/runtime with a required Redis URL;
-local Docker Compose dependency for host-run development
+local Docker Compose stack containing both API and Redis services
 
 **Project Type**: Python monorepo with an independently installable FastAPI
 package and an externally deployed Next.js frontend
@@ -49,7 +50,7 @@ provides normal-restart persistence but not zero-loss durability for abrupt
 host failure; network retries are separate page views
 
 **Scale/Scope**: One lifetime homepage counter, one API endpoint, one Redis key,
-API configuration/tests/docs, and a local Redis Compose service; production
+API configuration/tests/docs, and a local API/Redis Compose stack; production
 deployment, frontend implementation, and analytics remain outside scope
 
 ## Constitution Check
@@ -128,8 +129,7 @@ README.md
 implementation because there is only one consumer; no shared storage abstraction
 is added to `aitraf-core`. Application creation owns client construction,
 connectivity/state validation, and lifecycle cleanup. The root `compose.yaml`
-owns local application dependencies and initially contains only Redis so the API
-can continue running directly through the existing task command. The separate
+owns both local API and Redis lifecycles with source mounts and API reload. The separate
 production deployment repository is not modified or planned as work here.
 
 ## Implementation Direction
@@ -146,18 +146,19 @@ production deployment repository is not modified or planned as work here.
 5. Keep existing demo routes protected by the bearer token and avoid embedding
    that token in frontend browser code. Browser-origin policy is deployment
    configuration rather than visitor identity or authentication.
-6. Add root `compose.yaml` with a non-public Redis 7 service exposed on a
-   configurable host port for host-run development, AOF `everysec`, a named
-   volume, health check, and no API container duplication.
+6. Add root `compose.yaml` with API and private Redis 7 services, API source
+   mounts and reload, Redis AOF `everysec`, a named volume, health checks, and a
+   foreground `task api:run` lifecycle.
 7. Document the external runtime requirement only: deployments must provide a
    reachable persistent Redis instance through `AITRAF_REDIS_URL`. Do not add or
    modify production deployment files in this repository.
 8. Use focused fake-backed unit/route tests and real Redis integration coverage
    for atomic concurrency, malformed stored state, unavailable Redis, and
    persistence across a normal restart.
-9. Validate local Compose, start Redis, run package tests, exercise sequential
-   and 100-way concurrent HTTP increments, restart Redis without deleting the
-   volume, and confirm the count remains.
+9. Validate local Compose, run package tests, exercise 100 concurrent increments
+   against an isolated integration-test key, perform one HTTP endpoint smoke
+   request, restart Redis without deleting the volume, and confirm the count
+   remains.
 
 ## Post-Design Constitution Check
 

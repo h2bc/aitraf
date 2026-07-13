@@ -1,0 +1,63 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: packages/aitraf-api/Dockerfile
+    image: ${AITRAF_LOCAL_API_IMAGE:-aitraf-api:local}
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - ${AITRAF_ENV_FILE:-.env}
+    environment:
+      AITRAF_REDIS_URL: redis://redis:6379/0
+      PYTHONPATH: /workspace/packages/aitraf-api/src:/workspace/packages/aitraf-core/src
+    command:
+      - uvicorn
+      - aitraf_api.app:create_app_from_env
+      - --factory
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --reload
+      - --reload-dir
+      - /workspace/packages/aitraf-api/src
+    ports:
+      - "127.0.0.1:${AITRAF_API_PORT:-8001}:8000"
+    volumes:
+      - ./packages/aitraf-api/src:/workspace/packages/aitraf-api/src:ro
+      - ./packages/aitraf-core/src:/workspace/packages/aitraf-core/src:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --save
+      - "60"
+      - "1"
+    ports:
+      - "127.0.0.1:${AITRAF_REDIS_PORT:-6380}:6379"
+    volumes:
+      - aitraf-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  aitraf-redis-data:
