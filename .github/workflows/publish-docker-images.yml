@@ -78,6 +78,8 @@ jobs:
           python-version: "3.13"
 
       - name: Run API tests
+        env:
+          AITRAF_REDIS_URL: ${{ vars.AITRAF_REDIS_URL }}
         run: uv run --package aitraf-api --extra dev pytest packages/aitraf-api/tests
 
       - name: Set up Docker Buildx
