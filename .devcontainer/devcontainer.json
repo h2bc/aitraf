@@ -22,7 +22,8 @@
     "ghcr.io/devcontainers-extra/features/ffmpeg-apt-get:1": {},
     "ghcr.io/devcontainer-community/devcontainer-features/astral.sh-uv:1": {},
     "ghcr.io/eitsupi/devcontainer-features/go-task:1": {},
-    "ghcr.io/sliekens/devcontainer-features/codex:1": {}
+    "ghcr.io/sliekens/devcontainer-features/codex:1": {},
+    "ghcr.io/stu-bell/devcontainer-features/claude-code:0": {}
   },
   "customizations": {
     "vscode": {
@@ -31,6 +32,7 @@
         "ms-toolsai.jupyter",
         "charliermarsh.ruff",
         "openai.chatgpt",
+        "anthropic.claude-code",
         "tamasfe.even-better-toml"
       ]
     }
