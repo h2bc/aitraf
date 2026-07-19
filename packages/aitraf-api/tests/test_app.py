@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from aitraf_api import app as app_module
 from aitraf_api.config import Settings
+from aitraf_api.features.demo_predictions.clips import DemoClipError
 
 
 def _settings() -> Settings:
@@ -91,3 +92,26 @@ def test_app_validates_and_closes_visitor_counter(
         assert counter.close_calls == 0
 
     assert counter.close_calls == 1
+
+
+def test_create_app_fails_when_pose_data_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A selected prediction without usable poses must block startup entirely.
+
+    Readiness with a non-pose asset is the failure this feature must never
+    produce, so the error propagates instead of degrading to the source clip.
+    """
+    monkeypatch.setattr(
+        app_module,
+        "download_demo_prediction_rows",
+        lambda settings: ([{"video_id": "matched.mp4"}], [{"video_id": "matched.mp4"}]),
+    )
+
+    def prepare(rows: list[dict[str, Any]], **kwargs: Any) -> list[dict[str, Any]]:
+        raise DemoClipError("Missing pose artifact for 'matched.mp4'")
+
+    monkeypatch.setattr(app_module, "prepare_public_demo_clips", prepare)
+
+    with pytest.raises(DemoClipError, match="Missing pose artifact"):
+        app_module.create_app(settings=_settings(), visitor_counter=RecordingCounter())

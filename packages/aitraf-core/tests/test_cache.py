@@ -21,8 +21,11 @@ def test_with_file_cache_loads_existing_value(tmp_path: Path) -> None:
     path = tmp_path / "value.json"
     path.write_text("cached", encoding="utf-8")
 
-    assert with_file_cache(
-        path=path,
-        compute=lambda: "computed",
-        load=lambda target: target.read_text(encoding="utf-8"),
-    ) == "cached"
+    assert (
+        with_file_cache(
+            path=path,
+            compute=lambda: "computed",
+            load=lambda target: target.read_text(encoding="utf-8"),
+        )
+        == "cached"
+    )

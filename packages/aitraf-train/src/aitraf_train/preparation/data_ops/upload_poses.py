@@ -1,4 +1,4 @@
-"""Upload generated pairwise labeling tasks to S3 under the `pairs/` prefix."""
+"""Publish extracted pose artifacts to S3 for the demo serving surface."""
 
 from __future__ import annotations
 
@@ -13,20 +13,20 @@ from aitraf_train.storage.artifacts import upload_directory
 
 
 @dataclass
-class PairUploadConfig:
-    """Configuration for uploading generated pair files to S3."""
+class PoseUploadConfig:
+    """Configuration for uploading pose `.npz` files to S3."""
 
-    pairs_dir: Path | str
-    prefix: str = "pairs"
+    poses_dir: Path | str
+    prefix: str = "poses"
     force: bool = False
 
     def __post_init__(self) -> None:
-        self.pairs_dir = Path(self.pairs_dir)
+        self.poses_dir = Path(self.poses_dir)
         self.prefix = self.prefix.strip().strip("/")
 
 
-def upload_pairs(config: PairUploadConfig) -> int:
-    """Upload pair files to `s3://$AWS_BUCKET/<prefix>/`."""
+def upload_poses(config: PoseUploadConfig) -> int:
+    """Upload pose artifacts to `s3://$AWS_BUCKET/<prefix>/`."""
     load_dotenv()
 
     settings = load_s3_settings(require_bucket=True)
@@ -34,7 +34,7 @@ def upload_pairs(config: PairUploadConfig) -> int:
         raise RuntimeError("AWS_BUCKET must be set.")
 
     return upload_directory(
-        config.pairs_dir,
+        config.poses_dir,
         bucket=settings.bucket,
         prefix=config.prefix,
         force=config.force,
@@ -42,4 +42,4 @@ def upload_pairs(config: PairUploadConfig) -> int:
     )
 
 
-__all__ = ["PairUploadConfig", "upload_pairs"]
+__all__ = ["PoseUploadConfig", "upload_poses"]

@@ -6,13 +6,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-import imageio.v3 as iio
 import numpy as np
 from ultralytics import YOLO
 
+from aitraf_core.render import get_video_rotation_deg, iter_frames
+
 from aitraf_train.logging import logger
 from aitraf_train.preparation.data_ops.utils import list_clip_files
-from aitraf_ml_core.processing.video import get_video_rotation_deg
 
 
 @dataclass
@@ -146,20 +146,10 @@ def _predict_clip_batches(
     model: YOLO,
     config: PoseAndBBoxExtractionConfig,
 ):
-    frames = _iter_frames(clip_path, rotation_deg)
+    frames = iter_frames(clip_path, rotation_deg)
 
     for batch in _batched(frames, int(config.batch_size)):
         yield from _predict_frames(batch, model, config)
-
-
-def _iter_frames(clip_path: Path, rotation_deg: int) -> Iterable[np.ndarray]:
-    rotate_quarter_turns = rotation_deg // 90
-
-    for frame in iio.imiter(str(clip_path)):
-        if rotate_quarter_turns:
-            yield np.rot90(frame, k=rotate_quarter_turns)
-        else:
-            yield frame
 
 
 def _batched(

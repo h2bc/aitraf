@@ -85,7 +85,8 @@ def test_download_clips_downloads_all_requests(tmp_path: Path) -> None:
     results = download_clips(requests, clips_dir=tmp_path, s3_client=client)
 
     assert [result.status for result in results] == ["downloaded", "downloaded"]
-    assert [path.name for path in tmp_path.iterdir()] == ["a.mp4", "b.mp4"]
+    # iterdir() yields in filesystem order, which is not creation order.
+    assert sorted(path.name for path in tmp_path.iterdir()) == ["a.mp4", "b.mp4"]
 
 
 def test_download_clips_reuses_lazy_client(

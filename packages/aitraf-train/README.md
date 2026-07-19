@@ -101,6 +101,9 @@ task train_eval -- task=score_prediction_ordinal model=video_mae_temporal_fusion
 - Download referenced clips into `storage/data/clips/`.
 - Extract pose keypoints and detection boxes into `storage/data/poses/` and
   `storage/data/boxes/`.
+- Upload pose artifacts to `s3://$AWS_BUCKET/poses/`, skipping keys that already
+  exist unless `upload_poses.force=true`. The demo API reads these to render its
+  pose-overlay clips. Box artifacts stay local.
 - Download pairwise labels into one JSONL file.
 - Extract and cache VideoMAE features into `storage/data/video_mae_features/`.
   Temporal-fusion feature extraction delegates frame-to-pixel processing and

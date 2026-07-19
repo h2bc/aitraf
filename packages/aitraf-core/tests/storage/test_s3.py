@@ -40,9 +40,7 @@ def test_download_s3_uri_uses_get_object_without_head(tmp_path: Path) -> None:
             return {"Body": BytesIO(b"video")}
 
     destination = tmp_path / "sample.mp4"
-    download_s3_uri(
-        "s3://aitraf/clips/sample.mp4", destination, s3_client=Client()
-    )
+    download_s3_uri("s3://aitraf/clips/sample.mp4", destination, s3_client=Client())
 
     assert destination.read_bytes() == b"video"
 
@@ -55,13 +53,19 @@ def test_copy_s3_object_uses_server_side_copy() -> None:
             calls.append(kwargs)
 
     copy_s3_object(
-        Client(), source_bucket="private", source_key="clips/sample.mp4",
-        destination_bucket="public", destination_key="videos/sample.mp4",
+        Client(),
+        source_bucket="private",
+        source_key="clips/sample.mp4",
+        destination_bucket="public",
+        destination_key="videos/sample.mp4",
     )
-    assert calls == [{
-        "Bucket": "public", "Key": "videos/sample.mp4",
-        "CopySource": {"Bucket": "private", "Key": "clips/sample.mp4"},
-    }]
+    assert calls == [
+        {
+            "Bucket": "public",
+            "Key": "videos/sample.mp4",
+            "CopySource": {"Bucket": "private", "Key": "clips/sample.mp4"},
+        }
+    ]
 
 
 def test_load_s3_settings_requires_expected_environment(

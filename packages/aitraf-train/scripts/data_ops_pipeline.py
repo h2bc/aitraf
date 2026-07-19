@@ -20,6 +20,10 @@ from aitraf_train.preparation.data_ops.pose_and_bbox_extraction import (
     PoseAndBBoxExtractionConfig,
     pose_and_bbox_extraction,
 )
+from aitraf_train.preparation.data_ops.upload_poses import (
+    PoseUploadConfig,
+    upload_poses,
+)
 from aitraf_train.preparation.data_ops.video_mae_feature_extraction import (
     VideoMaeFeatureExtractionConfig,
     video_mae_feature_extraction,
@@ -75,6 +79,18 @@ def run(cfg: DictConfig) -> None:
         )
     else:
         heading("Skip pose/bbox extraction (disabled)")
+
+    if data_cfg.upload_poses.enabled:
+        heading("Upload Poses")
+        upload_poses(
+            PoseUploadConfig(
+                poses_dir=data_cfg.upload_poses.poses_dir,
+                prefix=data_cfg.upload_poses.prefix,
+                force=data_cfg.upload_poses.force,
+            )
+        )
+    else:
+        heading("Skip pose upload (disabled)")
 
     if data_cfg.video_mae_feature_extraction.enabled:
         heading("VideoMAE Feature Extraction")

@@ -5,23 +5,27 @@ from pathlib import Path
 
 ROOT = Path(__file__).parents[3]
 CORE = ROOT / "packages" / "aitraf-core"
+
+# aitraf-core is copied into the serving image, so it must stay free of the ML
+# training stack. The rendering helpers it owns need numpy/pillow/imageio/av,
+# which are small pure-wheel dependencies; torch and friends remain excluded.
+ALLOWED_DEPENDENCIES = ["av", "boto3", "imageio", "numpy", "pillow"]
 PROHIBITED = {
     "aitraf_ml_core",
     "aitraf_train",
-    "av",
     "huggingface_hub",
     "kornia",
     "mlflow",
-    "numpy",
     "torch",
     "torchcodec",
     "transformers",
+    "ultralytics",
 }
 
 
-def test_core_declares_only_boto3_runtime_dependency() -> None:
+def test_core_declares_only_lightweight_runtime_dependencies() -> None:
     manifest = tomllib.loads((CORE / "pyproject.toml").read_text(encoding="utf-8"))
-    assert manifest["project"]["dependencies"] == ["boto3"]
+    assert manifest["project"]["dependencies"] == ALLOWED_DEPENDENCIES
 
 
 def test_core_source_does_not_import_ml_runtime() -> None:
