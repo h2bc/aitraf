@@ -19,7 +19,9 @@ class ClipDownloadRequest:
     relative_path: Path | str | None = None
 
     def destination_path(self, clips_dir: Path | str) -> Path:
-        relative = Path(self.relative_path if self.relative_path is not None else self.video_id)
+        relative = Path(
+            self.relative_path if self.relative_path is not None else self.video_id
+        )
         if relative.is_absolute() or ".." in relative.parts:
             raise ValueError(f"Clip destination must be relative: {relative}")
         return Path(clips_dir) / relative

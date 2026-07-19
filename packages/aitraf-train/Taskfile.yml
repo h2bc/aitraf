@@ -1,6 +1,18 @@
 version: "3"
 
 tasks:
+  test:
+    desc: Run train tests
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run --package aitraf-train pytest packages/aitraf-train/tests {{.CLI_ARGS}}"
+
+  lint:
+    desc: Run train lint checks
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run ruff check packages/aitraf-train/src packages/aitraf-train/tests {{.CLI_ARGS}}"
+
   data_ops:
     desc: Run the data ops pipeline
     dir: "{{.TASKFILE_DIR}}/../.."

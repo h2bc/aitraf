@@ -35,6 +35,12 @@ pose_and_bbox_extraction:
   batch_size: 128
   max_det: 1
 
+upload_poses:
+  enabled: true
+  force: false
+  poses_dir: ${pose_and_bbox_extraction.poses_dir}
+  prefix: poses
+
 video_mae_feature_extraction:
   enabled: true
   force: false

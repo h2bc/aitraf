@@ -1,6 +1,12 @@
 version: "3"
 
 includes:
+  core:
+    taskfile: packages/aitraf-core/Taskfile.yml
+    dir: .
+  ml-core:
+    taskfile: packages/aitraf-ml-core/Taskfile.yml
+    dir: .
   train:
     taskfile: packages/aitraf-train/Taskfile.yml
     dir: .
@@ -15,9 +21,17 @@ tasks:
     cmds:
       - uv sync
 
+  test:
+    desc: Run every package's tests
+    cmds:
+      - task: core:test
+      - task: ml-core:test
+      - task: train:test
+      - task: api:test
+
   lint:
     desc: Run ruff linting
-    cmds: 
+    cmds:
       - uv run ruff check . {{.CLI_ARGS}}
 
   format:

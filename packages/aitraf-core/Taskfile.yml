@@ -1,0 +1,14 @@
+version: "3"
+
+tasks:
+  test:
+    desc: Run core tests
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run --package aitraf-core pytest packages/aitraf-core/tests {{.CLI_ARGS}}"
+
+  lint:
+    desc: Run core lint checks
+    dir: "{{.TASKFILE_DIR}}/../.."
+    cmds:
+      - "uv run ruff check packages/aitraf-core/src packages/aitraf-core/tests {{.CLI_ARGS}}"
